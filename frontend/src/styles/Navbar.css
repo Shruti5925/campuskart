@@ -1,0 +1,145 @@
+:root {
+    --primary-color: #22c55e;
+    --secondary-color: #16a34a;
+    --text-main: #1f2937;
+    --text-muted: #6b7280;
+    --bg-white: #ffffff;
+    --bg-light: #f9fafb;
+    --border-color: #e5e7eb;
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+nav {
+    padding: 0.75rem 5%;
+    background: var(--bg-white);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border-color);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    font-family: var(--font-family);
+}
+
+.nav-logo {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--text-main);
+    text-decoration: none;
+    letter-spacing: -0.025em;
+}
+
+.logo-box {
+    background-color: var(--primary-color);
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+
+.nav-links {
+    display: flex;
+    gap: 2.5rem;
+    align-items: center;
+}
+
+.nav-link {
+    color: var(--text-main);
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 0.9375rem;
+    transition: color 0.2s;
+}
+
+.nav-link:hover {
+    color: var(--primary-color);
+}
+
+.nav-link.active {
+    color: var(--text-main);
+    font-weight: 700;
+}
+
+.nav-right {
+    display: flex;
+    gap: 1.25rem;
+    align-items: center;
+}
+
+.sell-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--primary-color);
+    color: white;
+    padding: 0.5rem 1.25rem;
+    border-radius: 9999px;
+    font-weight: 600;
+    font-size: 0.875rem;
+    text-decoration: none;
+    transition: background 0.2s;
+    border: none;
+    cursor: pointer;
+}
+
+.sell-btn:hover {
+    background: var(--secondary-color);
+}
+
+.icon-btn {
+    background: var(--bg-light);
+    border: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 9999px;
+    padding: 8px;
+    color: var(--text-main);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.icon-btn:hover {
+    background: var(--border-color);
+}
+
+.profile-img {
+    width: 36px;
+    height: 36px;
+    border-radius: 9999px;
+    border: 2px solid var(--border-color);
+}
+
+.nav-auth {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+.btn-login {
+    color: var(--text-main);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+.btn-signup {
+    background: var(--primary-color);
+    color: white;
+    padding: 0.5rem 1.25rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.875rem;
+    text-decoration: none;
+}
