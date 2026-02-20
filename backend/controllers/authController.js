@@ -12,6 +12,7 @@ exports.signup = async (req, res) => {
     collegeId,
     department,
     mobileNumber,
+    gender,
     securityQuestion,
     securityAnswer
   } = req.body;
@@ -37,6 +38,7 @@ exports.signup = async (req, res) => {
       collegeId,
       department,
       mobileNumber,
+      gender: req.body.gender,
       securityQuestion,
       securityAnswer
     });

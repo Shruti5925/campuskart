@@ -105,3 +105,8 @@
 .choice-card {
     transition: all 0.3s ease !important;
 }
+.required-star {
+  color: red;
+  margin-left: 4px;
+  font-weight: bold;
+}
