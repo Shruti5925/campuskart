@@ -5,6 +5,7 @@ require("dotenv").config();
 
 const authRoutes = require("./routes/authRoutes");
 const productRoutes = require("./routes/productRoutes"); // import here
+const userRoutes = require("./routes/userRoutes");
 
 const app = express();
 
@@ -21,6 +22,7 @@ app.use((req, res, next) => {
 console.log("Mounting /api/auth...");
 app.use("/api/auth", authRoutes);
 app.use("/api/products", productRoutes);
+app.use("/api/users", userRoutes);
 
 // Connect to MongoDB
 mongoose

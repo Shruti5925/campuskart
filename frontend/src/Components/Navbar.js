@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import '../styles/Navbar.css';
 
@@ -6,6 +6,7 @@ const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const token = localStorage.getItem('token');
+  const [showDropdown, setShowDropdown] = useState(false);
 
   const handleLogout = () => {
     if (window.confirm("Are you sure you want to logout?")) {
@@ -41,15 +42,59 @@ const Navbar = () => {
             <Link to="/want-to-sell" className="sell-btn">
               <span style={{ fontSize: '1.2rem' }}>+</span> Sell
             </Link>
+
             <button className="icon-btn">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path></svg>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" strokeWidth="2"
+                strokeLinecap="round" strokeLinejoin="round">
+                <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path>
+                <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path>
+              </svg>
             </button>
-            <div className="profile-img-container" onClick={handleLogout} style={{ cursor: 'pointer' }}>
-              <img
-                src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"
-                alt="Profile"
-                className="profile-img"
-              />
+
+            <div className="profile-wrapper">
+              <div
+                className="profile-img-container"
+                onClick={() => setShowDropdown(!showDropdown)}
+                style={{ cursor: 'pointer' }}
+              >
+                <img
+                  src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"
+                  alt="Profile"
+                  className="profile-img"
+                />
+              </div>
+
+              {showDropdown && (
+                <div className="profile-dropdown">
+                  <div
+                    className="dropdown-item"
+                    onClick={() => {
+                      navigate('/profile');
+                      setShowDropdown(false);
+                    }}
+                  >
+                    👤 Profile
+                  </div>
+
+                  <div
+                    className="dropdown-item"
+                    onClick={() => {
+                      navigate('/orders');
+                      setShowDropdown(false);
+                    }}
+                  >
+                    📦 Previous Orders
+                  </div>
+
+                  <div
+                    className="dropdown-item logout-item"
+                    onClick={handleLogout}
+                  >
+                    🚪 Logout
+                  </div>
+                </div>
+              )}
             </div>
           </>
         ) : (
@@ -66,6 +111,5 @@ const Navbar = () => {
     </nav>
   );
 };
-
 
 export default Navbar;

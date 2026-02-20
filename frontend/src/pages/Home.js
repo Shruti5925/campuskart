@@ -13,13 +13,14 @@ const Home = () => {
     const [recentProducts, setRecentProducts] = useState([]);
 
     const categories = [
-        { name: 'All Items', icon: '田', id: 'all' },
-        { name: 'Books', icon: '📚', id: 'books' },
-        { name: 'Fan', icon: '🌬️', id: 'fan' },
-        { name: 'Electronics', icon: '💻', id: 'electronics' },
-        { name: 'Cycles', icon: '🚲', id: 'cycles' },
-        { name: 'Others', icon: '⋯', id: 'others' }
-    ];
+  { name: "All", icon: "田", id: "all" },
+  { name: "book", icon: "📚", id: "book" },
+  { name: "fan", icon: "🌬️", id: "fan" },
+  { name: "electronics", icon: "💻", id: "electronics" },
+  { name: "bicycle", icon: "🚲", id: "bicycle" },
+  { name: "others", icon: "⋯", id: "others" }
+];
+
 
     useEffect(() => {
         const fetchProducts = async () => {
@@ -94,9 +95,14 @@ const Home = () => {
                         key={cat.id}
                         className={`category-card ${activeCategory === cat.name ? 'active' : ''}`}
                         onClick={() => {
-                            setActiveCategory(cat.name);
-                            navigate(`/products?category=${cat.name}`);
-                        }}
+    setActiveCategory(cat.name);
+
+    if (cat.name === "All") {
+        navigate("/products");
+    } else {
+        navigate(`/products?category=${cat.name}`);
+    }
+}}
                     >
                         <div className="category-icon">{cat.icon}</div>
                         <span className="category-label">{cat.name}</span>

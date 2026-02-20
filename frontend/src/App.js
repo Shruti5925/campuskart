@@ -3,6 +3,12 @@ import Login from "./pages/Login";
 import Products from "./pages/Products";
 import AddProduct from "./pages/AddProduct";
 import EditProduct from "./pages/EditProduct";
+import Guidelines from "./pages/Guidelines";
+
+import ProductDetails from "./pages/ProductDetails";
+
+
+
 
 import Signup from "./pages/Signup";
 import Home from "./pages/Home";
@@ -30,6 +36,12 @@ function App() {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/sell-gate" element={<SellerGate />} />
         <Route path="/products" element={<Products isSeller={false} />} />
+        <Route path="/guidelines" element={<Guidelines />} />
+      
+        <Route path="/product/:id" element={<ProductDetails />} />
+
+
+
         <Route
           path="/want-to-sell"
           element={
@@ -55,6 +67,7 @@ function App() {
           }
         />
       </Routes>
+      
     </BrowserRouter>
   );
 }

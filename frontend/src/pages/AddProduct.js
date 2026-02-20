@@ -51,20 +51,15 @@ function AddProduct() {
             onChange={handleChange}
             required
           />
+
           <textarea
             name="description"
             placeholder="Describe your item..."
             value={form.description}
             onChange={handleChange}
-            style={{
-              padding: '12px',
-              borderRadius: '6px',
-              border: '1px solid #ddd',
-              minHeight: '100px',
-              fontFamily: 'inherit'
-            }}
             required
           />
+
           <input
             name="price"
             type="number"
@@ -73,33 +68,25 @@ function AddProduct() {
             onChange={handleChange}
             required
           />
-          <input
+
+          {/* ✅ LOWERCASE VALUES */}
+          <select
             name="category"
-            placeholder="Category (e.g., Cycle, Electronics)"
             value={form.category}
             onChange={handleChange}
             required
-          />
-
-          <button type="submit" style={{ marginTop: '10px' }}>List Product</button>
-          <button
-            type="button"
-            onClick={() => navigate("/want-to-sell")}
-            style={{
-              marginTop: '10px',
-              background: '#f1f5f9',
-              color: '#64748b',
-              padding: '12px',
-              border: 'none',
-              borderRadius: '6px',
-              width: '100%',
-              fontWeight: '600',
-              cursor: 'pointer'
-            }}
           >
-            Cancel
-          </button>
+            <option value="">Select Category</option>
+            <option value="book">Book</option>
+            <option value="electronics">Electronics</option>
+            <option value="fan">Fan</option>
+            <option value="bicycle">Bicycle</option>
+            <option value="others">Others</option>
+          </select>
+
+          <button type="submit">List Product</button>
         </form>
+
         <p className="auth-message">{message}</p>
       </div>
     </div>
