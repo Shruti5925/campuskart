@@ -1,195 +1,365 @@
 :root {
-    --primary-color: #22c55e;
-    --secondary-color: #16a34a;
+    --primary-color: #3B82F6;
+    /* Modern Blue Primary */
+    --primary-light: #eff6ff;
+    --secondary-color: #2563EB;
+    --hover-green: #00D14E;
+    /* Green for Hovers */
     --text-main: #1f2937;
     --text-muted: #6b7280;
+    --text-light: #9ca3af;
     --bg-white: #ffffff;
     --bg-light: #f9fafb;
+    --bg-alt: #f1f5f9;
     --border-color: #e5e7eb;
     --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
     --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-    --font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    --font-family: 'Outfit', 'Inter', system-ui, -apple-system, sans-serif;
 }
 
-nav {
-    padding: 0.75rem 5%;
-    background: var(--bg-white);
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: var(--font-family);
+    color: var(--text-main);
+    background-color: var(--bg-light);
+    line-height: 1.5;
+}
+
+nav.navbar-container {
+    padding: 0.75rem 1.5rem;
+    background: transparent;
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     align-items: center;
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: none;
     position: sticky;
-    top: 0;
+    top: 5px;
+    /* Floating slightly from the top */
     z-index: 1000;
     font-family: var(--font-family);
+    height: 75px;
+    pointer-events: none;
+    width: 100%;
 }
 
-.nav-logo {
+.nav-pill-wrapper {
+    pointer-events: auto;
     display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 1.25rem;
-    font-weight: 800;
-    color: var(--text-main);
-    text-decoration: none;
-    letter-spacing: -0.025em;
-}
-
-.logo-box {
-    background-color: var(--primary-color);
-    width: 28px;
-    height: 28px;
-    border-radius: 6px;
-    display: flex;
-    align-items: center;
     justify-content: center;
-    color: white;
+    width: 100%;
 }
 
 .nav-links {
     display: flex;
-    gap: 2.5rem;
     align-items: center;
+    justify-content: space-between;
+    /* Push logo to left, icons to right */
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(12px);
+    border-radius: 999px;
+    padding: 6px 16px;
+    box-shadow: 0 10px 35px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    gap: 0;
+    border: 1px solid rgba(229, 231, 235, 0.6);
+    position: relative;
+    width: 100%;
+    /* Expand to fill wrapper */
+    max-width: 1400px;
+    /* Optional cap for very wide screens */
+    overflow: visible;
 }
 
-.nav-link {
-    color: var(--text-main);
-    text-decoration: none;
-    font-weight: 500;
-    font-size: 0.9375rem;
-    transition: color 0.2s;
-}
-
-.nav-link:hover {
-    color: var(--primary-color);
-}
-
-.nav-link.active {
-    color: var(--text-main);
-    font-weight: 700;
-}
-
-.nav-right {
-    display: flex;
-    gap: 1.25rem;
-    align-items: center;
-}
-
-.sell-btn {
+.nav-logo-pill {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    background: var(--primary-color);
-    color: white;
-    padding: 0.5rem 1.25rem;
-    border-radius: 9999px;
-    font-weight: 600;
-    font-size: 0.875rem;
+    padding: 0 12px;
     text-decoration: none;
-    transition: background 0.2s;
-    border: none;
-    cursor: pointer;
+    gap: 12px;
+    flex-shrink: 0;
 }
 
-.sell-btn:hover {
-    background: var(--secondary-color);
+.nav-logo-text-pill {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: #111827;
+    letter-spacing: -0.025em;
 }
 
-.icon-btn {
-    background: var(--bg-light);
-    border: none;
-    width: 36px;
-    height: 36px;
-    border-radius: 9999px;
-    padding: 8px;
-    color: var(--text-main);
-    cursor: pointer;
+.logo-box-pill {
+    background-color: var(--primary-color);
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s;
-}
-
-.icon-btn:hover {
-    background: var(--border-color);
-}
-
-.profile-img {
-    width: 36px;
-    height: 36px;
-    border-radius: 9999px;
-    border: 2px solid var(--border-color);
-}
-
-.nav-auth {
-    display: flex;
-    gap: 0.75rem;
-    align-items: center;
-}
-
-.btn-login {
-    color: var(--text-main);
-    text-decoration: none;
-    font-weight: 600;
-    font-size: 0.875rem;
-}
-
-.btn-signup {
-    background: var(--primary-color);
     color: white;
-    padding: 0.5rem 1.25rem;
-    border-radius: 8px;
-    font-weight: 600;
-    font-size: 0.875rem;
-    text-decoration: none;
+    font-size: 1.1rem;
+    font-weight: 800;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
 }
-.profile-wrapper {
+
+.nav-links-center {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.pill-divider {
+    width: 1px;
+    height: 24px;
+    background: rgba(0, 0, 0, 0.08);
+    margin: 0 4px;
+}
+
+.nav-link {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0px;
+    padding: 4px 20px;
+    color: #6b7280;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.7rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
 }
 
+.nav-icon-wrapper {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    color: #6b7280;
+}
+
+.nav-label {
+    transition: all 0.3s ease;
+    font-size: 0.7rem;
+    font-weight: 600;
+    opacity: 0.8;
+}
+
+.nav-link:hover .nav-icon-wrapper {
+    color: var(--hover-green);
+    background: rgba(0, 209, 78, 0.08);
+    transform: translateY(-2px);
+}
+
+.nav-link:hover .nav-label {
+    color: var(--hover-green);
+}
+
+.nav-link.active {
+    color: var(--primary-color);
+}
+
+.nav-link.active .nav-icon-wrapper {
+    background: var(--primary-color);
+    color: white;
+    transform: translateY(-16px);
+    box-shadow: 0 10px 25px rgba(59, 130, 246, 0.4);
+}
+
+.nav-link.active .nav-label {
+    color: var(--primary-color);
+    font-weight: 700;
+    transform: translateY(-4px);
+    opacity: 1;
+}
+
+.nav-pill-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 8px;
+    flex-shrink: 0;
+}
+
+.pill-icon-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #4b5563;
+    transition: all 0.3s;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+}
+
+.pill-icon-btn:hover {
+    background: rgba(0, 0, 0, 0.05);
+    color: var(--hover-green);
+}
+
+.pill-icon-btn.with-text {
+    width: auto;
+    padding: 0 16px 0 12px;
+    border-radius: 999px;
+    gap: 8px;
+}
+
+.pill-btn-label {
+    font-size: 0.875rem;
+    font-weight: 700;
+}
+
+.sell-icon-btn {
+    background: var(--primary-color);
+    color: white;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+}
+
+.sell-icon-btn:hover {
+    background: var(--hover-green);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 15px rgba(0, 209, 78, 0.25);
+    color: white;
+}
+
+.profile-img-pill {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.profile-img-pill:hover {
+    transform: scale(1.1);
+    border-color: var(--hover-green);
+}
+
+.nav-auth {
+    display: none;
+    /* Handled by icons in pill */
+}
+
+
+/* Dropdown Styles */
 .profile-dropdown {
     position: absolute;
+    top: calc(100% + 10px);
     right: 0;
-    top: 48px;
-    width: 200px;
-    background: var(--bg-white);
-    border: 1px solid var(--border-color);
+    background-color: white;
+    min-width: 220px;
     border-radius: 12px;
-    box-shadow: var(--shadow-md);
-    overflow: hidden;
-    animation: dropdownFade 0.15s ease-in-out;
-    z-index: 2000;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    border: 1px solid var(--border-color);
+    padding: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    z-index: 10001;
+    animation: slideDown 0.2s ease-out;
 }
 
-.dropdown-item {
-    padding: 12px 16px;
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: var(--text-main);
-    cursor: pointer;
-    transition: background 0.2s;
-}
-
-.dropdown-item:hover {
-    background: var(--bg-light);
-}
-
-.logout-item {
-    color: #ef4444;
-    border-top: 1px solid var(--border-color);
-}
-
-.logout-item:hover {
-    background: #fef2f2;
-}
-
-@keyframes dropdownFade {
+@keyframes slideDown {
     from {
         opacity: 0;
-        transform: translateY(-5px);
+        transform: translateY(-10px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
     }
+}
+
+.dropdown-header {
+    padding: 0.75rem 1rem;
+}
+
+.dropdown-name {
+    font-weight: 700;
+    font-size: 0.9375rem;
+    color: var(--text-main);
+    margin: 0;
+}
+
+.dropdown-email {
+    font-size: 0.8125rem;
+    color: var(--text-muted);
+    margin: 2px 0 0 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.dropdown-divider {
+    height: 1px;
+    background-color: var(--border-color);
+    margin: 0.5rem 0;
+}
+
+.dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.625rem 1rem;
+    color: var(--text-main);
+    text-decoration: none;
+    font-size: 0.875rem;
+    font-weight: 500;
+    border-radius: 8px;
+    transition: all 0.2s;
+    border: none;
+    background: transparent;
+    width: 100%;
+    cursor: pointer;
+    text-align: left;
+}
+
+.dropdown-item:hover {
+    background-color: var(--bg-light);
+    color: var(--primary-color);
+}
+
+.logout-item:hover {
+    color: #ef4444;
+    background-color: #fef2f2;
+}
+
+.profile-wrapper::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    height: 10px;
+}
+
+/* Global Green Button Hover Effect */
+.btn-green,
+.sell-btn,
+.chat-btn,
+.btn-signup {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.btn-green:hover,
+.sell-btn:hover,
+.chat-btn:hover,
+.btn-signup:hover {
+    background-color: var(--hover-green) !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 209, 78, 0.2);
 }

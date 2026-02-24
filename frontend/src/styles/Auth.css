@@ -3,9 +3,22 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    min-height: 80vh;
+    min-height: calc(100vh - 70px);
     font-family: 'Inter', sans-serif;
+    position: relative;
 }
+
+.auth-container::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: linear-gradient(rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0.65)),
+        url('../assets/auth-bg.jpg') center/cover no-repeat;
+    will-change: transform;
+    z-index: -1;
+}
+
+
 
 .auth-card {
     background: white;
@@ -54,23 +67,25 @@
 
 .auth-form input:focus {
     outline: none;
-    border-color: #007bff;
+    border-color: #3B82F6;
 }
 
 .auth-form button {
     padding: 12px;
-    background-color: #007bff;
+    background-color: #3B82F6;
     color: white;
     border: none;
     border-radius: 6px;
     font-size: 1rem;
     font-weight: 600;
     cursor: pointer;
-    transition: background-color 0.2s;
+    transition: all 0.3s ease;
 }
 
 .auth-form button:hover {
-    background-color: #0056b3;
+    background-color: #00D14E;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 209, 78, 0.2);
 }
 
 .auth-message {
@@ -86,22 +101,51 @@
 }
 
 .auth-footer a {
-    color: #007bff;
+    color: #3B82F6;
     text-decoration: none;
     font-weight: 600;
 }
 
 .auth-footer a:hover {
+    color: #00D14E;
     text-decoration: underline;
 }
 
 .choice-card:hover {
-    border-color: #6366f1 !important;
-    box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.1);
+    border-color: #00D14E !important;
+    box-shadow: 0 10px 15px -3px rgba(0, 209, 78, 0.1);
     transform: translateY(-4px);
-    background-color: #f5f3ff !important;
+    background-color: #eff6ff !important;
 }
 
 .choice-card {
     transition: all 0.3s ease !important;
+}
+
+.gender-options {
+    display: flex;
+    gap: 20px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+.gender-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    color: #444;
+}
+
+.gender-option input[type="radio"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: #3B82F6;
+}
+
+.full-width label {
+    display: block;
+    margin-bottom: 5px;
 }

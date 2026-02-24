@@ -23,10 +23,20 @@ const seedUser = async () => {
 
         // Create user
         const newUser = new User({
-            name: "Admin User",
+            firstName: "Admin",
+            middleName: "",
+            lastName: "User",
+            gender: "Male",
+            address: "Campus Hostel A",
             email: "admin@example.com",
             password: hashedPassword,
+            // ... (rest of the code snippet)
             role: "admin",
+            collegeId: "ADMIN001",
+            department: "IT",
+            mobileNumber: "1234567890",
+            securityQuestion: "What is your favorite color?",
+            securityAnswer: "Blue"
         });
 
         await newUser.save();

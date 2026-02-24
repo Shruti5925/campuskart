@@ -1,74 +1,17 @@
-import React from "react";
-import Navbar from "../Components/Navbar";
-import Footer from "../Components/Footer";
-import "../styles/Guidelines.css";
+import React from 'react';
+import Footer from '../Components/Footer';
 
 const Guidelines = () => {
-  return (
-    <div className="guidelines-container">
-      <Navbar />
-
-      <div className="guidelines-hero">
-        <h1>CampusKart Guidelines</h1>
-        <p>
-          To ensure a safe and smooth experience for everyone, please follow
-          these community rules.
-        </p>
-      </div>
-
-      <div className="guidelines-content">
-        <div className="guideline-card">
-          <h2>1. Be Honest</h2>
-          <p>
-            Provide accurate details about your product including price,
-            condition, and images. Misleading listings may be removed.
-          </p>
+    return (
+        <div className="guidelines-container" style={{ minHeight: '80vh', display: 'flex', flexDirection: 'column' }}>
+            {/* Blank content as requested */}
+            <main style={{ flex: 1, padding: '10rem 2rem', textAlign: 'center' }}>
+                <h1 style={{ color: '#64748b', fontSize: '2rem', fontWeight: '500' }}>Guidelines</h1>
+                <p style={{ color: '#94a3b8', marginTop: '1rem' }}>Content coming soon...</p>
+            </main>
+            <Footer />
         </div>
-
-        <div className="guideline-card">
-          <h2>2. Respect Campus Community</h2>
-          <p>
-            This platform is only for students. Maintain respectful
-            communication while interacting with buyers and sellers.
-          </p>
-        </div>
-
-        <div className="guideline-card">
-          <h2>3. No Prohibited Items</h2>
-          <p>
-            Selling illegal, harmful, or restricted items is strictly
-            prohibited and will result in account suspension.
-          </p>
-        </div>
-
-        <div className="guideline-card">
-          <h2>4. Meet Safely</h2>
-          <p>
-            Always meet in public campus areas during daytime when completing
-            transactions.
-          </p>
-        </div>
-
-        <div className="guideline-card">
-          <h2>5. Fair Pricing</h2>
-          <p>
-            Keep pricing reasonable and student-friendly. Avoid price gouging
-            or scams.
-          </p>
-        </div>
-
-        <div className="guideline-card">
-          <h2>6. Report Issues</h2>
-          <p>
-            If you notice suspicious activity or inappropriate listings, report
-            them immediately.
-          </p>
-        </div>
-      </div>
-
-      <Footer />
-    </div>
-  );
+    );
 };
 
 export default Guidelines;

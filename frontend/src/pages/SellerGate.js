@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import Navbar from '../Components/Navbar';
+
+
 import '../styles/Auth.css'; // Reuse premium card styles
 
 const SellerGate = () => {
@@ -18,7 +19,7 @@ const SellerGate = () => {
 
     return (
         <div className="home-container" style={{ minHeight: '100vh', backgroundColor: '#f8fafc' }}>
-            <Navbar />
+
 
             <div className="auth-container" style={{ paddingTop: '50px' }}>
                 <div className="auth-card" style={{ maxWidth: '600px', textAlign: 'center' }}>

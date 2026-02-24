@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" fill="none">
+  <rect width="400" height="400" fill="#f0fdf4"/>
+  <!-- Background circles -->
+  <circle cx="200" cy="200" r="170" fill="#dcfce7" opacity="0.6"/>
+  <circle cx="200" cy="200" r="120" fill="#bbf7d0" opacity="0.5"/>
+  <!-- Shopping box body -->
+  <rect x="120" y="160" width="160" height="130" rx="12" fill="#00D14E"/>
+  <!-- Box bottom shadow -->
+  <rect x="130" y="275" width="140" height="15" rx="6" fill="#059669" opacity="0.4"/>
+  <!-- Box top flap left -->
+  <path d="M120 160 L120 185 L195 185 L195 145 Z" fill="#00c246" rx="8"/>
+  <!-- Box top flap right -->
+  <path d="M280 160 L280 185 L205 185 L205 145 Z" fill="#00D14E"/>
+  <!-- Handle -->
+  <path d="M165 145 Q200 115 235 145" stroke="white" stroke-width="8" stroke-linecap="round" fill="none"/>
+  <!-- Ribbon/stripe on box -->
+  <rect x="188" y="160" width="24" height="130" rx="4" fill="white" opacity="0.25"/>
+  <!-- Star sparkle top-right -->
+  <path d="M310 90 L315 105 L330 100 L315 115 L320 130 L305 118 L290 130 L295 115 L280 100 L295 105 Z" fill="#fbbf24" opacity="0.8"/>
+  <!-- Small star bottom-left -->
+  <path d="M80 280 L83 290 L93 287 L83 297 L86 307 L76 300 L66 307 L69 297 L59 287 L69 290 Z" fill="#fbbf24" opacity="0.6"/>
+  <!-- Price tag -->
+  <rect x="230" y="195" width="75" height="40" rx="8" fill="white" opacity="0.9"/>
+  <text x="267" y="210" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#6b7280">PRICE</text>
+  <text x="267" y="228" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="900" fill="#00D14E">₹---</text>
+  <!-- Graduation cap on top -->
+  <ellipse cx="200" cy="105" rx="35" ry="8" fill="#1e293b"/>
+  <rect x="185" y="85" width="30" height="20" rx="3" fill="#1e293b"/>
+  <line x1="225" y1="105" x2="235" y2="120" stroke="#1e293b" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="235" cy="123" r="5" fill="#fbbf24"/>
+  <!-- CampusKart brand text -->
+  <text x="200" y="360" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="900" fill="#00D14E" letter-spacing="1">CampusKart</text>
+  <text x="200" y="380" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#94a3b8">No image available</text>
+</svg>

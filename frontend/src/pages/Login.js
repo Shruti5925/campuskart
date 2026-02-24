@@ -15,6 +15,11 @@ function Login() {
   const handleLogin = async (e) => {
     e.preventDefault();
 
+    if (!email.endsWith("@banasthali.in")) {
+      setMessage("Please use your @banasthali.in email ID ❌");
+      return;
+    }
+
     try {
       const res = await axios.post(
         "http://localhost:5001/api/auth/login",

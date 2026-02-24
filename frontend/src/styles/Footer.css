@@ -3,7 +3,12 @@
     padding: 5rem 5% 2rem;
     border-top: 1px solid var(--border-color);
     font-family: var(--font-family);
+    position: relative;
+    z-index: 1;
 }
+
+
+
 
 .footer-content {
     display: grid;
@@ -55,7 +60,7 @@
 }
 
 .footer-column ul li a:hover {
-    color: var(--primary-color);
+    color: #00D14E;
 }
 
 .newsletter h4 {
@@ -102,7 +107,7 @@
 }
 
 .newsletter-btn:hover {
-    background: var(--secondary-color);
+    background: #00D14E;
 }
 
 .footer-bottom {

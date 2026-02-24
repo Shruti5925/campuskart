@@ -1,0 +1,27 @@
+.wishlist-page-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 4rem;
+    background-color: transparent;
+    min-height: 100vh;
+    position: relative;
+}
+
+.wishlist-page-container::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: linear-gradient(rgba(248, 250, 252, 0.85), rgba(248, 250, 252, 0.95)),
+        url('../assets/bv.jpeg') center/cover no-repeat;
+    z-index: -1;
+}
+
+.section-header {
+    position: relative;
+    z-index: 1;
+}
+
+.products-grid {
+    position: relative;
+    z-index: 1;
+}

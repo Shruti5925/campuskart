@@ -1,7 +1,24 @@
 const mongoose = require("mongoose");
 
 const userSchema = new mongoose.Schema({
-  fullName: {
+  firstName: {
+    type: String,
+    required: true
+  },
+  middleName: {
+    type: String,
+    required: false
+  },
+  lastName: {
+    type: String,
+    required: true
+  },
+  gender: {
+    type: String,
+    required: true,
+    enum: ["Male", "Female", "Other"]
+  },
+  address: {
     type: String,
     required: true
   },
@@ -38,7 +55,11 @@ const userSchema = new mongoose.Schema({
   securityAnswer: {
     type: String,
     required: true
-  }
+  },
+  wishlist: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Product'
+  }]
 });
 
 module.exports = mongoose.model("User", userSchema);
