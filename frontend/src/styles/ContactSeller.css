@@ -1,0 +1,96 @@
+.contact-container {
+  padding: 40px;
+  display: flex;
+  justify-content: center;
+  background: #f4f6f9;
+}
+
+.contact-card {
+  width: 900px;
+  background: #ffffff;
+  padding: 30px;
+  border-radius: 15px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+}
+
+.contact-card h1 {
+  margin-bottom: 25px;
+  color: #2c3e50;
+}
+
+.contact-product {
+  display: flex;
+  gap: 25px;
+  margin-bottom: 30px;
+}
+
+.contact-product img {
+  width: 220px;
+  height: 180px;
+  object-fit: cover;
+  border-radius: 12px;
+}
+
+.price {
+  font-size: 20px;
+  font-weight: bold;
+  color: #27ae60;
+}
+
+.seller-details {
+  margin-top: 20px;
+  padding: 20px;
+  background: #f9fafc;
+  border-radius: 12px;
+}
+
+.seller-details h3 {
+  margin-bottom: 15px;
+  color: #34495e;
+}
+
+.seller-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px 30px;
+  font-size: 14px;
+}
+
+.back-btn {
+  margin-top: 25px;
+  padding: 10px 20px;
+  border: none;
+  background: #2c3e50;
+  color: white;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.back-btn:hover {
+  background: #1a252f;
+}
+
+@media (max-width: 768px) {
+  .contact-product {
+    flex-direction: column;
+  }
+
+  .seller-grid {
+    grid-template-columns: 1fr;
+  }
+  /* This makes page vertical layout */
+.page-wrapper {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* This makes content take available space */
+.contact-container {
+  flex: 1;
+  padding: 40px;
+  display: flex;
+  justify-content: center;
+  background: #f4f6f9;
+}
+}

@@ -2,11 +2,14 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import Sidebar from "../Components/Sidebar";
-import "../styles/Dashboard.css"; // Reuse for consistent layout
+import "../styles/Dashboard.css";
 
 function Profile() {
     const [userData, setUserData] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [showAvatarPicker, setShowAvatarPicker] = useState(false);
+    const [selectedAvatar, setSelectedAvatar] = useState("Aneka");
+
     const navigate = useNavigate();
     const token = localStorage.getItem("token");
 
@@ -23,18 +26,23 @@ function Profile() {
             const res = await axios.get("http://localhost:5001/api/auth/me", {
                 headers: { Authorization: `Bearer ${token}` }
             });
+
             setUserData(res.data);
+            setSelectedAvatar(res.data.avatar || "Aneka");
             setLoading(false);
+
         } catch (err) {
             console.error("Error fetching profile:", err);
             setLoading(false);
         }
     };
 
+    const avatarOptions = [
+        "Aneka", "Felix", "Midnight", "Luna", "Leo", "Bella", "Charlie", "Milo"
+    ];
+
     if (loading) return <div className="loading">Loading Profile...</div>;
     if (!userData) return <div className="error">User not found</div>;
-
-    const avatarSeed = userData.gender === "Female" ? "Aneka" : (userData.gender === "Male" ? "Felix" : "Midnight");
 
     return (
         <div className="dashboard-layout">
@@ -58,51 +66,142 @@ function Profile() {
                         <p>Manage your personal information and campus identity.</p>
                     </div>
 
-                    <div className="section-card profile-info-card" style={{ marginTop: '2rem', display: 'flex', gap: '2rem', alignItems: 'flex-start' }}>
-                        <div className="profile-photo-section" style={{ textAlign: 'center' }}>
+                    <div
+                        className="section-card profile-info-card"
+                        style={{
+                            marginTop: "2rem",
+                            display: "flex",
+                            gap: "2rem",
+                            alignItems: "flex-start"
+                        }}
+                    >
+                        {/* PROFILE PHOTO SECTION */}
+                        <div style={{ textAlign: "center" }}>
                             <img
-                                src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${avatarSeed}`}
+                                src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${selectedAvatar}`}
                                 alt="avatar"
-                                style={{ width: '120px', height: '120px', borderRadius: '50%', background: '#f0fdf4', border: '5px solid white', boxShadow: 'var(--shadow-md)' }}
+                                style={{
+                                    width: "120px",
+                                    height: "120px",
+                                    borderRadius: "50%",
+                                    background: "#f0fdf4",
+                                    border: "5px solid white",
+                                    boxShadow: "var(--shadow-md)"
+                                }}
                             />
-                            <button className="edit-btn" style={{ marginTop: '1rem', width: '100%' }}>Change Photo</button>
+
+                            <button
+                                className="edit-btn"
+                                style={{ marginTop: "1rem", width: "100%" }}
+                                onClick={() => setShowAvatarPicker(!showAvatarPicker)}
+                            >
+                                Change Photo
+                            </button>
+
+                            {/* AVATAR OPTIONS */}
+                            {showAvatarPicker && (
+                                <div
+                                    style={{
+                                        marginTop: "1rem",
+                                        display: "grid",
+                                        gridTemplateColumns: "repeat(4, 1fr)",
+                                        gap: "10px"
+                                    }}
+                                >
+                                    {avatarOptions.map((seed) => (
+                                        <img
+                                            key={seed}
+                                            src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${seed}`}
+                                            alt={seed}
+                                            style={{
+                                                width: "60px",
+                                                height: "60px",
+                                                borderRadius: "50%",
+                                                cursor: "pointer",
+                                                border:
+                                                    selectedAvatar === seed
+                                                        ? "3px solid #22c55e"
+                                                        : "2px solid #ddd"
+                                            }}
+                                            onClick={async () => {
+                                                try {
+                                                    await axios.put(
+                                                        "http://localhost:5001/api/auth/update-avatar",
+                                                        { avatar: seed },
+                                                        {
+                                                            headers: {
+                                                                Authorization: `Bearer ${token}`
+                                                            }
+                                                        }
+                                                    );
+
+                                                    setSelectedAvatar(seed);
+                                                    setShowAvatarPicker(false);
+
+                                                    // ✅ Dispatch avatarUpdated event
+                                                    window.dispatchEvent(new Event("avatarUpdated"));
+
+                                                } catch (error) {
+                                                    console.error("Error updating avatar:", error);
+                                                }
+                                            }}
+                                        />
+                                    ))}
+                                </div>
+                            )}
                         </div>
 
-                        <div className="profile-details-grid" style={{ flex: 1, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
-                            <div className="input-group">
+                        {/* PROFILE DETAILS */}
+                        <div
+                            style={{
+                                flex: 1,
+                                display: "grid",
+                                gridTemplateColumns: "1fr 1fr",
+                                gap: "1.5rem"
+                            }}
+                        >
+                            <div>
                                 <label>Full Name</label>
-                                <p className="val-text" style={{ fontSize: '1.1rem', fontWeight: '700' }}>{userData.firstName} {userData.middleName} {userData.lastName}</p>
+                                <p>{userData.firstName} {userData.middleName} {userData.lastName}</p>
                             </div>
-                            <div className="input-group">
-                                <label>Email Address</label>
-                                <p className="val-text" style={{ fontSize: '1.1rem', fontWeight: '700' }}>{userData.email}</p>
+
+                            <div>
+                                <label>Email</label>
+                                <p>{userData.email}</p>
                             </div>
-                            <div className="input-group">
+
+                            <div>
                                 <label>College ID</label>
-                                <p className="val-text" style={{ fontSize: '1.1rem', fontWeight: '700' }}>{userData.collegeId}</p>
+                                <p>{userData.collegeId}</p>
                             </div>
-                            <div className="input-group">
+
+                            <div>
                                 <label>Department</label>
-                                <p className="val-text" style={{ fontSize: '1.1rem', fontWeight: '700' }}>{userData.department}</p>
+                                <p>{userData.department}</p>
                             </div>
-                            <div className="input-group">
+
+                            <div>
                                 <label>Gender</label>
-                                <p className="val-text" style={{ fontSize: '1.1rem', fontWeight: '700' }}>{userData.gender}</p>
+                                <p>{userData.gender}</p>
                             </div>
-                            <div className="input-group">
-                                <label>Mobile Number</label>
-                                <p className="val-text" style={{ fontSize: '1.1rem', fontWeight: '700' }}>{userData.mobileNumber}</p>
+
+                            <div>
+                                <label>Mobile</label>
+                                <p>{userData.mobileNumber}</p>
                             </div>
-                            <div className="input-group" style={{ gridColumn: 'span 2' }}>
-                                <label>Campus Address / Hostel</label>
-                                <p className="val-text" style={{ fontSize: '1.1rem', fontWeight: '700' }}>{userData.address}</p>
+
+                            <div style={{ gridColumn: "span 2" }}>
+                                <label>Address</label>
+                                <p>{userData.address}</p>
                             </div>
                         </div>
                     </div>
 
-                    <div className="action-row" style={{ marginTop: '2rem', display: 'flex', gap: '1rem' }}>
-                        <button className="continue-btn" style={{ maxWidth: '200px' }}>Edit Profile</button>
-                        <button className="back-btn" onClick={() => navigate("/dashboard")}>Go to Dashboard</button>
+                    <div style={{ marginTop: "2rem", display: "flex", gap: "1rem" }}>
+                        <button className="continue-btn">Edit Profile</button>
+                        <button className="back-btn" onClick={() => navigate("/dashboard")}>
+                            Go to Dashboard
+                        </button>
                     </div>
                 </div>
 

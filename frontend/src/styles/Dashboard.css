@@ -355,3 +355,22 @@
 .footer-links a:hover {
     color: #6b7280;
 }
+.dashboard-user {
+    display: flex;
+    align-items: center;
+    margin-left: 12px;
+}
+
+.dashboard-avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #22c55e;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.dashboard-avatar:hover {
+    transform: scale(1.05);
+}

@@ -1,9 +1,9 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation, Navigate } from "react-router-dom";
 import Login from "./pages/Login";
 import Products from "./pages/Products";
 import AddProduct from "./pages/AddProduct";
 import EditProduct from "./pages/EditProduct";
-
+import ContactSeller from "./pages/ContactSeller";
 import Signup from "./pages/Signup";
 import Home from "./pages/Home";
 import ForgotPassword from "./pages/ForgotPassword";
@@ -13,9 +13,11 @@ import Dashboard from "./pages/Dashboard";
 import ProductView from "./pages/ProductView";
 import Wishlist from "./pages/Wishlist";
 import Guidelines from "./pages/Guidelines";
-import { useLocation, Navigate } from "react-router-dom";
 import Navbar from "./Components/Navbar";
 
+
+
+/* ================= PROTECTED ROUTE ================= */
 
 const ProtectedRoute = ({ children }) => {
   const token = localStorage.getItem("token");
@@ -24,26 +26,49 @@ const ProtectedRoute = ({ children }) => {
   if (!token) {
     return <Navigate to="/login" replace state={{ from: location }} />;
   }
+
   return children;
 };
 
+
+/* ================= MAIN APP CONTENT ================= */
+
 const AppContent = () => {
   const location = useLocation();
-  const showNavbarPaths = ["/", "/login", "/signup", "/products", "/wishlist", "/guidelines"];
-  const shouldShowNavbar = showNavbarPaths.includes(location.pathname) || location.pathname.startsWith("/product/");
+
+  // Show navbar on all pages except auth pages
+  const hideNavbarPaths = ["/login", "/signup", "/forgot-password"];
+  const shouldShowNavbar = !hideNavbarPaths.includes(location.pathname);
 
   return (
     <>
       {shouldShowNavbar && <Navbar />}
+
       <Routes>
+
+        {/* Public Routes */}
         <Route path="/" element={<Home />} />
+        <Route path="/products" element={<Products isSeller={false} />} />
         <Route path="/product/:id" element={<ProductView />} />
+        <Route path="/contact/:id" element={<ContactSeller />} />
+        <Route path="/guidelines" element={<Guidelines />} />
+
+        {/* Auth Routes */}
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/sell-gate" element={<SellerGate />} />
-        <Route path="/products" element={<Products isSeller={false} />} />
-        <Route path="/wishlist" element={<ProtectedRoute><Wishlist /></ProtectedRoute>} />
+
+        {/* Protected Routes */}
+        <Route
+          path="/wishlist"
+          element={
+            <ProtectedRoute>
+              <Wishlist />
+            </ProtectedRoute>
+          }
+        />
+
         <Route
           path="/dashboard"
           element={
@@ -52,6 +77,7 @@ const AppContent = () => {
             </ProtectedRoute>
           }
         />
+
         <Route
           path="/want-to-sell"
           element={
@@ -60,6 +86,7 @@ const AppContent = () => {
             </ProtectedRoute>
           }
         />
+
         <Route
           path="/add-product"
           element={
@@ -68,6 +95,8 @@ const AppContent = () => {
             </ProtectedRoute>
           }
         />
+        <Route path="/edit-product/:id" element={<EditProduct />} />
+
         <Route
           path="/edit/:id"
           element={
@@ -76,6 +105,7 @@ const AppContent = () => {
             </ProtectedRoute>
           }
         />
+
         <Route
           path="/profile"
           element={
@@ -84,11 +114,14 @@ const AppContent = () => {
             </ProtectedRoute>
           }
         />
-        <Route path="/guidelines" element={<Guidelines />} />
+
       </Routes>
     </>
   );
 };
+
+
+/* ================= ROOT APP ================= */
 
 function App() {
   return (
@@ -99,4 +132,3 @@ function App() {
 }
 
 export default App;
-

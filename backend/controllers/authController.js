@@ -214,7 +214,37 @@ exports.getWishlist = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+exports.updateAvatar = async (req, res) => {
+    try {
+        const User = require("../models/User");
 
+        const { avatar } = req.body;
+
+        if (!avatar) {
+            return res.status(400).json({ message: "Avatar is required" });
+        }
+
+        const user = await User.findByIdAndUpdate(
+            req.user.id,
+            { avatar },
+            { new: true }
+        ).select("-password");
+
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: "Avatar updated successfully",
+            user
+        });
+
+    } catch (error) {
+        console.error("Error updating avatar:", error);
+        res.status(500).json({ message: "Server error" });
+    }
+};
 exports.testWishlist = async (req, res) => {
   try {
     const user = await User.findById(req.user.id);

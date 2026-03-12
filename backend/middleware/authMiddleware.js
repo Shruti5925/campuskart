@@ -13,8 +13,12 @@ module.exports = (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded;
-    console.log("Auth Middleware - Decoded User ID:", decoded.id);
+
+    req.user = {
+      id: decoded.id || decoded._id
+    };
+
+    console.log("Auth Middleware - Decoded User ID:", req.user.id);
     next();
   } catch (err) {
     console.log("Auth Middleware - JWT Error:", err.message);

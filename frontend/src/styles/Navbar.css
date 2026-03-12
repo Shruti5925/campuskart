@@ -1,10 +1,9 @@
+/* ===================== Root Variables ===================== */
 :root {
-    --primary-color: #3B82F6;
-    /* Modern Blue Primary */
+    --primary-color: #3B82F6; /* Modern Blue Primary */
     --primary-light: #eff6ff;
     --secondary-color: #2563EB;
-    --hover-green: #00D14E;
-    /* Green for Hovers */
+    --hover-green: #00D14E; /* Green for Hovers */
     --text-main: #1f2937;
     --text-muted: #6b7280;
     --text-light: #9ca3af;
@@ -18,6 +17,7 @@
     --font-family: 'Outfit', 'Inter', system-ui, -apple-system, sans-serif;
 }
 
+/* ===================== Base Reset ===================== */
 * {
     margin: 0;
     padding: 0;
@@ -31,6 +31,7 @@ body {
     line-height: 1.5;
 }
 
+/* ===================== Navbar Container ===================== */
 nav.navbar-container {
     padding: 0.75rem 1.5rem;
     background: transparent;
@@ -40,7 +41,6 @@ nav.navbar-container {
     border-bottom: none;
     position: sticky;
     top: 5px;
-    /* Floating slightly from the top */
     z-index: 1000;
     font-family: var(--font-family);
     height: 75px;
@@ -59,7 +59,6 @@ nav.navbar-container {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    /* Push logo to left, icons to right */
     background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(12px);
     border-radius: 999px;
@@ -69,12 +68,11 @@ nav.navbar-container {
     border: 1px solid rgba(229, 231, 235, 0.6);
     position: relative;
     width: 100%;
-    /* Expand to fill wrapper */
     max-width: 1400px;
-    /* Optional cap for very wide screens */
     overflow: visible;
 }
 
+/* ===================== Logo ===================== */
 .nav-logo-pill {
     display: flex;
     align-items: center;
@@ -105,6 +103,7 @@ nav.navbar-container {
     box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
 }
 
+/* ===================== Center Links ===================== */
 .nav-links-center {
     display: flex;
     align-items: center;
@@ -121,6 +120,7 @@ nav.navbar-container {
     margin: 0 4px;
 }
 
+/* ===================== Links ===================== */
 .nav-link {
     display: flex;
     flex-direction: column;
@@ -130,11 +130,28 @@ nav.navbar-container {
     color: #6b7280;
     text-decoration: none;
     font-weight: 600;
-    font-size: 0.7rem;
+    font-size: 0.9rem; /* bigger than default */
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
 }
 
+.nav-link .nav-label {
+    transition: all 0.3s ease;
+    font-size: 0.85rem; /* slightly bigger label */
+    font-weight: 600;
+    opacity: 0.8;
+}
+
+/* Wishlist bigger */
+.nav-link.wishlist {
+    font-size: 1rem;
+    font-weight: 700;
+}
+.nav-link.wishlist .nav-label {
+    font-size: 0.9rem;
+}
+
+/* Icon Wrapper */
 .nav-icon-wrapper {
     width: 36px;
     height: 36px;
@@ -146,34 +163,26 @@ nav.navbar-container {
     color: #6b7280;
 }
 
-.nav-label {
-    transition: all 0.3s ease;
-    font-size: 0.7rem;
-    font-weight: 600;
-    opacity: 0.8;
-}
-
+/* Hover Effects */
 .nav-link:hover .nav-icon-wrapper {
     color: var(--hover-green);
     background: rgba(0, 209, 78, 0.08);
     transform: translateY(-2px);
 }
-
 .nav-link:hover .nav-label {
     color: var(--hover-green);
 }
 
+/* Active Link */
 .nav-link.active {
     color: var(--primary-color);
 }
-
 .nav-link.active .nav-icon-wrapper {
     background: var(--primary-color);
     color: white;
     transform: translateY(-16px);
     box-shadow: 0 10px 25px rgba(59, 130, 246, 0.4);
 }
-
 .nav-link.active .nav-label {
     color: var(--primary-color);
     font-weight: 700;
@@ -181,6 +190,7 @@ nav.navbar-container {
     opacity: 1;
 }
 
+/* ===================== Right Section ===================== */
 .nav-pill-right {
     display: flex;
     align-items: center;
@@ -215,24 +225,29 @@ nav.navbar-container {
     gap: 8px;
 }
 
-.pill-btn-label {
-    font-size: 0.875rem;
-    font-weight: 700;
-}
-
+/* ===================== Oval Sell Button ===================== */
+.sell-btn,
 .sell-icon-btn {
-    background: var(--primary-color);
+    background-color: var(--hover-green); /* bright green */
     color: white;
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+    font-weight: 600;
+    border-radius: 999px; /* oval/pill shape */
+    border: none;
+    cursor: pointer;
+    padding: 0.5rem 1.8rem; /* horizontal padding for oval shape */
+    font-size: 0.9rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
+.sell-btn:hover,
 .sell-icon-btn:hover {
-    background: var(--hover-green);
+    background-color: #16a34a; /* slightly darker green hover */
     transform: translateY(-1px);
     box-shadow: 0 6px 15px rgba(0, 209, 78, 0.25);
     color: white;
 }
 
+/* ===================== Profile Image ===================== */
 .profile-img-pill {
     width: 36px;
     height: 36px;
@@ -249,13 +264,7 @@ nav.navbar-container {
     border-color: var(--hover-green);
 }
 
-.nav-auth {
-    display: none;
-    /* Handled by icons in pill */
-}
-
-
-/* Dropdown Styles */
+/* ===================== Dropdown ===================== */
 .profile-dropdown {
     position: absolute;
     top: calc(100% + 10px);
@@ -263,7 +272,8 @@ nav.navbar-container {
     background-color: white;
     min-width: 220px;
     border-radius: 12px;
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+                0 4px 6px -2px rgba(0, 0, 0, 0.05);
     border: 1px solid var(--border-color);
     padding: 0.5rem;
     display: flex;
@@ -273,93 +283,16 @@ nav.navbar-container {
 }
 
 @keyframes slideDown {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
-.dropdown-header {
-    padding: 0.75rem 1rem;
-}
+.dropdown-header { padding: 0.75rem 1rem; }
+.dropdown-name { font-weight: 700; font-size: 0.9375rem; color: var(--text-main); margin: 0; }
+.dropdown-email { font-size: 0.8125rem; color: var(--text-muted); margin: 2px 0 0 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dropdown-divider { height: 1px; background-color: var(--border-color); margin: 0.5rem 0; }
+.dropdown-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.625rem 1rem; color: var(--text-main); text-decoration: none; font-size: 0.875rem; font-weight: 500; border-radius: 8px; transition: all 0.2s; border: none; background: transparent; width: 100%; cursor: pointer; text-align: left; }
+.dropdown-item:hover { background-color: var(--bg-light); color: var(--primary-color); }
+.logout-item:hover { color: #ef4444; background-color: #fef2f2; }
 
-.dropdown-name {
-    font-weight: 700;
-    font-size: 0.9375rem;
-    color: var(--text-main);
-    margin: 0;
-}
-
-.dropdown-email {
-    font-size: 0.8125rem;
-    color: var(--text-muted);
-    margin: 2px 0 0 0;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.dropdown-divider {
-    height: 1px;
-    background-color: var(--border-color);
-    margin: 0.5rem 0;
-}
-
-.dropdown-item {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 0.625rem 1rem;
-    color: var(--text-main);
-    text-decoration: none;
-    font-size: 0.875rem;
-    font-weight: 500;
-    border-radius: 8px;
-    transition: all 0.2s;
-    border: none;
-    background: transparent;
-    width: 100%;
-    cursor: pointer;
-    text-align: left;
-}
-
-.dropdown-item:hover {
-    background-color: var(--bg-light);
-    color: var(--primary-color);
-}
-
-.logout-item:hover {
-    color: #ef4444;
-    background-color: #fef2f2;
-}
-
-.profile-wrapper::after {
-    content: '';
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    height: 10px;
-}
-
-/* Global Green Button Hover Effect */
-.btn-green,
-.sell-btn,
-.chat-btn,
-.btn-signup {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-}
-
-.btn-green:hover,
-.sell-btn:hover,
-.chat-btn:hover,
-.btn-signup:hover {
-    background-color: var(--hover-green) !important;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 209, 78, 0.2);
-}
+.profile-wrapper::after { content: ''; position: absolute; top: 100%; left: 0; right: 0; height: 10px; }

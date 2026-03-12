@@ -25,4 +25,10 @@ router.put("/:id", protect, upload.single('image'), updateProduct);
 // DELETE
 router.delete("/:id", protect, deleteProduct);
 
+//EDIT
+const multer = require("multer");
+const upload = multer({ dest: "uploads/" });
+
+router.put("/:id", upload.single("image"), updateProduct);
+
 module.exports = router;
