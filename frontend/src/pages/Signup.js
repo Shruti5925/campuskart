@@ -89,11 +89,17 @@ function Signup() {
     }
 
     try {
-      const res = await axios.post("http://localhost:5001/api/auth/signup", {
+      const sanitizedData = {
         ...formData,
+        email: formData.email.trim().toLowerCase(),
+        password: formData.password.trim(),
+        confirmPassword: formData.confirmPassword.trim(),
+        securityAnswer: formData.securityAnswer.trim(),
         captchaToken: captchaData.token,
         captchaAnswer: captchaAnswer
-      });
+      };
+
+      const res = await axios.post("http://localhost:5001/api/auth/signup", sanitizedData);
       localStorage.setItem("token", res.data.token);
       setMessage("Signup successful! Redirecting... ✅");
       setTimeout(() => navigate(from, { replace: true }), 1500);
@@ -108,7 +114,11 @@ function Signup() {
   return (
     <div className="auth-container">
       <div className="auth-card">
-        <h2>Join CampusKart</h2>
+        <div className="brand-logo-shared" style={{ justifyContent: 'center', marginBottom: '1.5rem' }}>
+          <div className="logo-box-shared">C</div>
+          <span className="brand-text-shared">CampusKart</span>
+        </div>
+        <h2>Join the community</h2>
         <form className="auth-form" onSubmit={handleSignup}>
           <div className="auth-form-grid">
             <div className="full-width">

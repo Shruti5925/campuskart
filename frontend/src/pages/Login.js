@@ -21,9 +21,12 @@ function Login() {
     }
 
     try {
+      const sanitizedEmail = email.trim().toLowerCase();
+      const sanitizedPassword = password.trim();
+
       const res = await axios.post(
         "http://localhost:5001/api/auth/login",
-        { email, password }
+        { email: sanitizedEmail, password: sanitizedPassword }
       );
 
       localStorage.setItem("token", res.data.token);
@@ -37,7 +40,11 @@ function Login() {
   return (
     <div className="auth-container">
       <div className="auth-card">
-        <h2>CampusKart Login</h2>
+        <div className="brand-logo-shared" style={{ justifyContent: 'center', marginBottom: '1.5rem' }}>
+          <div className="logo-box-shared">C</div>
+          <span className="brand-text-shared">CampusKart</span>
+        </div>
+        <h2>Login to your account</h2>
 
         <form className="auth-form" onSubmit={handleLogin}>
           <input

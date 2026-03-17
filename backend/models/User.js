@@ -25,7 +25,9 @@ const userSchema = new mongoose.Schema({
   email: {
     type: String,
     required: true,
-    unique: true
+    unique: true,
+    trim: true,
+    lowercase: true
   },
   password: {
     type: String,
@@ -54,12 +56,28 @@ const userSchema = new mongoose.Schema({
   },
   securityAnswer: {
     type: String,
-    required: true
+    required: true,
+    trim: true
   },
   wishlist: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Product'
-  }]
+  }],
+  cart: [{
+    product: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Product'
+    },
+    quantity: {
+      type: Number,
+      default: 1,
+      min: 1
+    }
+  }],
+  profilePhoto: {
+    type: String,
+    default: null
+  }
 });
 
 module.exports = mongoose.model("User", userSchema);

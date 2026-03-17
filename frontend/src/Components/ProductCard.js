@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import defaultProduct from '../assets/default-product.svg';
+
 import itemStandard from '../assets/image.webp';
 import '../styles/ProductCard.css';
 
@@ -9,6 +9,18 @@ import '../styles/ProductCard.css';
 const ProductCard = ({ product, isSeller, onDelete, isWishlistPage, onRemove, showContactBtn, initialIsWishlisted }) => {
     const navigate = useNavigate();
     const token = localStorage.getItem('token');
+    let currentUser = null;
+    if (token) {
+        try {
+            const parts = token.split('.');
+            if (parts.length === 3) {
+                currentUser = JSON.parse(atob(parts[1]));
+            }
+        } catch (e) {
+            console.error("JWT Decode Error:", e);
+        }
+    }
+
     const [isWishlisted, setIsWishlisted] = React.useState(initialIsWishlisted || false);
     const hasSyncOnce = React.useRef(false);
 
@@ -61,14 +73,94 @@ const ProductCard = ({ product, isSeller, onDelete, isWishlistPage, onRemove, sh
         }
     };
 
+    const [currentImageIndex, setCurrentImageIndex] = React.useState(0);
+    const images = (product.images && product.images.length > 0)
+        ? product.images
+        : (product.image ? [product.image] : [itemStandard]);
+
+    const nextImage = (e) => {
+        if (e) e.stopPropagation();
+        setCurrentImageIndex((prev) => (prev + 1) % images.length);
+    };
+
+    const prevImage = (e) => {
+        e.stopPropagation();
+        setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
+    };
+
+    React.useEffect(() => {
+        if (images.length <= 1) return;
+
+        const interval = setInterval(() => {
+            nextImage();
+        }, 3000);
+
+        return () => clearInterval(interval);
+    }, [images.length]);
+
+    const categorySlug = (product.category || 'others').toLowerCase().replace(/\s+/g, '-');
+
+    const handleChat = async (e) => {
+        e.stopPropagation();
+        if (!token) {
+            navigate('/login');
+            return;
+        }
+        try {
+            await axios.post('http://localhost:5001/api/chat/send', {
+                receiverId: product.seller?._id || product.seller,
+                productId: product._id,
+                content: `Hi, I'm interested in "${product.title}".`
+            }, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            navigate('/messages');
+        } catch (err) {
+            console.error("Chat error:", err);
+            navigate('/messages');
+        }
+    };
+
+    const handleAddToCart = async (e) => {
+        e.stopPropagation();
+        if (!token) {
+            navigate('/login');
+            return;
+        }
+        try {
+            await axios.post(`http://localhost:5001/api/auth/cart/${product._id}`, {}, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            window.dispatchEvent(new Event('cartUpdated'));
+            alert("Added to cart! 🛒");
+        } catch (err) {
+            console.error("Cart error:", err);
+            const msg = err.response?.data?.message || "Error adding to cart";
+            alert(msg);
+        }
+    };
+
     return (
         <div className="product-card" onClick={() => navigate(`/product/${product._id}`)}>
             <div className="product-image-wrapper">
                 <img
-                    src={itemStandard}
+                    src={images[currentImageIndex]}
                     alt={product.title}
                     className="product-image"
                 />
+
+                {images.length > 1 && (
+                    <div className="carousel-controls">
+                        <button className="carousel-btn prev" onClick={prevImage}>‹</button>
+                        <button className="carousel-btn next" onClick={nextImage}>›</button>
+                        <div className="carousel-dots">
+                            {images.map((_, idx) => (
+                                <span key={idx} className={`dot ${idx === currentImageIndex ? 'active' : ''}`}></span>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
                 {!isSeller && (
                     <button
                         className={`wishlist-heart-btn ${isWishlisted || isWishlistPage ? 'active' : ''}`}
@@ -83,22 +175,50 @@ const ProductCard = ({ product, isSeller, onDelete, isWishlistPage, onRemove, sh
             </div>
 
             <div className="product-content">
-                <span className="product-category">{product.category}</span>
+                <span className={`product-category cat-${(product.category || 'others').toLowerCase().replace(/\s+/g, '-')}`}>
+                    {product.category}
+                </span>
                 <div className="product-header-row">
                     <h3 className="product-title">{product.title}</h3>
                 </div>
-                <p className="product-description">{product.description}</p>
 
                 <div className="product-footer">
-                    <span className="product-price">₹{product.price}</span>
-                    <span className="seller-year-tag">🎓 {product.sellerYear || "3rd Year"}</span>
+                    <div className="footer-main-row">
+                        <span className="product-price">₹{product.price}</span>
+                        {product.averageRating > 0 && (
+                            <div className="rating-summary">
+                                <span className="star-icon">★</span>
+                                <span className="rating-val">{product.averageRating.toFixed(1)}</span>
+                                <span className="rating-count">({product.reviewCount})</span>
+                            </div>
+                        )}
+                    </div>
+                    <div className="product-tags" style={{ display: 'flex', flexWrap: 'nowrap', gap: '0.35rem', alignItems: 'center', overflow: 'hidden' }}>
+                        {product.yearsUsed !== undefined && product.yearsUsed !== null && (
+                            <span className="years-used-tag" style={{ fontSize: '0.7rem', padding: '2px 6px', whiteSpace: 'nowrap', flexShrink: 0 }}>⏳ {product.yearsUsed} yrs</span>
+                        )}
+                        {product.condition && <span className="condition-tag" style={{ fontSize: '0.7rem', padding: '2px 6px', whiteSpace: 'nowrap', flexShrink: 0 }}>🏷️ {product.condition}</span>}
+                    </div>
                 </div>
+                {product.pickupPoint && (
+                    <div className="pickup-info">
+                        <span>📍 Pickup: {product.pickupPoint}</span>
+                    </div>
+                )}
 
                 {showContactBtn && (
-                    <button className="contact-seller-btn" onClick={(e) => { e.stopPropagation(); /* Logic for contact */ }}>
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-                        Contact Seller
-                    </button>
+                    <div className="card-action-btns">
+                        <button className="contact-seller-btn" onClick={handleChat}>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                            Contact
+                        </button>
+                        {!isSeller && (product.seller?._id || product.seller) !== currentUser?.id && (
+                            <button className="add-to-cart-btn" onClick={handleAddToCart}>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+                                Cart
+                            </button>
+                        )}
+                    </div>
                 )}
 
                 {isSeller && (

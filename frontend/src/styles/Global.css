@@ -1,0 +1,105 @@
+:root {
+    --primary-color: #3B82F6;
+    --primary-light: #eff6ff;
+    --secondary-color: #2563EB;
+    --hover-green: #00D14E;
+    --text-main: #1f2937;
+    --text-muted: #6b7280;
+    --text-light: #9ca3af;
+    --bg-white: #ffffff;
+    --bg-light: #f9fafb;
+    --bg-alt: #f1f5f9;
+    --border-color: #e5e7eb;
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    --font-family: 'Outfit', 'Inter', system-ui, -apple-system, sans-serif;
+
+    /* Premium Accents */
+    --accent-indigo: #6366f1;
+    --accent-indigo-light: #eef2ff;
+    --accent-indigo-border: #e0e7ff;
+
+    --accent-amber: #f59e0b;
+    --accent-amber-light: #fffbeb;
+    --accent-amber-border: #fef3c7;
+
+    --accent-teal: #14b8a6;
+    --accent-teal-light: #f0fdfa;
+    --accent-teal-border: #ccfbf1;
+
+    --accent-rose: #f43f5e;
+    --accent-rose-light: #fff1f2;
+    --accent-rose-border: #ffe4e6;
+
+    --accent-emerald: #10b981;
+    --accent-emerald-light: #ecfdf5;
+    --accent-emerald-border: #d1fae5;
+
+    --accent-sky: #0ea5e9;
+    --accent-sky-light: #f0f9ff;
+    --accent-sky-border: #e0f2fe;
+
+    --accent-purple: #a855f7;
+    --accent-purple-light: #faf5ff;
+    --accent-purple-border: #f3e8ff;
+
+    --accent-lime: #84cc16;
+    --accent-lime-light: #f7fee7;
+    --accent-lime-border: #ecfccb;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: var(--font-family);
+    color: var(--text-main);
+    background-color: var(--bg-light);
+    line-height: 1.5;
+}
+
+/* Shared Brand Logo Styles */
+.brand-logo-shared {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+}
+
+.logo-box-shared {
+    background: linear-gradient(135deg, var(--primary-color), var(--accent-indigo));
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.1rem;
+    font-weight: 800;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
+    flex-shrink: 0;
+}
+
+.brand-text-shared {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: #111827;
+    letter-spacing: -0.025em;
+    white-space: nowrap;
+}
+
+/* Modal entrance animations */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+@keyframes scaleIn {
+    from { transform: scale(0.7); opacity: 0; }
+    to   { transform: scale(1);   opacity: 1; }
+}

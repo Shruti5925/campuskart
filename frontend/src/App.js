@@ -13,7 +13,11 @@ import Dashboard from "./pages/Dashboard";
 import ProductView from "./pages/ProductView";
 import Wishlist from "./pages/Wishlist";
 import Guidelines from "./pages/Guidelines";
+import Cart from "./pages/Cart";
+import Messages from "./pages/Messages";
+import Orders from "./pages/Orders";
 import { useLocation, Navigate } from "react-router-dom";
+import ScrollToTop from "./Components/ScrollToTop";
 import Navbar from "./Components/Navbar";
 
 
@@ -29,8 +33,9 @@ const ProtectedRoute = ({ children }) => {
 
 const AppContent = () => {
   const location = useLocation();
-  const showNavbarPaths = ["/", "/login", "/signup", "/products", "/wishlist", "/guidelines"];
-  const shouldShowNavbar = showNavbarPaths.includes(location.pathname) || location.pathname.startsWith("/product/");
+  const showNavbarPaths = ["/", "/login", "/signup", "/products", "/wishlist", "/guidelines", "/cart"];
+  const shouldShowNavbar = showNavbarPaths.includes(location.pathname) ||
+    location.pathname.startsWith("/product/");
 
   return (
     <>
@@ -44,6 +49,8 @@ const AppContent = () => {
         <Route path="/sell-gate" element={<SellerGate />} />
         <Route path="/products" element={<Products isSeller={false} />} />
         <Route path="/wishlist" element={<ProtectedRoute><Wishlist /></ProtectedRoute>} />
+        <Route path="/cart" element={<ProtectedRoute><Cart /></ProtectedRoute>} />
+        <Route path="/orders" element={<ProtectedRoute><Orders /></ProtectedRoute>} />
         <Route
           path="/dashboard"
           element={
@@ -84,6 +91,14 @@ const AppContent = () => {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/messages"
+          element={
+            <ProtectedRoute>
+              <Messages />
+            </ProtectedRoute>
+          }
+        />
         <Route path="/guidelines" element={<Guidelines />} />
       </Routes>
     </>
@@ -93,6 +108,7 @@ const AppContent = () => {
 function App() {
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <AppContent />
     </BrowserRouter>
   );

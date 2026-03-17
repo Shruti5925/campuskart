@@ -1,0 +1,268 @@
+/* Tabs Navigation */
+.orders-tabs-wrapper {
+    padding: 1rem 0.5rem 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.orders-tabs {
+    display: flex;
+    gap: 2rem;
+}
+
+.tab-btn {
+    background: transparent;
+    border: none;
+    padding: 0.5rem 0.5rem;
+    font-weight: 700;
+    color: #64748b;
+    cursor: pointer;
+    position: relative;
+    font-size: 0.95rem;
+    transition: all 0.2s;
+}
+
+.tab-btn.active {
+    color: #00D14E; /* Matching the green active tab in image */
+}
+
+.tab-btn.active::after {
+    content: '';
+    position: absolute;
+    bottom: -5px;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: #00D14E;
+    border-radius: 999px;
+}
+
+.tab-btn:hover:not(.active) {
+    color: #1e293b;
+}
+
+/* Vertical List Layout */
+.orders-container {
+    margin-top: 1rem;
+    background: white;
+    border-radius: 32px;
+    border: 1px solid #f1f5f9;
+    padding: 0.5rem;
+}
+
+.orders-list {
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+/* Large Order Card */
+.order-card-large {
+    display: flex;
+    gap: 2rem;
+    padding: 1.5rem;
+    background: white;
+    border-radius: 24px;
+    border: 1px solid #f1f5f9;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+}
+
+.order-card-large:hover {
+    background: #fdfdfd;
+    border-color: #00D14E;
+    transform: translateY(-2px);
+    box-shadow: 0 12px 24px rgba(0, 209, 78, 0.08); /* Green shadow on hover */
+}
+
+.order-card-left .order-img-large {
+    width: 140px;
+    height: 140px;
+    border-radius: 18px;
+    object-fit: cover;
+    background: #f9fafb;
+}
+
+.order-card-center {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.order-header-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+}
+
+.order-status-badge {
+    font-size: 0.65rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 6px;
+    letter-spacing: 0.5px;
+}
+
+.status-picked-up { 
+    background: #ecfdf5; 
+    color: #00D14E; 
+}
+
+.status-pending { 
+    background: #fffbeb; 
+    color: #f59e0b; 
+}
+
+.status-cancelled { 
+    background: #f1f5f9; 
+    color: #94a3b8; 
+}
+
+.order-id-label {
+    font-size: 0.8rem;
+    color: #9ca3af;
+    font-weight: 700;
+}
+
+.order-title-large {
+    font-size: 1.5rem;
+    font-weight: 900;
+    color: #111827;
+    margin-bottom: 0.5rem;
+}
+
+.order-description {
+    font-size: 0.95rem;
+    color: #6b7280;
+    margin-bottom: 1rem;
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.order-seller {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #374151;
+    margin-bottom: 1.25rem;
+}
+
+.order-seller span {
+    color: #3B82F6;
+}
+
+.order-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: auto;
+}
+
+.reorder-btn, 
+.view-details-btn,
+.view-reason-btn,
+.contact-seller-pill {
+    padding: 0.6rem 1.2rem;
+    border-radius: 100px; /* Pill shape */
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid #e2e8f0;
+    background: white;
+    transition: all 0.2s;
+    color: #1e293b;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.view-details-btn {
+    background: #f8fafc;
+    color: #1e293b;
+}
+
+.contact-seller-pill {
+    border-color: #00D14E;
+    color: #00D14E;
+}
+
+.reorder-btn {
+    background: #00D14E;
+    color: white;
+    border: none;
+}
+
+.view-details-btn:hover {
+    background: #f1f5f9;
+}
+
+.contact-seller-pill:hover {
+    background: #ecfdf5;
+}
+
+.reorder-btn:hover {
+    background: #05b145;
+}
+
+.order-card-right {
+    text-align: right;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-width: 120px;
+}
+
+.order-price-large {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: #00D14E; /* Green price as in image */
+}
+
+.status-cancelled ~ .order-price-large,
+.status-cancelled .order-price-large {
+    color: #94a3b8;
+    text-decoration: line-through;
+}
+
+.order-date-large {
+    font-size: 0.85rem;
+    color: #94a3b8;
+    font-weight: 500;
+    margin-top: 4px;
+}
+
+/* Empty State */
+.empty-orders-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 6rem 2rem;
+}
+
+.empty-icon {
+    font-size: 4rem;
+    margin-bottom: 1.5rem;
+}
+
+.empty-orders-state p {
+    color: #9ca3af;
+    font-weight: 800;
+    font-size: 1.2rem;
+}
+
+@media (max-width: 768px) {
+    .order-card-large {
+        flex-direction: column;
+    }
+    .order-card-right {
+        text-align: left;
+        margin-top: 1rem;
+        flex-direction: row;
+        align-items: center;
+    }
+}

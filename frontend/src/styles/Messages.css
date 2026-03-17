@@ -1,0 +1,492 @@
+.messages-layout {
+    display: flex;
+    min-height: 100vh;
+    background-color: #f9fafb;
+}
+
+.messages-main {
+    flex: 1;
+    margin-left: 300px;
+    display: flex;
+    flex-direction: column;
+}
+
+.messages-header {
+    height: 70px;
+    background: white;
+    border-bottom: 1px solid #f1f5f9;
+    padding: 0 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.logo-box-mini {
+    background: #eff6ff;
+    padding: 6px;
+    border-radius: 8px;
+    font-size: 1.2rem;
+}
+
+.header-left h2 {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: #1e293b;
+}
+
+.header-search {
+    background: #f1f5f9;
+    padding: 0.6rem 1.25rem;
+    border-radius: 999px;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    width: 400px;
+}
+
+.header-search input {
+    background: transparent;
+    border: none;
+    outline: none;
+    width: 100%;
+    font-size: 0.9rem;
+}
+
+.header-actions {
+    display: flex;
+    gap: 1rem;
+}
+
+.icon-btn {
+    background: transparent;
+    border: none;
+    color: #64748b;
+    cursor: pointer;
+    transition: color 0.23s;
+}
+
+.icon-btn:hover {
+    color: var(--primary-color);
+}
+
+/* Content Area */
+.messages-content {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+}
+
+/* Conversation Sidebar */
+.conv-sidebar {
+    width: 320px;
+    border-right: 1px solid #f1f5f9;
+    display: flex;
+    flex-direction: column;
+    background: white;
+}
+
+.tabs {
+    display: flex;
+    padding: 1.5rem;
+    gap: 1rem;
+}
+
+.tab {
+    flex: 1;
+    padding: 0.6rem;
+    border: none;
+    background: transparent;
+    color: #64748b;
+    font-weight: 700;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.tab.active {
+    background: #3b82f6;
+    color: white;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+}
+
+.conv-list {
+    flex: 1;
+    overflow-y: auto;
+}
+
+.conv-item {
+    display: flex;
+    padding: 1.25rem;
+    gap: 1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    border-left: 4px solid transparent;
+}
+
+.conv-item:hover {
+    background: #f8fafc;
+}
+
+.conv-item.selected {
+    background: #eff6ff;
+    border-left-color: #3b82f6;
+}
+
+.conv-item .avatar img {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    object-fit: cover;
+}
+
+.conv-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.conv-top {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 4px;
+}
+
+.conv-top h4 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.conv-top .time {
+    font-size: 0.75rem;
+    color: #94a3b8;
+}
+
+.product-name {
+    font-size: 0.85rem;
+    color: #3b82f6;
+    font-weight: 700;
+    margin-bottom: 2px;
+}
+
+.last-msg {
+    font-size: 0.85rem;
+    color: #64748b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Chat Window */
+.chat-window {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: #f8fafc;
+}
+
+.chat-header {
+    height: 80px;
+    background: white;
+    border-bottom: 1px solid #f1f5f9;
+    padding: 0 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.product-summary {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.prod-img img {
+    width: 44px;
+    height: 44px;
+    border-radius: 8px;
+    object-fit: cover;
+}
+
+.prod-details h3 {
+    font-size: 1rem;
+    font-weight: 800;
+    color: #1e293b;
+}
+
+.prod-details p {
+    font-size: 0.8rem;
+    color: #3b82f6;
+    font-weight: 700;
+}
+
+.chat-actions {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.make-offer-btn {
+    background: #f0fdf4;
+    color: #166534;
+    border: none;
+    padding: 0.6rem 1.25rem;
+    border-radius: 10px;
+    font-weight: 800;
+    font-size: 0.85rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.make-offer-btn::before {
+    content: '🤝';
+}
+
+.more-btn {
+    background: white;
+    border: 1px solid #f1f5f9;
+    padding: 6px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.archive-btn {
+    background: #f8fafc;
+    border: 1px solid #f1f5f9;
+    padding: 8px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1.1rem;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.archive-btn:hover {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+}
+
+.offer-action-container {
+    display: flex;
+    align-items: center;
+}
+
+.offer-input-box {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: #f1f5f9;
+    padding: 4px 8px;
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
+}
+
+.offer-input-box input {
+    width: 80px;
+    border: none;
+    background: transparent;
+    outline: none;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.confirm-offer-btn {
+    background: #3b82f6;
+    color: white;
+    border: none;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.cancel-offer-btn {
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    cursor: pointer;
+    font-size: 0.9rem;
+    padding: 0 4px;
+}
+
+.cancel-offer-btn:hover {
+    color: #ef4444;
+}
+
+/* Messages List */
+.messages-list {
+    flex: 1;
+    padding: 2rem;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.date-divider {
+    text-align: center;
+    position: relative;
+    margin: 1rem 0;
+}
+
+.date-divider::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: #f1f5f9;
+    z-index: 1;
+}
+
+.date-divider span {
+    background: #f1f5f9;
+    padding: 4px 16px;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 800;
+    color: #94a3b8;
+    position: relative;
+    z-index: 2;
+}
+
+.message-bubble-wrapper {
+    display: flex;
+    gap: 1rem;
+    max-width: 80%;
+}
+
+.message-bubble-wrapper.own {
+    flex-direction: row-reverse;
+    align-self: flex-end;
+}
+
+.avatar-mini img {
+    width: 32px;
+    height: 32px;
+    border-radius: 24px;
+}
+
+.bubble {
+    background: white;
+    padding: 1rem 1.25rem;
+    border-radius: 0 20px 20px 20px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+    position: relative;
+}
+
+.own .bubble {
+    background: #3b82f6;
+    color: white;
+    border-radius: 20px 0 20px 20px;
+    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.2);
+}
+
+.bubble p {
+    font-size: 0.95rem;
+    line-height: 1.5;
+    margin-bottom: 4px;
+}
+
+.time-stamp {
+    font-size: 0.7rem;
+    color: #94a3b8;
+}
+
+.own .time-stamp {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+/* Footer */
+.chat-footer {
+    padding: 1.5rem 2rem;
+    background: white;
+    border-top: 1px solid #f1f5f9;
+}
+
+.input-area {
+    background: #f1f5f9;
+    padding: 0.5rem;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.input-area input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    padding: 0.75rem;
+    font-size: 0.95rem;
+    color: #1e293b;
+}
+
+.attachment-btn,
+.location-btn {
+    background: transparent;
+    border: none;
+    font-size: 1.25rem;
+    cursor: pointer;
+    padding: 8px;
+    color: #64748b;
+}
+
+.send-btn {
+    background: #3b82f6;
+    color: white;
+    border: none;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3);
+}
+
+.trust-footer {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    margin-top: 1rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #94a3b8;
+}
+
+.no-conv {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #94a3b8;
+    font-weight: 700;
+}
+
+/* Adapt to Blue Theme Header */
+.messages-header h2 {
+    color: #3b82f6;
+}
+
+.logo-box-mini {
+    background: #eff6ff;
+    color: #3b82f6;
+}

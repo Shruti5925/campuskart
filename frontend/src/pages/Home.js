@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import defaultProduct from '../assets/default-product.svg';
-import itemStandard from '../assets/item-standard.webp';
+
 
 import Footer from '../Components/Footer';
 import ProductCard from '../Components/ProductCard';
@@ -23,7 +22,7 @@ const Home = () => {
         { name: 'All Items', icon: '📦', id: 'all' },
         { name: 'Books', icon: '📖', id: 'books' },
         { name: 'Fan', icon: '💨', id: 'fan' },
-        { name: 'Electronics', icon: '⚡', id: 'electronics' },
+        { name: 'Trunk', icon: '🧳', id: 'trunk' },
         { name: 'Cycles', icon: '🚲', id: 'cycles' },
         { name: 'Others', icon: '✨', id: 'others' }
     ];
@@ -74,14 +73,35 @@ const Home = () => {
             return p === a || p === a.replace(/s$/, '') || a === p.replace(/s$/, '');
         };
 
-        let filtered = allProducts;
+        let filtered = allProducts.filter(p => p.status === 'active' || !p.status);
         if (activeCategory !== 'All Items') {
-            filtered = allProducts.filter(p => isCategoryMatch(p.category, activeCategory));
+            filtered = filtered.filter(p => isCategoryMatch(p.category, activeCategory));
         }
 
         setTrendingProducts(filtered.slice(0, 4));
         setRecentProducts(filtered.slice(-4).reverse());
     }, [activeCategory, allProducts]);
+
+    const getPriceProducts = (maxPrice) => {
+        let filtered = allProducts.filter(p => (p.status === 'active' || !p.status) && p.price <= maxPrice);
+        if (activeCategory !== 'All Items') {
+            const isCategoryMatch = (pCat, activeCat) => {
+                if (!pCat || !activeCat) return false;
+                const p = pCat.toLowerCase();
+                const a = activeCat.toLowerCase();
+                return p === a || p === a.replace(/s$/, '') || a === p.replace(/s$/, '');
+            };
+            filtered = filtered.filter(p => isCategoryMatch(p.category, activeCategory));
+        }
+        return filtered.slice(0, 4);
+    };
+
+    const budgetRanges = [
+        { label: 'Under ₹199', max: 199, icon: '🏷️' },
+        { label: 'Under ₹299', max: 299, icon: '🛒' },
+        { label: 'Under ₹399', max: 399, icon: '🔥' },
+        { label: 'Under ₹499', max: 499, icon: '💰' }
+    ];
 
     return (
         <div className="home-container">
@@ -100,6 +120,23 @@ const Home = () => {
                         />
                         <button type="submit" className="search-btn">Search</button>
                     </form>
+
+                    <div className="hero-features-bar">
+                        <div className="feature-item">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="feature-icon"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"></path></svg>
+                            <span>3 Days Easy Return</span>
+                        </div>
+                        <div className="feature-divider"></div>
+                        <div className="feature-item">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="feature-icon"><rect x="2" y="6" width="20" height="12" rx="2"></rect><circle cx="12" cy="12" r="2"></circle><path d="M6 12h.01M18 12h.01"></path></svg>
+                            <span>Cash on Delivery</span>
+                        </div>
+                        <div className="feature-divider"></div>
+                        <div className="feature-item">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="feature-icon"><path d="M6 9l6 6 6-6"></path></svg>
+                            <span>Lowest Prices</span>
+                        </div>
+                    </div>
                 </div>
             </header>
 
@@ -108,7 +145,7 @@ const Home = () => {
                     {categories.map((cat) => (
                         <div
                             key={cat.id}
-                            className={`category-card ${activeCategory === cat.name ? 'active' : ''}`}
+                            className={`category-card category-${cat.id} ${activeCategory === cat.name ? 'active' : ''}`}
                             onClick={() => setActiveCategory(cat.name)}
                         >
                             <div className="category-icon">{cat.icon}</div>
@@ -172,6 +209,33 @@ const Home = () => {
                         ))
                     )}
                 </div>
+            </section>
+
+            <section className="budget-explorer-section">
+                <div className="section-header">
+                    <h2 className="section-title">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M16 8l-8 8"></path><path d="M12 16V8"></path></svg>
+                        Shop by Budget
+                    </h2>
+                    <p className="section-subtitle">Find what you need within your price range</p>
+                </div>
+
+                <div className="budget-boxes-container">
+                    {budgetRanges.map(range => (
+                        <Link
+                            key={range.max}
+                            to={`/products?maxPrice=${range.max}`}
+                            className="budget-box-card"
+                        >
+                            <div className="budget-box-icon">{range.icon}</div>
+                            <div className="budget-box-info">
+                                <span className="budget-box-label">{range.label}</span>
+                                <span className="budget-box-count">View All Products →</span>
+                            </div>
+                        </Link>
+                    ))}
+                </div>
+
             </section>
 
             <Footer />

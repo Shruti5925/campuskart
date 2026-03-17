@@ -16,7 +16,8 @@ function ForgotPassword() {
     const handleFetchQuestion = async (e) => {
         e.preventDefault();
         try {
-            const res = await axios.post("http://localhost:5001/api/auth/get-security-question", { email });
+            const sanitizedEmail = email.trim().toLowerCase();
+            const res = await axios.post("http://localhost:5001/api/auth/get-security-question", { email: sanitizedEmail });
             setSecurityQuestion(res.data.question);
             setStep(2);
             setMessage("");
@@ -33,9 +34,9 @@ function ForgotPassword() {
         }
         try {
             await axios.post("http://localhost:5001/api/auth/reset-password", {
-                email,
-                securityAnswer,
-                newPassword
+                email: email.trim().toLowerCase(),
+                securityAnswer: securityAnswer.trim(),
+                newPassword: newPassword.trim()
             });
             setMessage("Password reset successful! Redirecting to login... ✅");
             setTimeout(() => navigate("/login"), 2000);

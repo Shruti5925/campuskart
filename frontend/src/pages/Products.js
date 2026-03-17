@@ -1,27 +1,36 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import { useNavigate, useLocation } from "react-router-dom";
 import ProductCard from "../Components/ProductCard";
 import "../styles/Products.css";
 
 const Products = ({ isSeller = false }) => {
-  const [products, setProducts] = useState([]);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [wishlist, setWishlist] = useState([]);
   const navigate = useNavigate();
   const location = useLocation();
   const token = localStorage.getItem("token");
+  const searchInputRef = useRef(null);
 
-  // Get category from URL
-  const queryParams = new URLSearchParams(location.search);
-  const categoryFromUrl = queryParams.get("category") || "All";
+  // Products and loading state
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [wishlist, setWishlist] = useState([]);
 
-  const [selectedCategory, setSelectedCategory] = useState(categoryFromUrl);
+  // State managed by URL (synchronized via useEffect)
+  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [maxPrice, setMaxPrice] = useState("");
 
+  // Sync state with URL params
   useEffect(() => {
+    const queryParams = new URLSearchParams(location.search);
+    const categoryFromUrl = queryParams.get("category") || "All";
+    const searchFromUrl = queryParams.get("search") || "";
+    const maxPriceFromUrl = queryParams.get("maxPrice") || "";
+
     setSelectedCategory(categoryFromUrl);
-  }, [categoryFromUrl]);
+    setSearchTerm(searchFromUrl);
+    setMaxPrice(maxPriceFromUrl);
+  }, [location.search]);
 
   useEffect(() => {
     fetchProducts();
@@ -37,6 +46,34 @@ const Products = ({ isSeller = false }) => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    const queryParams = new URLSearchParams(location.search);
+    if (searchTerm) {
+      queryParams.set("search", searchTerm);
+    } else {
+      queryParams.delete("search");
+    }
+    navigate(`/products?${queryParams.toString()}`);
+
+    // Remove focus from search input
+    if (searchInputRef.current) {
+      searchInputRef.current.blur();
+    }
+  };
+
+  const handleCategoryChange = (category) => {
+    const queryParams = new URLSearchParams(location.search);
+    if (category !== "All") {
+      queryParams.set("category", category);
+    } else {
+      queryParams.delete("category");
+    }
+    // Deep link category usually clears the search for better UX
+    queryParams.delete("search");
+    navigate(`/products?${queryParams.toString()}`);
   };
 
   const fetchWishlist = async () => {
@@ -64,7 +101,8 @@ const Products = ({ isSeller = false }) => {
     }
   };
 
-  const categories = ["All", ...new Set(products.filter(p => p && p.category).map(p => p.category))];
+  const categories = ["All", "Books", "Fan", "Trunk", "Cycles", "Others"];
+
 
   const isCategoryMatch = (pCat, selectedCat) => {
     if (!pCat || !selectedCat) return false;
@@ -75,10 +113,17 @@ const Products = ({ isSeller = false }) => {
 
   const filteredProducts = products.filter(p => {
     if (!p || !p.title) return false;
-    const matchesSearch = p.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (p.description && p.description.toLowerCase().includes(searchTerm.toLowerCase()));
+
+    const matchesSearch = !searchTerm ||
+      p.title.toLowerCase()
+        .replace(/[^a-z0-9\s]/g, ' ')
+        .split(/\s+/)
+        .some(word => word.startsWith(searchTerm.toLowerCase()));
+
+    const isPubliclyVisible = p.status === 'active' || !p.status;
     const matchesCategory = selectedCategory === "All" || isCategoryMatch(p.category, selectedCategory);
-    return matchesSearch && matchesCategory;
+    const matchesPrice = !maxPrice || p.price <= parseInt(maxPrice);
+    return matchesSearch && matchesCategory && matchesPrice && isPubliclyVisible;
   });
 
   return (
@@ -86,8 +131,9 @@ const Products = ({ isSeller = false }) => {
       <div className="products-header">
         <h2>{isSeller ? "Seller Console" : "Discover CampusKart"}</h2>
 
-        <div className="search-filter-bar">
+        <form className="search-filter-bar" onSubmit={handleSearch}>
           <input
+            ref={searchInputRef}
             type="text"
             placeholder="What are you looking for?"
             className="search-input"
@@ -97,13 +143,13 @@ const Products = ({ isSeller = false }) => {
           <select
             className="filter-select"
             value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value)}
+            onChange={(e) => handleCategoryChange(e.target.value)}
           >
             {categories.map(cat => (
               <option key={cat} value={cat}>{cat}</option>
             ))}
           </select>
-        </div>
+        </form>
 
         {isSeller && (
           <button
