@@ -20,7 +20,7 @@ const userSchema = new mongoose.Schema({
   },
   address: {
     type: String,
-    required: true
+    required: false
   },
   email: {
     type: String,
@@ -77,7 +77,15 @@ const userSchema = new mongoose.Schema({
   profilePhoto: {
     type: String,
     default: null
+  },
+  isVerified: {
+    type: Boolean,
+    default: false
+  },
+  isSuspended: {
+    type: Boolean,
+    default: false
   }
-});
+}, { timestamps: true });
 
 module.exports = mongoose.model("User", userSchema);

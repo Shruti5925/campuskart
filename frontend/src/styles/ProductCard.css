@@ -72,90 +72,12 @@
 }
 
 .product-category {
-    font-size: 0.7rem;
-    text-transform: uppercase;
-    font-weight: 800;
-    color: #3B82F6;
-    letter-spacing: 0.05em;
     margin-bottom: 0.5rem;
-    padding: 2px 8px;
-    border-radius: 6px;
-    width: fit-content;
-}
-
-/* Dynamic Category Colors - Ensuring coverage for common variations */
-.product-category {
-    color: var(--primary-color);
-    background: var(--primary-light);
-    border: 1px solid var(--border-color);
-}
-
-.cat-electronics,
-.cat-gadgets,
-.cat-mobile,
-.cat-laptop {
-    color: var(--accent-indigo) !important;
-    background: var(--accent-indigo-light) !important;
-    border: 1px solid var(--accent-indigo-border) !important;
-}
-
-.cat-books,
-.cat-book,
-.cat-study-material,
-.cat-notes,
-.cat-stationery {
-    color: var(--accent-rose) !important;
-    background: var(--accent-rose-light) !important;
-    border: 1px solid var(--accent-rose-border) !important;
-}
-
-.cat-fan,
-.cat-fans,
-.cat-cooler {
-    color: var(--accent-teal) !important;
-    background: var(--accent-teal-light) !important;
-    border: 1px solid var(--accent-teal-border) !important;
-}
-
-.cat-cycles,
-.cat-cycle,
-.cat-bicycle {
-    color: var(--accent-lime) !important;
-    background: var(--accent-lime-light) !important;
-    border: 1px solid var(--accent-lime-border) !important;
-}
-
-.cat-trunk,
-.cat-trunks,
-.cat-luggage,
-.cat-box {
-    color: var(--accent-amber) !important;
-    background: var(--accent-amber-light) !important;
-    border: 1px solid var(--accent-amber-border) !important;
-}
-
-.cat-fashion,
-.cat-clothing,
-.cat-clothes,
-.cat-shoes,
-.cat-accessories {
-    color: var(--accent-rose) !important;
-    background: var(--accent-rose-light) !important;
-    border: 1px solid var(--accent-rose-border) !important;
-}
-
-.cat-others,
-.cat-other,
-.cat-miscellaneous,
-.cat-misc {
-    color: var(--accent-purple) !important;
-    background: var(--accent-purple-light) !important;
-    border: 1px solid var(--accent-purple-border) !important;
 }
 
 .product-title {
     font-size: 1.15rem;
-    font-weight: 800;
+    font-weight: 900;
     color: #0f172a;
     margin: 0 0 0.5rem 0;
     display: -webkit-box;
@@ -191,7 +113,7 @@
     align-items: center;
     gap: 0.25rem;
     font-size: 0.85rem;
-    font-weight: 700;
+    font-weight: 800;
 }
 
 .rating-summary .star-icon {
@@ -204,7 +126,7 @@
 
 .rating-summary .rating-count {
     color: #9ca3af;
-    font-weight: 500;
+    font-weight: 600;
 }
 
 .product-tags {
@@ -216,7 +138,7 @@
 .years-used-tag {
     font-size: 0.75rem;
     color: #b45309;
-    font-weight: 700;
+    font-weight: 800;
     background: #fffbeb;
     padding: 0.4rem 0.8rem;
     border-radius: 999px;
@@ -229,7 +151,7 @@
 .condition-tag {
     font-size: 0.75rem;
     color: #0369a1;
-    font-weight: 700;
+    font-weight: 800;
     background: #f0f9ff;
     padding: 0.4rem 0.8rem;
     border-radius: 999px;
@@ -262,7 +184,7 @@
     flex: 1;
     padding: 0.75rem 0.5rem;
     border-radius: 12px;
-    font-weight: 800;
+    font-weight: 900;
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -307,7 +229,7 @@
     flex: 1;
     padding: 0.6rem;
     border-radius: 10px;
-    font-weight: 700;
+    font-weight: 800;
     font-size: 0.85rem;
     cursor: pointer;
     transition: all 0.2s;

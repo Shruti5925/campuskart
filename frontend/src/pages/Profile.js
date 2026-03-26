@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
+import { useModal } from "../context/ModalContext";
 import Sidebar from "../Components/Sidebar";
+import Footer from "../Components/Footer";
 import "../styles/Dashboard.css"; // Reuse for consistent layout
 import femaleAvatar from "../assets/female-avatar.png";
 import maleAvatar from "../assets/male-avatar.png";
@@ -13,6 +15,7 @@ function Profile() {
     const [isEditing, setIsEditing] = useState(false);
     const [formData, setFormData] = useState({});
     const [updating, setUpdating] = useState(false);
+    const { showModal } = useModal();
     
     const [products, setProducts] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
@@ -108,7 +111,11 @@ function Profile() {
             setIsEditing(false);
         } catch (err) {
             console.error("Error updating profile:", err);
-            alert(err.response?.data?.message || "Failed to update profile");
+            showModal({
+                title: 'Update Failed',
+                message: err.response?.data?.message || "Failed to update profile",
+                type: 'alert'
+            });
         } finally {
             setUpdating(false);
             setPhotoUploading(false);
@@ -165,252 +172,254 @@ function Profile() {
     const displayedSearchProducts = searchTerm ? products.filter(p => p.title.toLowerCase().includes(searchTerm.toLowerCase())) : products;
 
     return (
-        <div className="dashboard-layout">
-            <Sidebar />
+        <div className="dashboard-page-container">
+            <div className="dashboard-layout">
+                <Sidebar />
 
-            <main className="dashboard-main">
-                <header className="dashboard-header">
-                    <div className="search-pill" style={{ position: 'relative' }}>
-                        <span className="search-icon">🔍</span>
-                        <input 
-                            type="text" 
-                            placeholder="Search my listings..." 
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            onFocus={() => setIsSearchFocused(true)}
-                            onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
-                        />
-                        {isSearchFocused && (
-                            <div className="search-dropdown" style={{
-                                position: 'absolute',
-                                top: '100%',
-                                left: 0,
-                                right: 0,
-                                backgroundColor: 'white',
-                                border: '1px solid #e5e7eb',
-                                borderRadius: '12px',
-                                marginTop: '0.5rem',
-                                maxHeight: '300px',
-                                overflowY: 'auto',
-                                zIndex: 100,
-                                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
-                            }}>
-                                {displayedSearchProducts.length > 0 ? (
-                                    displayedSearchProducts.map(p => (
-                                        <div 
-                                            key={p._id} 
-                                            onClick={() => navigate(`/product/${p._id}`)}
-                                            style={{
-                                                padding: '0.75rem 1rem',
-                                                cursor: 'pointer',
-                                                borderBottom: '1px solid #f3f4f6',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                gap: '0.75rem'
-                                            }}
-                                            onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#f9fafb'}
-                                            onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'white'}
-                                        >
-                                            <img src={(p.images && p.images.length > 0) ? p.images[0] : (p.image || itemStandard)} alt={p.title} style={{ width: '40px', height: '40px', borderRadius: '8px', objectFit: 'cover' }} />
-                                            <div>
-                                                <p style={{ margin: 0, fontWeight: '600', fontSize: '0.9rem', color: '#111827' }}>{p.title}</p>
-                                                <p style={{ margin: 0, fontSize: '0.8rem', color: '#6b7280' }}>₹{p.price} • {p.status === 'sold' ? 'Sold' : (p.status === 'draft' ? 'Draft' : 'Active')}</p>
+                <main className="dashboard-main">
+                    <header className="dashboard-header">
+                        <div className="search-pill" style={{ position: 'relative' }}>
+                            <span className="search-icon">🔍</span>
+                            <input 
+                                type="text" 
+                                placeholder="Search my listings..." 
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                onFocus={() => setIsSearchFocused(true)}
+                                onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
+                            />
+                            {isSearchFocused && (
+                                <div className="search-dropdown" style={{
+                                    position: 'absolute',
+                                    top: '100%',
+                                    left: 0,
+                                    right: 0,
+                                    backgroundColor: 'white',
+                                    border: '1px solid #e5e7eb',
+                                    borderRadius: '12px',
+                                    marginTop: '0.5rem',
+                                    maxHeight: '300px',
+                                    overflowY: 'auto',
+                                    zIndex: 100,
+                                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
+                                }}>
+                                    {displayedSearchProducts.length > 0 ? (
+                                        displayedSearchProducts.map(p => (
+                                            <div 
+                                                key={p._id} 
+                                                onClick={() => navigate(`/product/${p._id}`)}
+                                                style={{
+                                                    padding: '0.75rem 1rem',
+                                                    cursor: 'pointer',
+                                                    borderBottom: '1px solid #f3f4f6',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '0.75rem'
+                                                }}
+                                                onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#f9fafb'}
+                                                onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'white'}
+                                            >
+                                                <img src={(p.images && p.images.length > 0) ? p.images[0] : (p.image || itemStandard)} alt={p.title} style={{ width: '40px', height: '40px', borderRadius: '8px', objectFit: 'cover' }} />
+                                                <div>
+                                                    <p style={{ margin: 0, fontWeight: '700', fontSize: '0.9rem', color: '#111827' }}>{p.title}</p>
+                                                    <p style={{ margin: 0, fontSize: '0.8rem', color: '#6b7280' }}>₹{p.price} • {p.status === 'sold' ? 'Sold' : (p.status === 'draft' ? 'Draft' : 'Active')}</p>
+                                                </div>
                                             </div>
-                                        </div>
-                                    ))
-                                ) : (
-                                    <div style={{ padding: '1rem', textAlign: 'center', color: '#6b7280', fontSize: '0.9rem' }}>
-                                        No product found
-                                    </div>
-                                )}
-                            </div>
-                        )}
-                    </div>
-                    <div className="header-actions">
-                        <div className="header-btn notification-indicator" style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'inherit' }}>
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
-                        </div>
-                    </div>
-                </header>
-
-                <div className="dashboard-content">
-                    <div className="welcome-section">
-                        <h1>User Profile</h1>
-                        <p>Manage your personal information and campus identity.</p>
-                    </div>
-
-                    <div className="section-card profile-info-card" style={{ marginTop: '2rem', display: 'flex', gap: '2rem', alignItems: 'flex-start' }}>
-                        <div className="profile-photo-section" style={{ textAlign: 'center' }}>
-                            <label htmlFor="profile-photo-input" style={{ cursor: isEditing ? 'pointer' : 'default', display: 'inline-block' }} title={isEditing ? 'Click to change photo' : ''}>
-                                <div style={{ position: 'relative', display: 'inline-block', borderRadius: '50%' }}>
-                                    <img
-                                        src={avatarSrc}
-                                        alt="avatar"
-                                        style={{
-                                            width: '150px',
-                                            height: '150px',
-                                            borderRadius: '50%',
-                                            objectFit: 'cover',
-                                            display: 'block',
-                                            boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
-                                        }}
-                                    />
-                                    {isEditing && (
-                                        <div style={{
-                                            position: 'absolute', inset: 0, borderRadius: '50%',
-                                            background: 'rgba(15, 23, 42, 0.52)',
-                                            display: 'flex', flexDirection: 'column',
-                                            alignItems: 'center', justifyContent: 'center',
-                                            gap: '4px', backdropFilter: 'blur(1px)',
-                                            cursor: 'pointer'
-                                        }}>
-                                            {photoUploading ? (
-                                                <span style={{ fontSize: '30px' }}>⏳</span>
-                                            ) : (
-                                                <>
-                                                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
-                                                        <circle cx="12" cy="13" r="4"></circle>
-                                                    </svg>
-                                                    <span style={{ color: 'white', fontSize: '12px', fontWeight: '700', letterSpacing: '0.02em' }}>Change Photo</span>
-                                                </>
-                                            )}
+                                        ))
+                                    ) : (
+                                        <div style={{ padding: '1rem', textAlign: 'center', color: '#6b7280', fontSize: '0.9rem' }}>
+                                            No product found
                                         </div>
                                     )}
-                                    {!isEditing && (
-                                        <span
-                                            onClick={(e) => { e.preventDefault(); setPhotoModalOpen(true); }}
+                                </div>
+                            )}
+                        </div>
+                        <div className="header-actions" style={{ display: 'flex', gap: '8px' }}>
+                            <Link to="/cart" className="pill-icon-btn cart-icon-btn" title="Cart">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+                            </Link>
+                            <Link to="/wishlist" className="pill-icon-btn wishlist-icon-btn" title="Wishlist">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                            </Link>
+                        </div>
+                    </header>
+
+                    <div className="dashboard-content">
+                        <div className="welcome-section">
+                            <h1>User Profile</h1>
+                            <p>Manage your personal information and campus identity.</p>
+                        </div>
+
+                        <div className="section-card profile-info-card" style={{ marginTop: '2rem', display: 'flex', gap: '2rem', alignItems: 'flex-start' }}>
+                            <div className="profile-photo-section" style={{ textAlign: 'center' }}>
+                                <label htmlFor="profile-photo-input" style={{ cursor: isEditing ? 'pointer' : 'default', display: 'inline-block' }} title={isEditing ? 'Click to change photo' : ''}>
+                                    <div style={{ position: 'relative', display: 'inline-block', borderRadius: '50%' }}>
+                                        <img
+                                            src={avatarSrc}
+                                            alt="avatar"
                                             style={{
-                                                position: 'absolute', inset: 0, borderRadius: '50%',
-                                                cursor: 'zoom-in', display: 'block'
+                                                width: '150px',
+                                                height: '150px',
+                                                borderRadius: '50%',
+                                                objectFit: 'cover',
+                                                display: 'block',
+                                                boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
                                             }}
                                         />
-                                    )}
+                                        {isEditing && (
+                                            <div style={{
+                                                position: 'absolute', inset: 0, borderRadius: '50%',
+                                                background: 'rgba(15, 23, 42, 0.52)',
+                                                display: 'flex', flexDirection: 'column',
+                                                alignItems: 'center', justifyContent: 'center',
+                                                gap: '4px', backdropFilter: 'blur(1px)',
+                                                cursor: 'pointer'
+                                            }}>
+                                                {photoUploading ? (
+                                                    <span style={{ fontSize: '30px' }}>⏳</span>
+                                                ) : (
+                                                    <>
+                                                        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                                                            <circle cx="12" cy="13" r="4"></circle>
+                                                        </svg>
+                                                        <span style={{ color: 'white', fontSize: '12px', fontWeight: '800', letterSpacing: '0.02em' }}>Change Photo</span>
+                                                    </>
+                                                )}
+                                            </div>
+                                        )}
+                                        {!isEditing && (
+                                            <span
+                                                onClick={(e) => { e.preventDefault(); setPhotoModalOpen(true); }}
+                                                style={{
+                                                    position: 'absolute', inset: 0, borderRadius: '50%',
+                                                    cursor: 'zoom-in', display: 'block'
+                                                }}
+                                            />
+                                        )}
+                                    </div>
+                                </label>
+                                <input
+                                    id="profile-photo-input"
+                                    type="file"
+                                    accept="image/*"
+                                    style={{ display: 'none' }}
+                                    onChange={handlePhotoUpload}
+                                    disabled={photoUploading || !isEditing}
+                                />
+                                {isEditing && userData.profilePhoto && (
+                                    <button onClick={handleRemovePhoto} style={{
+                                        display: 'block', margin: '0.6rem auto 0',
+                                        background: 'none', border: '1px solid #fca5a5',
+                                        borderRadius: '6px', padding: '3px 12px',
+                                        color: '#ef4444', fontSize: '0.75rem',
+                                        cursor: 'pointer', fontWeight: '700'
+                                    }}>✕ Remove photo</button>
+                                )}
+                                {isEditing && !userData.profilePhoto && (
+                                    <p style={{ fontSize: '0.75rem', color: '#6b7280', marginTop: '0.5rem', fontWeight: '600' }}>Click photo to upload</p>
+                                )}
+                                {!isEditing && (
+                                    <p style={{ fontSize: '0.75rem', color: '#9ca3af', marginTop: '0.5rem' }}>
+                                        {userData.profilePhoto ? 'Custom photo' : (userData.gender === 'Female' ? 'Default (Female)' : 'Default (Male)')}
+                                    </p>
+                                )}
+                            </div>
+
+                            {isEditing ? (
+                                <form onSubmit={handleUpdateProfile} style={{ flex: 1 }}>
+                                    <div className="profile-details-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+                                        <div className="input-group">
+                                            <label>First Name</label>
+                                            <input type="text" name="firstName" value={formData.firstName} onChange={handleInputChange} required className="auth-input" style={{ width: '100%' }} />
+                                        </div>
+                                        <div className="input-group">
+                                            <label>Middle Name</label>
+                                            <input type="text" name="middleName" value={formData.middleName} onChange={handleInputChange} className="auth-input" style={{ width: '100%' }} />
+                                        </div>
+                                        <div className="input-group">
+                                            <label>Last Name</label>
+                                            <input type="text" name="lastName" value={formData.lastName} onChange={handleInputChange} required className="auth-input" style={{ width: '100%' }} />
+                                        </div>
+                                        <div className="input-group">
+                                            <label>Mobile Number</label>
+                                            <input type="text" name="mobileNumber" value={formData.mobileNumber} onChange={handleInputChange} required pattern="\d{10}" title="Must be 10 digits" className="auth-input" style={{ width: '100%' }} />
+                                        </div>
+                                        <div className="input-group" style={{ gridColumn: 'span 2' }}>
+                                            <label>Campus Address / Hostel</label>
+                                            <input type="text" name="address" value={formData.address} onChange={handleInputChange} required className="auth-input" style={{ width: '100%' }} />
+                                        </div>
+                                        
+                                        {/* Non-editable fields shown for context */}
+                                        <div className="input-group">
+                                            <label>Email Address</label>
+                                            <p className="val-text" style={{ fontSize: '1rem', color: '#6b7280' }}>{userData.email} <span style={{fontSize: '0.8rem'}}>(Cannot change)</span></p>
+                                        </div>
+                                        <div className="input-group">
+                                            <label>College ID</label>
+                                            <p className="val-text" style={{ fontSize: '1rem', color: '#6b7280' }}>{userData.collegeId} <span style={{fontSize: '0.8rem'}}>(Cannot change)</span></p>
+                                        </div>
+                                    </div>
+                                    <div className="action-row" style={{ marginTop: '2rem', display: 'flex', gap: '1rem' }}>
+                                        <button type="submit" className="continue-btn" disabled={updating} style={{ maxWidth: '200px' }}>
+                                            {updating ? 'Saving...' : 'Save Changes'}
+                                        </button>
+                                        <button type="button" className="back-btn" onClick={() => {
+                                            cancelPendingPhoto();
+                                            setIsEditing(false);
+                                            // Reset form to current userData
+                                            setFormData({
+                                                firstName: userData.firstName || "",
+                                                middleName: userData.middleName || "",
+                                                lastName: userData.lastName || "",
+                                                mobileNumber: userData.mobileNumber || "",
+                                                address: userData.address || ""
+                                            });
+                                        }}>Cancel</button>
+                                    </div>
+                                </form>
+                            ) : (
+                                <div style={{ flex: 1 }}>
+                                    <div className="profile-details-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+                                        <div className="input-group" style={{ gridColumn: 'span 2' }}>
+                                            <label>Full Name</label>
+                                            <p className="val-text" style={{ fontSize: '1.1rem', fontWeight: '800' }}>{userData.firstName} {userData.middleName} {userData.lastName}</p>
+                                        </div>
+                                        <div className="input-group">
+                                            <label>Email Address</label>
+                                            <p className="val-text" style={{ fontSize: '1.1rem', fontWeight: '800' }}>{userData.email}</p>
+                                        </div>
+                                        <div className="input-group">
+                                            <label>College ID</label>
+                                            <p className="val-text" style={{ fontSize: '1.1rem', fontWeight: '800' }}>{userData.collegeId}</p>
+                                        </div>
+                                        <div className="input-group">
+                                            <label>Department</label>
+                                            <p className="val-text" style={{ fontSize: '1.1rem', fontWeight: '800' }}>{userData.department}</p>
+                                        </div>
+                                        <div className="input-group">
+                                            <label>Gender</label>
+                                            <p className="val-text" style={{ fontSize: '1.1rem', fontWeight: '800' }}>{userData.gender}</p>
+                                        </div>
+                                        <div className="input-group">
+                                            <label>Mobile Number</label>
+                                            <p className="val-text" style={{ fontSize: '1.1rem', fontWeight: '800' }}>{userData.mobileNumber}</p>
+                                        </div>
+                                        <div className="input-group" style={{ gridColumn: 'span 2' }}>
+                                            <label>Campus Address / Hostel</label>
+                                            <p className="val-text" style={{ fontSize: '1.1rem', fontWeight: '800' }}>{userData.address}</p>
+                                        </div>
+                                    </div>
+                                    <div className="action-row" style={{ marginTop: '2rem', display: 'flex', gap: '1rem' }}>
+                                        <button className="continue-btn" onClick={() => setIsEditing(true)} style={{ maxWidth: '200px' }}>Edit Profile</button>
+                                    </div>
                                 </div>
-                            </label>
-                            <input
-                                id="profile-photo-input"
-                                type="file"
-                                accept="image/*"
-                                style={{ display: 'none' }}
-                                onChange={handlePhotoUpload}
-                                disabled={photoUploading || !isEditing}
-                            />
-                            {isEditing && userData.profilePhoto && (
-                                <button onClick={handleRemovePhoto} style={{
-                                    display: 'block', margin: '0.6rem auto 0',
-                                    background: 'none', border: '1px solid #fca5a5',
-                                    borderRadius: '6px', padding: '3px 12px',
-                                    color: '#ef4444', fontSize: '0.75rem',
-                                    cursor: 'pointer', fontWeight: '600'
-                                }}>✕ Remove photo</button>
-                            )}
-                            {isEditing && !userData.profilePhoto && (
-                                <p style={{ fontSize: '0.75rem', color: '#6b7280', marginTop: '0.5rem', fontWeight: '500' }}>Click photo to upload</p>
-                            )}
-                            {!isEditing && (
-                                <p style={{ fontSize: '0.75rem', color: '#9ca3af', marginTop: '0.5rem' }}>
-                                    {userData.profilePhoto ? 'Custom photo' : (userData.gender === 'Female' ? 'Default (Female)' : 'Default (Male)')}
-                                </p>
                             )}
                         </div>
-
-                        {isEditing ? (
-                            <form onSubmit={handleUpdateProfile} style={{ flex: 1 }}>
-                                <div className="profile-details-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
-                                    <div className="input-group">
-                                        <label>First Name</label>
-                                        <input type="text" name="firstName" value={formData.firstName} onChange={handleInputChange} required className="auth-input" style={{ width: '100%' }} />
-                                    </div>
-                                    <div className="input-group">
-                                        <label>Middle Name</label>
-                                        <input type="text" name="middleName" value={formData.middleName} onChange={handleInputChange} className="auth-input" style={{ width: '100%' }} />
-                                    </div>
-                                    <div className="input-group">
-                                        <label>Last Name</label>
-                                        <input type="text" name="lastName" value={formData.lastName} onChange={handleInputChange} required className="auth-input" style={{ width: '100%' }} />
-                                    </div>
-                                    <div className="input-group">
-                                        <label>Mobile Number</label>
-                                        <input type="text" name="mobileNumber" value={formData.mobileNumber} onChange={handleInputChange} required pattern="\d{10}" title="Must be 10 digits" className="auth-input" style={{ width: '100%' }} />
-                                    </div>
-                                    <div className="input-group" style={{ gridColumn: 'span 2' }}>
-                                        <label>Campus Address / Hostel</label>
-                                        <input type="text" name="address" value={formData.address} onChange={handleInputChange} required className="auth-input" style={{ width: '100%' }} />
-                                    </div>
-                                    
-                                    {/* Non-editable fields shown for context */}
-                                    <div className="input-group">
-                                        <label>Email Address</label>
-                                        <p className="val-text" style={{ fontSize: '1rem', color: '#6b7280' }}>{userData.email} <span style={{fontSize: '0.8rem'}}>(Cannot change)</span></p>
-                                    </div>
-                                    <div className="input-group">
-                                        <label>College ID</label>
-                                        <p className="val-text" style={{ fontSize: '1rem', color: '#6b7280' }}>{userData.collegeId} <span style={{fontSize: '0.8rem'}}>(Cannot change)</span></p>
-                                    </div>
-                                </div>
-                                <div className="action-row" style={{ marginTop: '2rem', display: 'flex', gap: '1rem' }}>
-                                    <button type="submit" className="continue-btn" disabled={updating} style={{ maxWidth: '200px' }}>
-                                        {updating ? 'Saving...' : 'Save Changes'}
-                                    </button>
-                                    <button type="button" className="back-btn" onClick={() => {
-                                        cancelPendingPhoto();
-                                        setIsEditing(false);
-                                        // Reset form to current userData
-                                        setFormData({
-                                            firstName: userData.firstName || "",
-                                            middleName: userData.middleName || "",
-                                            lastName: userData.lastName || "",
-                                            mobileNumber: userData.mobileNumber || "",
-                                            address: userData.address || ""
-                                        });
-                                    }}>Cancel</button>
-                                </div>
-                            </form>
-                        ) : (
-                            <div style={{ flex: 1 }}>
-                                <div className="profile-details-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
-                                    <div className="input-group" style={{ gridColumn: 'span 2' }}>
-                                        <label>Full Name</label>
-                                        <p className="val-text" style={{ fontSize: '1.1rem', fontWeight: '700' }}>{userData.firstName} {userData.middleName} {userData.lastName}</p>
-                                    </div>
-                                    <div className="input-group">
-                                        <label>Email Address</label>
-                                        <p className="val-text" style={{ fontSize: '1.1rem', fontWeight: '700' }}>{userData.email}</p>
-                                    </div>
-                                    <div className="input-group">
-                                        <label>College ID</label>
-                                        <p className="val-text" style={{ fontSize: '1.1rem', fontWeight: '700' }}>{userData.collegeId}</p>
-                                    </div>
-                                    <div className="input-group">
-                                        <label>Department</label>
-                                        <p className="val-text" style={{ fontSize: '1.1rem', fontWeight: '700' }}>{userData.department}</p>
-                                    </div>
-                                    <div className="input-group">
-                                        <label>Gender</label>
-                                        <p className="val-text" style={{ fontSize: '1.1rem', fontWeight: '700' }}>{userData.gender}</p>
-                                    </div>
-                                    <div className="input-group">
-                                        <label>Mobile Number</label>
-                                        <p className="val-text" style={{ fontSize: '1.1rem', fontWeight: '700' }}>{userData.mobileNumber}</p>
-                                    </div>
-                                    <div className="input-group" style={{ gridColumn: 'span 2' }}>
-                                        <label>Campus Address / Hostel</label>
-                                        <p className="val-text" style={{ fontSize: '1.1rem', fontWeight: '700' }}>{userData.address}</p>
-                                    </div>
-                                </div>
-                                <div className="action-row" style={{ marginTop: '2rem', display: 'flex', gap: '1rem' }}>
-                                    <button className="continue-btn" onClick={() => setIsEditing(true)} style={{ maxWidth: '200px' }}>Edit Profile</button>
-                                </div>
-                            </div>
-                        )}
                     </div>
-                </div>
-
-                <footer className="dashboard-footer">
-                    <p>© 2026 Campuskart • Exclusively for Students</p>
-                </footer>
-            </main>
+                </main>
+            </div>
+            <Footer />
 
             {/* Photo Lightbox Modal */}
             {photoModalOpen && (

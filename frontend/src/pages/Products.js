@@ -1,14 +1,18 @@
 import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useModal } from "../context/ModalContext";
 import ProductCard from "../Components/ProductCard";
+import Footer from "../Components/Footer";
 import "../styles/Products.css";
+import "../styles/Dashboard.css";
 
 const Products = ({ isSeller = false }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const token = localStorage.getItem("token");
   const searchInputRef = useRef(null);
+  const { showModal } = useModal();
 
   // Products and loading state
   const [products, setProducts] = useState([]);
@@ -35,6 +39,9 @@ const Products = ({ isSeller = false }) => {
   useEffect(() => {
     fetchProducts();
     fetchWishlist();
+    
+    window.addEventListener('wishlistUpdated', fetchWishlist);
+    return () => window.removeEventListener('wishlistUpdated', fetchWishlist);
   }, []);
 
   const fetchProducts = async () => {
@@ -89,16 +96,23 @@ const Products = ({ isSeller = false }) => {
   };
 
   const deleteProduct = async (id) => {
-    if (window.confirm("Are you sure you want to delete this product?")) {
-      try {
-        await axios.delete(`http://localhost:5001/api/products/${id}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        fetchProducts();
-      } catch (err) {
-        console.error("Error deleting product:", err);
+    showModal({
+      title: 'Delete Product',
+      message: "Are you sure you want to delete this product?",
+      type: 'confirm',
+      onConfirm: async () => {
+        try {
+          await axios.delete(`http://localhost:5001/api/products/${id}`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          fetchProducts();
+          showModal({ title: 'Deleted', message: "Product deleted successfully", type: 'alert' });
+        } catch (err) {
+          console.error("Error deleting product:", err);
+          showModal({ title: 'Error', message: "Failed to delete product", type: 'alert' });
+        }
       }
-    }
+    });
   };
 
   const categories = ["All", "Books", "Fan", "Trunk", "Cycles", "Others"];
@@ -120,14 +134,15 @@ const Products = ({ isSeller = false }) => {
         .split(/\s+/)
         .some(word => word.startsWith(searchTerm.toLowerCase()));
 
-    const isPubliclyVisible = p.status === 'active' || !p.status;
+    const isPubliclyVisible = (p.status === 'active' || !p.status) && !p.isFlagged;
     const matchesCategory = selectedCategory === "All" || isCategoryMatch(p.category, selectedCategory);
     const matchesPrice = !maxPrice || p.price <= parseInt(maxPrice);
     return matchesSearch && matchesCategory && matchesPrice && isPubliclyVisible;
   });
 
   return (
-    <div className="products-container">
+    <div className="dashboard-page-container">
+      <div className="products-container">
       <div className="products-header">
         <h2>{isSeller ? "Seller Console" : "Discover CampusKart"}</h2>
 
@@ -180,6 +195,8 @@ const Products = ({ isSeller = false }) => {
           ))
         )}
       </div>
+      </div>
+      <Footer />
     </div>
   );
 };

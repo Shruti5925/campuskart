@@ -101,8 +101,8 @@ function Signup() {
 
       const res = await axios.post("http://localhost:5001/api/auth/signup", sanitizedData);
       localStorage.setItem("token", res.data.token);
-      setMessage("Signup successful! Redirecting... ✅");
-      setTimeout(() => navigate(from, { replace: true }), 1500);
+      setMessage("Registration successful! 🎉 Your account is now in the approval queue. An administrator will review your details shortly.");
+      setTimeout(() => navigate(from, { replace: true }), 3000);
     } catch (err) {
       const errorMsg = err.response?.data?.detail
         ? `Error: ${err.response.data.detail}`
@@ -177,11 +177,10 @@ function Signup() {
                 <input
                   type="text"
                   name="address"
-                  placeholder="Hostel Name *"
+                  placeholder="Hostel Name"
                   value={formData.address}
                   onChange={handleChange}
                   style={{ width: "100%" }}
-                  required
                 />
               </div>
             )}
@@ -191,7 +190,7 @@ function Signup() {
               <input
                 type="email"
                 name="email"
-                placeholder="College Email ID"
+                placeholder="College Email ID *"
                 value={formData.email}
                 onChange={handleChange}
                 style={{ width: "100%" }}
@@ -202,7 +201,7 @@ function Signup() {
             <input
               type="password"
               name="password"
-              placeholder="Password"
+              placeholder="Password *"
               value={formData.password}
               onChange={handleChange}
               required
@@ -210,7 +209,7 @@ function Signup() {
             <input
               type="password"
               name="confirmPassword"
-              placeholder="Confirm Password"
+              placeholder="Confirm Password *"
               value={formData.confirmPassword}
               onChange={handleChange}
               required
@@ -219,7 +218,7 @@ function Signup() {
             <input
               type="text"
               name="collegeId"
-              placeholder="College ID / Employee ID"
+              placeholder="College ID / Employee ID *"
               value={formData.collegeId}
               onChange={handleChange}
               required
@@ -227,7 +226,7 @@ function Signup() {
             <input
               type="text"
               name="department"
-              placeholder="Department"
+              placeholder="Department *"
               value={formData.department}
               onChange={handleChange}
               required
@@ -237,7 +236,7 @@ function Signup() {
               <input
                 type="tel"
                 name="mobileNumber"
-                placeholder="Mobile Number"
+                placeholder="Mobile Number *"
                 value={formData.mobileNumber}
                 onChange={handleChange}
                 style={{ width: "100%" }}
@@ -258,7 +257,7 @@ function Signup() {
               <input
                 type="text"
                 name="securityAnswer"
-                placeholder="Your Answer"
+                placeholder="Your Answer *"
                 value={formData.securityAnswer}
                 onChange={handleChange}
                 style={{ width: "100%" }}

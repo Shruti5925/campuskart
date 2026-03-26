@@ -8,7 +8,7 @@ const conversationSchema = new mongoose.Schema({
     product: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Product',
-        required: true
+        required: false
     },
     lastMessage: {
         type: String,
@@ -26,7 +26,12 @@ const conversationSchema = new mongoose.Schema({
     archivedBy: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'
-    }]
+    }],
+    status: {
+        type: String,
+        enum: ['active', 'resolved'],
+        default: 'active'
+    }
 }, { timestamps: true });
 
 module.exports = mongoose.model('Conversation', conversationSchema);

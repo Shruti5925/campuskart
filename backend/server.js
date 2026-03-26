@@ -7,6 +7,9 @@ const authRoutes = require("./routes/authRoutes");
 const productRoutes = require("./routes/productRoutes");
 const chatRoutes = require("./routes/chatRoutes");
 const orderRoutes = require("./routes/orderRoutes");
+const notificationRoutes = require("./routes/notificationRoutes");
+const adminActivityRoutes = require("./routes/adminActivityRoutes");
+const reportRoutes = require("./routes/reportRoutes");
 
 const app = express();
 const http = require("http");
@@ -53,7 +56,6 @@ app.use((req, res, next) => {
   req.users = users;
   next();
 });
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 const fs = require("fs");
 
@@ -77,6 +79,9 @@ app.use("/api/auth", authRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/orders", orderRoutes);
+app.use("/api/notifications", notificationRoutes);
+app.use("/api/admin-activities", adminActivityRoutes);
+app.use("/api/reports", reportRoutes);
 
 const Subscription = require("./models/Subscription");
 

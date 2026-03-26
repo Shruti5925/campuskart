@@ -22,6 +22,14 @@ const reviewSchema = new mongoose.Schema({
         required: true,
         trim: true
     },
+    isFlagged: {
+        type: Boolean,
+        default: false
+    },
+    isHelpful: {
+        type: Boolean,
+        default: false
+    },
     createdAt: {
         type: Date,
         default: Date.now

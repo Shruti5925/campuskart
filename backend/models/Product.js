@@ -9,10 +9,11 @@ const productSchema = new mongoose.Schema({
   images: [{ type: String }],
   pickupPoint: { type: String },
   yearsUsed: { type: Number },
-  status: { type: String, default: "active", enum: ["active", "sold", "draft"] },
+  status: { type: String, default: "pending", enum: ["pending", "approved", "rejected", "active", "sold", "draft"] },
   seller: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
   averageRating: { type: Number, default: 0 },
-  reviewCount: { type: Number, default: 0 }
+  reviewCount: { type: Number, default: 0 },
+  isFlagged: { type: Boolean, default: false }
 }, { timestamps: true });
 
 module.exports = mongoose.model("Product", productSchema);

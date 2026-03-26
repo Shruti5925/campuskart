@@ -13,7 +13,7 @@
     background: transparent;
     border: none;
     padding: 0.5rem 0.5rem;
-    font-weight: 700;
+    font-weight: 800;
     color: #64748b;
     cursor: pointer;
     position: relative;
@@ -98,7 +98,7 @@
 
 .order-status-badge {
     font-size: 0.65rem;
-    font-weight: 800;
+    font-weight: 950;
     text-transform: uppercase;
     padding: 4px 10px;
     border-radius: 6px;
@@ -123,7 +123,7 @@
 .order-id-label {
     font-size: 0.8rem;
     color: #9ca3af;
-    font-weight: 700;
+    font-weight: 800;
 }
 
 .order-title-large {
@@ -147,7 +147,7 @@
 
 .order-seller {
     font-size: 0.9rem;
-    font-weight: 700;
+    font-weight: 800;
     color: #374151;
     margin-bottom: 1.25rem;
 }
@@ -169,7 +169,7 @@
     padding: 0.6rem 1.2rem;
     border-radius: 100px; /* Pill shape */
     font-size: 0.85rem;
-    font-weight: 600;
+    font-weight: 700;
     cursor: pointer;
     border: 1px solid #e2e8f0;
     background: white;
@@ -218,7 +218,7 @@
 
 .order-price-large {
     font-size: 1.4rem;
-    font-weight: 800;
+    font-weight: 950;
     color: #00D14E; /* Green price as in image */
 }
 
@@ -231,7 +231,7 @@
 .order-date-large {
     font-size: 0.85rem;
     color: #94a3b8;
-    font-weight: 500;
+    font-weight: 600;
     margin-top: 4px;
 }
 
@@ -251,7 +251,7 @@
 
 .empty-orders-state p {
     color: #9ca3af;
-    font-weight: 800;
+    font-weight: 950;
     font-size: 1.2rem;
 }
 
@@ -265,4 +265,126 @@
         flex-direction: row;
         align-items: center;
     }
+}
+
+/* Return Action Styling */
+.status-returned {
+    background: #fdf2f2;
+    color: #ef4444;
+}
+
+.return-action-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.return-btn {
+    padding: 0.6rem 1.2rem;
+    border-radius: 100px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    background: #ffffff;
+    border: 1.5px solid #3B82F6;
+    color: #3B82F6;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.return-btn:hover:not(:disabled) {
+    background: #f0f7ff;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.12);
+}
+
+.return-btn.inactive {
+    background: #f8fafc;
+    border-color: #e2e8f0;
+    color: #94a3b8;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.return-msg {
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: #ef4444;
+    background: #fef2f2;
+    padding: 4px 10px;
+    border-radius: 99px;
+    border: 1px solid #fee2e2;
+}
+/* Search Dropdown - Professional Overlay */
+.search-dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    right: 0;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1), 0 5px 15px rgba(0, 0, 0, 0.05);
+    border: 1px solid #f1f5f9;
+    z-index: 100;
+    max-height: 400px;
+    overflow-y: auto;
+    padding: 0.75rem;
+}
+
+.search-no-results {
+    padding: 1.5rem;
+    text-align: center;
+    color: #94a3b8;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.search-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.search-item:hover {
+    background: #f8fafc;
+}
+
+.search-item img {
+    width: 48px;
+    height: 48px;
+    border-radius: 8px;
+    object-fit: cover;
+    background: #f1f5f9;
+}
+
+.search-title {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0;
+}
+
+.search-subtitle {
+    font-size: 0.75rem;
+    color: #64748b;
+    margin: 2px 0 0;
+    font-weight: 600;
+}
+
+/* Custom Scrollbar for Search Results */
+.search-dropdown::-webkit-scrollbar {
+    width: 6px;
+}
+.search-dropdown::-webkit-scrollbar-track {
+    background: transparent;
+}
+.search-dropdown::-webkit-scrollbar-thumb {
+    background: #e2e8f0;
+    border-radius: 10px;
 }

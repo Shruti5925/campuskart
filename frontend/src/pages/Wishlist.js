@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { useModal } from '../context/ModalContext';
 import ProductCard from '../Components/ProductCard';
+import Footer from '../Components/Footer';
 import '../styles/Home.css'; // Reusing Home grid styles
 import '../styles/Products.css';
 import '../styles/Wishlist.css';
@@ -9,6 +11,7 @@ const Wishlist = () => {
     const [wishlist, setWishlist] = useState([]);
     const [loading, setLoading] = useState(true);
     const token = localStorage.getItem('token');
+    const { showModal } = useModal();
 
     useEffect(() => {
         fetchWishlist();
@@ -28,20 +31,30 @@ const Wishlist = () => {
     };
 
     const removeFromWishlist = async (productId) => {
-        try {
-            await axios.post(`http://localhost:5001/api/auth/wishlist/${productId}`, {}, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            setWishlist(prev => prev.filter(p => p._id !== productId));
-        } catch (err) {
-            console.error("Error removing from wishlist:", err);
-        }
+        showModal({
+            title: 'Remove from Wishlist',
+            message: 'Are you sure you want to remove this item from your saved items?',
+            type: 'confirm',
+            onConfirm: async () => {
+                try {
+                    await axios.post(`http://localhost:5001/api/auth/wishlist/${productId}`, {}, {
+                        headers: { Authorization: `Bearer ${token}` }
+                    });
+                    setWishlist(prev => prev.filter(p => p._id !== productId));
+                    window.dispatchEvent(new Event('wishlistUpdated'));
+                } catch (err) {
+                    console.error("Error removing from wishlist:", err);
+                    showModal({ title: 'Error', message: 'Failed to remove from wishlist', type: 'alert' });
+                }
+            }
+        });
     };
 
     if (loading) return <div className="loading-state" style={{ padding: '10rem', textAlign: 'center' }}>Loading your wishlist...</div>;
 
     return (
-        <div className="wishlist-page-container">
+        <div className="dashboard-page-container">
+            <div className="wishlist-page-container">
             <div className="section-header" style={{ marginBottom: '2.5rem' }}>
                 <h1 style={{ fontSize: '2.2rem', fontWeight: '800', color: '#1e293b' }}>
                     My Saved <span style={{ color: '#22c55e' }}>Items</span> 💚
@@ -64,10 +77,13 @@ const Wishlist = () => {
                             product={product}
                             isWishlistPage={true}
                             onRemove={removeFromWishlist}
+                            showContactBtn={true}
                         />
                     ))
                 )}
             </div>
+            </div>
+            <Footer />
         </div>
     );
 };

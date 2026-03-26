@@ -30,8 +30,11 @@ function Login() {
       );
 
       localStorage.setItem("token", res.data.token);
+      localStorage.setItem("user", JSON.stringify(res.data.user));
       setMessage("Login successful ✅");
-      setTimeout(() => navigate(from, { replace: true }), 1000);
+      
+      const redirectPath = res.data.role === 'admin' ? '/admin' : from;
+      setTimeout(() => navigate(redirectPath, { replace: true }), 1000);
     } catch (err) {
       setMessage(err.response?.data?.message || "Login failed ❌");
     }

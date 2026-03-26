@@ -1,14 +1,16 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { useModal } from '../context/ModalContext';
 
 import itemStandard from '../assets/image.webp';
 import '../styles/ProductCard.css';
 
 
-const ProductCard = ({ product, isSeller, onDelete, isWishlistPage, onRemove, showContactBtn, initialIsWishlisted }) => {
+const ProductCard = ({ product, isSeller, onDelete, isWishlistPage, onRemove, showContactBtn, initialIsWishlisted, isAdmin, variant = 'grid' }) => {
     const navigate = useNavigate();
     const token = localStorage.getItem('token');
+    const { showModal } = useModal();
     let currentUser = null;
     if (token) {
         try {
@@ -20,6 +22,10 @@ const ProductCard = ({ product, isSeller, onDelete, isWishlistPage, onRemove, sh
             console.error("JWT Decode Error:", e);
         }
     }
+    const isSuspended = localStorage.getItem('isSuspended') === 'true';
+    const isUnverified = localStorage.getItem('isVerified') === 'false';
+    const currentUserId = currentUser?.id || currentUser?._id;
+    const isOwnProduct = currentUserId && (product.seller?._id || product.seller) === currentUserId;
 
     const [isWishlisted, setIsWishlisted] = React.useState(initialIsWishlisted || false);
     const hasSyncOnce = React.useRef(false);
@@ -33,7 +39,7 @@ const ProductCard = ({ product, isSeller, onDelete, isWishlistPage, onRemove, sh
         }
 
         // Parent prop changed (e.g. after fetch), sync it
-        if (initialIsWishlisted !== undefined) {
+        if (initialIsWishlisted !== undefined && initialIsWishlisted !== isWishlisted) {
             setIsWishlisted(initialIsWishlisted);
             return;
         }
@@ -60,14 +66,26 @@ const ProductCard = ({ product, isSeller, onDelete, isWishlistPage, onRemove, sh
             navigate('/login');
             return;
         }
+        if (isUnverified && currentUser?.role !== 'admin') {
+            showModal({
+                title: 'Account Pending Approval',
+                message: 'Your account is currently under review. You will be able to wishlist items once an administrator approves your account.',
+                type: 'alert'
+            });
+            return;
+        }
         try {
+            if (isWishlistPage && onRemove) {
+                // Let the wishlist page handle both API and state update
+                onRemove(product._id);
+                return;
+            }
+
             const res = await axios.post(`http://localhost:5001/api/auth/wishlist/${product._id}`, {}, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             setIsWishlisted(res.data.isWishlisted);
-            if (isWishlistPage && onRemove) {
-                onRemove(product._id);
-            }
+            window.dispatchEvent(new Event('wishlistUpdated'));
         } catch (err) {
             console.error("Wishlist error:", err);
         }
@@ -106,6 +124,14 @@ const ProductCard = ({ product, isSeller, onDelete, isWishlistPage, onRemove, sh
             navigate('/login');
             return;
         }
+        if (isUnverified && currentUser?.role !== 'admin') {
+            showModal({
+                title: 'Account Pending Approval',
+                message: 'Your account is currently under review. You will be able to message sellers once an administrator approves your account.',
+                type: 'alert'
+            });
+            return;
+        }
         try {
             await axios.post('http://localhost:5001/api/chat/send', {
                 receiverId: product.seller?._id || product.seller,
@@ -127,21 +153,105 @@ const ProductCard = ({ product, isSeller, onDelete, isWishlistPage, onRemove, sh
             navigate('/login');
             return;
         }
+        if (isUnverified && currentUser?.role !== 'admin') {
+            showModal({
+                title: 'Account Pending Approval',
+                message: 'Your account is currently under review. You will be able to add items to your cart once an administrator approves your account.',
+                type: 'alert'
+            });
+            return;
+        }
         try {
             await axios.post(`http://localhost:5001/api/auth/cart/${product._id}`, {}, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             window.dispatchEvent(new Event('cartUpdated'));
-            alert("Added to cart! 🛒");
+            showModal({ title: 'Success', message: "Added to cart! 🛒", type: 'alert' });
         } catch (err) {
             console.error("Cart error:", err);
             const msg = err.response?.data?.message || "Error adding to cart";
-            alert(msg);
+            showModal({ title: 'Error', message: msg, type: 'alert' });
         }
     };
 
+    if (variant === 'row') {
+        return (
+            <div 
+                className={`product-card-row ${isAdmin ? 'admin-view' : ''}`} 
+                onClick={!isAdmin ? () => navigate(`/product/${product._id}`) : undefined}
+                style={isAdmin ? { cursor: 'default' } : { cursor: 'pointer' }}
+            >
+                <div className="row-image-container">
+                    <img src={images[currentImageIndex]} alt={product.title} className="row-image" />
+                    {images.length > 1 && (
+                        <div className="row-image-overlay">
+                            <span>{images.length} Photos</span>
+                        </div>
+                    )}
+                </div>
+
+                <div className="row-details-container">
+                    <div className="row-main-info">
+                        <div className="row-header-top">
+                            <span className={`row-category cat-${(product.category || 'others').toLowerCase().replace(/\s+/g, '-')}`}>
+                                {product.category}
+                            </span>
+                            <span className="row-price">₹{product.price}</span>
+                        </div>
+                        <h3 className="row-title">{product.title}</h3>
+                        <p className="row-description">
+                            {product.description?.length > 120 ? `${product.description.substring(0, 120)}...` : product.description}
+                        </p>
+                        
+                        <div className="row-meta-tags">
+                            {product.condition && <span className="row-meta-tag">🏷️ {product.condition}</span>}
+                            {product.yearsUsed !== undefined && <span className="row-meta-tag">⏳ {product.yearsUsed} Years Used</span>}
+                            {product.pickupPoint && <span className="row-meta-tag">📍 {product.pickupPoint}</span>}
+                        </div>
+                    </div>
+
+                    <div className="row-actions-container">
+                        <div className="row-action-btns">
+                            {showContactBtn && (
+                                <button 
+                                    className="row-action-btn contact"
+                                    onClick={(e) => { e.stopPropagation(); !isAdmin && !isSuspended && !isOwnProduct && handleChat(e); }}
+                                    disabled={isAdmin || isSuspended || isOwnProduct}
+                                    title={isAdmin ? "Disabled for Admin" : isSuspended ? "Account Suspended" : isOwnProduct ? "Cannot contact yourself" : "Contact Seller"}
+                                >
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                                    Message
+                                </button>
+                            )}
+                            {!isSeller && (
+                                <button 
+                                    className="row-action-btn cart"
+                                    onClick={(e) => { e.stopPropagation(); !isAdmin && !isSuspended && !isUnverified && !isOwnProduct && handleAddToCart(e); }}
+                                    disabled={isAdmin || isSuspended || (isUnverified && currentUser?.role !== 'admin') || isOwnProduct}
+                                    title={isAdmin ? "Disabled for Admin" : isSuspended ? "Account Suspended" : (isUnverified && currentUser?.role !== 'admin') ? "Pending Approval" : isOwnProduct ? "Cannot add own item to cart" : "Add to Cart"}
+                                >
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+                                    Add to Cart
+                                </button>
+                            )}
+                        </div>
+                        {isWishlistPage && onRemove && (
+                            <button 
+                                className="row-remove-btn"
+                                onClick={(e) => { e.stopPropagation(); onRemove(product._id); }}
+                                title="Remove from Wishlist"
+                            >
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                            </button>
+                        )}
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     return (
-        <div className="product-card" onClick={() => navigate(`/product/${product._id}`)}>
+        <div className="product-card" onClick={!isAdmin ? () => navigate(`/product/${product._id}`) : undefined} style={isAdmin ? { cursor: 'default' } : { cursor: 'pointer' }}>
             <div className="product-image-wrapper">
                 <img
                     src={images[currentImageIndex]}
@@ -164,8 +274,10 @@ const ProductCard = ({ product, isSeller, onDelete, isWishlistPage, onRemove, sh
                 {!isSeller && (
                     <button
                         className={`wishlist-heart-btn ${isWishlisted || isWishlistPage ? 'active' : ''}`}
-                        onClick={handleWishlistToggle}
-                        title={isWishlisted || isWishlistPage ? "Remove from Wishlist" : "Add to Wishlist"}
+                        onClick={!isAdmin && !isSuspended && !isUnverified && !isOwnProduct ? handleWishlistToggle : undefined}
+                        disabled={isAdmin || isSuspended || (isUnverified && currentUser?.role !== 'admin') || isOwnProduct}
+                        style={(isAdmin || isSuspended || (isUnverified && currentUser?.role !== 'admin') || isOwnProduct) ? { opacity: 0.6, cursor: 'not-allowed' } : {}}
+                        title={isAdmin ? "Interaction disabled for Admin" : isSuspended ? "Account suspended" : (isUnverified && currentUser?.role !== 'admin') ? "Pending Approval" : isOwnProduct ? "Cannot wishlist own item" : (isWishlisted || isWishlistPage ? "Remove from Wishlist" : "Add to Wishlist")}
                     >
                         <svg width="20" height="20" viewBox="0 0 24 24" fill={(isWishlisted || isWishlistPage) ? "#22c55e" : "none"} stroke={(isWishlisted || isWishlistPage) ? "#22c55e" : "white"} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
@@ -208,12 +320,24 @@ const ProductCard = ({ product, isSeller, onDelete, isWishlistPage, onRemove, sh
 
                 {showContactBtn && (
                     <div className="card-action-btns">
-                        <button className="contact-seller-btn" onClick={handleChat}>
+                        <button 
+                            className="contact-seller-btn" 
+                            onClick={!isAdmin && !isSuspended && !isUnverified && !isOwnProduct ? handleChat : undefined}
+                            disabled={isAdmin || isSuspended || (isUnverified && currentUser?.role !== 'admin') || isOwnProduct}
+                            style={(isAdmin || isSuspended || (isUnverified && currentUser?.role !== 'admin') || isOwnProduct) ? { opacity: 0.6, cursor: 'not-allowed' } : {}}
+                            title={isOwnProduct ? "Cannot contact yourself" : (isUnverified && currentUser?.role !== 'admin') ? "Pending Approval" : ""}
+                        >
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
                             Contact
                         </button>
-                        {!isSeller && (product.seller?._id || product.seller) !== currentUser?.id && (
-                            <button className="add-to-cart-btn" onClick={handleAddToCart}>
+                        {!isSeller && (
+                            <button 
+                                className="add-to-cart-btn" 
+                                onClick={!isAdmin && !isSuspended && !isUnverified && !isOwnProduct ? handleAddToCart : undefined}
+                                disabled={isAdmin || isSuspended || (isUnverified && currentUser?.role !== 'admin') || isOwnProduct}
+                                style={(isAdmin || isSuspended || (isUnverified && currentUser?.role !== 'admin') || isOwnProduct) ? { opacity: 0.6, cursor: 'not-allowed' } : {}}
+                                title={isOwnProduct ? "Cannot add own item to cart" : (isUnverified && currentUser?.role !== 'admin') ? "Pending Approval" : ""}
+                            >
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
                                 Cart
                             </button>

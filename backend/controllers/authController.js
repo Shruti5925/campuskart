@@ -1,5 +1,7 @@
 const User = require("../models/User");
 const Product = require("../models/Product");
+const Notification = require("../models/Notification");
+const AdminActivity = require("../models/AdminActivity");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { generateCaptcha, verifyCaptcha } = require("../utils/captcha");
@@ -123,7 +125,7 @@ exports.signup = async (req, res) => {
       address,
       email,
       password: hashedPassword,
-      role,
+      role: role === 'admin' ? 'student' : (role || 'student'), // Restrict admin role from signup
       collegeId,
       department,
       mobileNumber,
@@ -177,7 +179,7 @@ exports.login = async (req, res) => {
       { expiresIn: "1d" }
     );
 
-    res.json({ message: "Login successful", token });
+    res.json({ message: "Login successful", token, role: user.role, user: { id: user._id, firstName: user.firstName, lastName: user.lastName, email: user.email, role: user.role } });
   } catch (err) {
     console.error("Login Error:", err);
     res.status(500).json({ message: "Server error" });
@@ -445,5 +447,177 @@ exports.updateCartQuantity = async (req, res) => {
   } catch (err) {
     console.error("Update Cart Quantity Error:", err);
     res.status(500).json({ message: "Server error" });
+  }
+};
+
+exports.getAllUsers = async (req, res) => {
+  try {
+    const users = await User.find().select("-password -securityAnswer").sort("-createdAt");
+    res.json(users);
+  } catch (err) {
+    res.status(500).json({ message: "Error fetching users" });
+  }
+};
+
+exports.updateUserStatus = async (req, res) => {
+  try {
+    const { isVerified, isSuspended } = req.body;
+    const user = await User.findByIdAndUpdate(
+      req.params.id,
+      { $set: { isVerified, isSuspended } },
+      { new: true }
+    ).select("-password -securityAnswer");
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    // Create notification for status change
+    let notifTitle = "Account Update";
+    let notifMessage = "Your account status has been updated.";
+    
+    if (isSuspended !== undefined) {
+        notifTitle = isSuspended ? "Account Suspended" : "Account Reactivated";
+        notifMessage = isSuspended 
+            ? "Your account has been suspended for violating community guidelines." 
+            : "Your account has been reactivated. You can now resume using the marketplace.";
+    } else if (isVerified !== undefined) {
+        notifTitle = isVerified ? "Identity Verified" : "Verification Status Updated";
+        notifMessage = isVerified
+            ? "Your identity has been successfully verified! You've earned the verified badge."
+            : "Your verification status has been updated.";
+    }
+
+    const notification = new Notification({
+        user: req.params.id,
+        type: isSuspended ? "suspension" : "info",
+        title: notifTitle,
+        message: notifMessage,
+        link: "/profile"
+    });
+    await notification.save();
+    console.log(`Notification created for user ${req.params.id}: ${notifTitle}`);
+
+    // Emit via socket if user is online
+    // Emit via socket if user is online
+    const userSocketId = req.users?.get(req.params.id.toString());
+    console.log(`Socket lookup for user ${req.params.id}: ${userSocketId || 'Not Online'}`);
+    
+    if (userSocketId && req.io) {
+        req.io.to(userSocketId).emit('new_notification', notification);
+        console.log(`Socket emission sent to ${userSocketId}`);
+    }
+
+    // Log Activity
+    console.log("Attempting to log activity for user status update...");
+    let actionType = "UPDATED";
+    let activityStatus = "SUCCESSFUL";
+
+    if (isSuspended !== undefined) {
+        actionType = isSuspended ? "SUSPENDED" : "REACTIVATED";
+        activityStatus = "ENFORCEMENT";
+    } else if (isVerified !== undefined) {
+        actionType = "VERIFIED";
+        activityStatus = "SUCCESSFUL";
+    }
+
+    const activity = new AdminActivity({
+        admin: req.user.id,
+        action: actionType,
+        targetType: "User",
+        targetId: user._id,
+        targetName: `${user.firstName} ${user.lastName}`,
+        status: activityStatus
+    });
+    try {
+        await activity.save();
+        console.log(`Activity logged successfully: ${actionType}`);
+    } catch (actErr) {
+        console.error("FAILED to save Activity Log (Auth):", actErr);
+    }
+
+    res.json({ message: "User status updated", user });
+  } catch (err) {
+    console.error("Update User Status Error:", err);
+    res.status(500).json({ message: "Server error updating status" });
+  }
+};
+exports.adminUpdateUser = async (req, res) => {
+  try {
+    const { firstName, middleName, lastName, role, department, collegeId, mobileNumber, address } = req.body;
+    
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    // Update fields if provided
+    if (firstName) user.firstName = firstName;
+    if (middleName !== undefined) user.middleName = middleName;
+    if (lastName) user.lastName = lastName;
+    if (role) user.role = role;
+    if (department) user.department = department;
+    if (collegeId) user.collegeId = collegeId;
+    if (mobileNumber) user.mobileNumber = mobileNumber;
+    if (address) user.address = address;
+
+    await user.save();
+
+    // Log Activity
+    try {
+        const activity = new AdminActivity({
+            admin: req.user.id,
+            action: "UPDATED_USER_PROFILE",
+            targetType: "User",
+            targetId: user._id,
+            targetName: `${user.firstName} ${user.lastName}`,
+            status: "SUCCESSFUL"
+        });
+        await activity.save();
+    } catch (logErr) {
+        console.error("Activity log error (adminUpdateUser):", logErr);
+    }
+
+    res.json({ message: "User profile updated successfully", user: {
+      _id: user._id,
+      firstName: user.firstName,
+      middleName: user.middleName,
+      lastName: user.lastName,
+      role: user.role,
+      department: user.department,
+      collegeId: user.collegeId,
+      mobileNumber: user.mobileNumber,
+      address: user.address,
+      isVerified: user.isVerified,
+      isSuspended: user.isSuspended
+    }});
+  } catch (err) {
+    console.error("Admin Update User Error:", err);
+    res.status(500).json({ message: "Server error updating user profile" });
+  }
+};
+
+exports.getSupportAdmin = async (req, res) => {
+  try {
+    // Find the first user with 'admin' role
+    const admin = await User.findOne({ role: 'admin' }).select('firstName lastName avatar gender');
+    
+    if (!admin) {
+      return res.status(404).json({ message: "No administration staff found." });
+    }
+
+    res.json({
+      adminId: admin._id,
+      productId: null,
+      adminName: `${admin.firstName} ${admin.lastName}`
+    });
+  } catch (err) {
+    console.error("Get Support Admin Error:", err);
+    res.status(500).json({ message: "Server error retrieving support staff" });
+  }
+};
+
+exports.getUserById = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id).select("-password -securityAnswer");
+    if (!user) return res.status(404).json({ message: "User not found" });
+    res.json({ user });
+  } catch (err) {
+    res.status(500).json({ message: "Error fetching user" });
   }
 };

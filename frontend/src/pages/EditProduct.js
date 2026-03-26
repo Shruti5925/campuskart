@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
 import Sidebar from "../Components/Sidebar";
+import Footer from "../Components/Footer";
 import "../styles/AddProduct.css"; // Reuse the beautiful add product styles
 import "../styles/Dashboard.css";
 
@@ -132,10 +133,11 @@ const EditProduct = () => {
   if (loading) return <div className="loading" style={{ padding: '5rem', textAlign: 'center' }}>Loading listing details...</div>;
 
   return (
-    <div className="dashboard-layout">
-      <Sidebar />
-      <main className="dashboard-main">
-        <div className="list-item-content">
+    <div className="dashboard-page-container">
+      <div className="dashboard-layout">
+        <Sidebar />
+        <main className="dashboard-main">
+          <div className="list-item-content">
           <div className="content-left">
             <div className="page-title">
               <h1>Edit Your Listing</h1>
@@ -282,7 +284,7 @@ const EditProduct = () => {
             <div className="form-actions">
               {form.status === 'draft' ? (
                 <>
-                  <button className="continue-btn" onClick={(e) => handleUpdate(e, 'active')} disabled={updating}>
+                  <button className="continue-btn" onClick={(e) => handleUpdate(e, 'pending')} disabled={updating}>
                     {updating ? "Listing..." : "List Product"}
                   </button>
                   <button className="draft-btn" onClick={(e) => handleUpdate(e, 'draft')} disabled={updating}>
@@ -317,7 +319,9 @@ const EditProduct = () => {
         </div>
       </main>
     </div>
-  );
+    <Footer />
+  </div>
+);
 };
 
 export default EditProduct;

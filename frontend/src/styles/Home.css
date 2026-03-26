@@ -77,7 +77,7 @@
     outline: none;
     font-size: 1.1rem;
     color: #111827;
-    font-weight: 500;
+    font-weight: 700;
 }
 
 .search-input::placeholder {
@@ -90,7 +90,7 @@
     border: none;
     padding: 1rem 2.75rem;
     border-radius: 9999px;
-    font-weight: 800;
+    font-weight: 950;
     font-size: 1rem;
     cursor: pointer;
     transition: all 0.3s ease;
@@ -128,7 +128,7 @@
     align-items: center;
     gap: 0.75rem;
     font-size: 1.05rem;
-    font-weight: 700;
+    font-weight: 850;
     color: #475569;
     white-space: nowrap;
 }
@@ -217,7 +217,7 @@
 
 .category-label {
     font-size: 0.8rem;
-    font-weight: 800;
+    font-weight: 950;
     text-transform: uppercase;
     letter-spacing: 0.02em;
     transition: color 0.2s;
@@ -341,7 +341,7 @@
 .view-all {
     color: var(--primary-color);
     text-decoration: none;
-    font-weight: 800;
+    font-weight: 950;
     font-size: 0.95rem;
     display: flex;
     align-items: center;
@@ -392,7 +392,7 @@
 .section-subtitle {
     color: #64748b;
     font-size: 1.1rem;
-    font-weight: 500;
+    font-weight: 700;
     margin-top: -1.5rem;
     margin-bottom: 3rem;
     text-align: left;
@@ -416,7 +416,7 @@
     background: white;
     border-radius: 999px;
     font-size: 1.1rem;
-    font-weight: 800;
+    font-weight: 950;
     color: #1e293b;
     box-shadow: 0 4px 15px rgba(59, 130, 246, 0.08);
     display: flex;
@@ -428,7 +428,7 @@
 .view-more-link {
     color: #3b82f6;
     text-decoration: none;
-    font-weight: 700;
+    font-weight: 800;
     font-size: 0.95rem;
     transition: all 0.2s;
 }
@@ -491,13 +491,13 @@
 
 .budget-box-label {
     font-size: 1.25rem;
-    font-weight: 800;
+    font-weight: 950;
     color: white;
 }
 
 .budget-box-count {
     font-size: 0.8rem;
-    font-weight: 700;
+    font-weight: 800;
     color: #f3e8ff;
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -513,7 +513,7 @@
 
 .sub-section-title {
     font-size: 1.4rem;
-    font-weight: 800;
+    font-weight: 950;
     color: #334155;
 }
 

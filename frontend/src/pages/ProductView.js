@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
+import { useModal } from '../context/ModalContext';
 import defaultProduct from '../assets/default-product.svg';
 import itemStandard from '../assets/image.webp';
 import ProductCard from '../Components/ProductCard';
 import femaleAvatar from '../assets/female-avatar.png';
 import maleAvatar from '../assets/male-avatar.png';
+import ReportModal from '../Components/ReportModal';
 
 import Footer from '../Components/Footer';
 import '../styles/ProductView.css';
@@ -40,6 +42,11 @@ const ProductView = () => {
     const [newRating, setNewRating] = useState(5);
     const [newComment, setNewComment] = useState('');
     const [submittingReview, setSubmittingReview] = useState(false);
+    const [reporting, setReporting] = useState(false);
+    const [isFlaggedError, setIsFlaggedError] = useState(false);
+    const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+    const { showModal } = useModal();
+    
 
     const token = localStorage.getItem('token');
     let currentUser = null;
@@ -53,6 +60,9 @@ const ProductView = () => {
             console.error("JWT Decode Error:", e);
         }
     }
+    const isSuspended = localStorage.getItem('isSuspended') === 'true';
+    const isVerified = localStorage.getItem('isVerified') !== 'false'; // Default to true if not set (to avoid blocking on load), but Navbar will set it precisely
+    const isUnverified = localStorage.getItem('isVerified') === 'false';
 
     const fetchProductData = async () => {
         try {
@@ -89,6 +99,9 @@ const ProductView = () => {
             setLoading(false);
         } catch (err) {
             console.error("Error fetching product:", err);
+            if (err.response && err.response.status === 403) {
+                setIsFlaggedError(true);
+            }
             setLoading(false);
         }
     };
@@ -101,6 +114,14 @@ const ProductView = () => {
         if (!product || !product.seller) return;
         if (!token) {
             navigate('/login');
+            return;
+        }
+        if (isUnverified && currentUser?.role !== 'admin') {
+            showModal({
+                title: 'Account Pending Approval',
+                message: 'Your account is currently under review. You will be able to message sellers once an administrator approves your account.',
+                type: 'alert'
+            });
             return;
         }
         try {
@@ -123,6 +144,14 @@ const ProductView = () => {
             navigate('/login');
             return;
         }
+        if (isUnverified && currentUser?.role !== 'admin') {
+            showModal({
+                title: 'Account Pending Approval',
+                message: 'Your account is currently under review. You will be able to wishlist items once an administrator approves your account.',
+                type: 'alert'
+            });
+            return;
+        }
         try {
             const res = await axios.post(`http://localhost:5001/api/auth/wishlist/${id}`, {}, {
                 headers: { Authorization: `Bearer ${token}` }
@@ -138,16 +167,32 @@ const ProductView = () => {
             navigate('/login');
             return;
         }
+        if (isUnverified && currentUser?.role !== 'admin') {
+            showModal({
+                title: 'Account Pending Approval',
+                message: 'Your account is currently under review. You will be able to add items to your cart once an administrator approves your account.',
+                type: 'alert'
+            });
+            return;
+        }
         try {
             await axios.post(`http://localhost:5001/api/auth/cart/${id}`, {}, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             window.dispatchEvent(new Event('cartUpdated'));
-            alert("Added to cart! 🛒");
+            showModal({
+                title: 'Cart Updated',
+                message: "Added to cart! 🛒",
+                type: 'alert'
+            });
         } catch (err) {
             console.error("Cart error:", err);
             const msg = err.response?.data?.message || "Error adding to cart";
-            alert(msg);
+            showModal({
+                title: 'Cart Error',
+                message: msg,
+                type: 'alert'
+            });
         }
     };
 
@@ -159,7 +204,11 @@ const ProductView = () => {
         }
 
         if (!newComment.trim()) {
-            alert("Please provide a comment.");
+            showModal({
+                title: 'Review Error',
+                message: "Please provide a comment.",
+                type: 'alert'
+            });
             return;
         }
 
@@ -175,16 +224,66 @@ const ProductView = () => {
             setNewRating(5);
             setNewComment('');
             fetchProductData(); // Refresh product data to show new review
-            alert("Review submitted successfully!");
+            showModal({
+                title: 'Review Submitted',
+                message: "Review submitted successfully!",
+                type: 'alert'
+            });
         } catch (err) {
             console.error("Error submitting review:", err);
-            alert(err.response?.data?.message || "Failed to submit review");
+            showModal({
+                title: 'Submission Failed',
+                message: err.response?.data?.message || "Failed to submit review",
+                type: 'alert'
+            });
         } finally {
             setSubmittingReview(false);
         }
     };
 
+    const handleActionClick = (e, callback) => {
+        if (isSuspended) {
+            showModal({
+                title: 'Account Suspended',
+                message: "Your account is suspended. You cannot perform this action.",
+                type: 'alert'
+            });
+            return;
+        }
+        callback(e);
+    };
+
+    const handleReport = () => {
+        if (!token) {
+            navigate('/login');
+            return;
+        }
+        setIsReportModalOpen(true);
+    };
+
     if (loading) return <div className="loading">Loading Product...</div>;
+
+    if (isFlaggedError) {
+        return (
+            <div className="product-view-container">
+                <main className="product-main">
+                    <div className="error-state-container" style={{ textAlign: 'center', padding: '100px 20px' }}>
+                        <div style={{ fontSize: '4rem', marginBottom: '20px' }}>🚩</div>
+                        <h2 style={{ color: '#111827', marginBottom: '10px' }}>Item Under Review</h2>
+                        <p style={{ color: '#6b7280', maxWidth: '500px', margin: '0 auto 30px' }}>
+                            This product has been flagged by an administrator and is currently under review. 
+                            It is temporarily unavailable for viewing or purchase.
+                        </p>
+                        <button onClick={() => navigate('/products')} className="back-btn" style={{ background: '#3b82f6', color: 'white', padding: '10px 25px', borderRadius: '8px', border: 'none', cursor: 'pointer' }}>
+                            Browse Other Products
+                        </button>
+                    </div>
+                </main>
+                <Footer />
+            </div>
+        );
+    }
+
     if (!product) return <div className="error">Product not found</div>;
 
     const sellerAvatar = product.seller?.gender === 'Female' ? femaleAvatar : maleAvatar;
@@ -254,8 +353,8 @@ const ProductView = () => {
                                     onChange={(e) => setNewComment(e.target.value)}
                                     rows="3"
                                 />
-                                <button type="submit" className="submit-review-btn" disabled={submittingReview}>
-                                    {submittingReview ? 'Submitting...' : 'Post Review'}
+                                <button type="submit" className="submit-review-btn" disabled={submittingReview || isSuspended}>
+                                    {isSuspended ? 'Account Suspended' : submittingReview ? 'Submitting...' : 'Post Review'}
                                 </button>
                             </form>
                         )}
@@ -289,7 +388,7 @@ const ProductView = () => {
                 <div className="view-right">
                     <div className="pricing-card">
                         <div className="pricing-header">
-                            <span className="cat-tag">{product.category}</span>
+                            <span className={`cat-tag cat-${(product.category || 'other').toLowerCase().replace(/\s+/g, '-')}`}>{product.category || 'Other'}</span>
                             {product.averageRating > 0 && (
                                 <div className="rating-pill">
                                     ★ {product.averageRating.toFixed(1)}
@@ -327,9 +426,13 @@ const ProductView = () => {
                                     Item Sold Out
                                 </button>
                             ) : (
-                                <button className="view-add-to-cart-btn" onClick={handleAddToCart}>
+                                <button 
+                                    className={`view-add-to-cart-btn ${isSuspended || (isUnverified && currentUser?.role !== 'admin') ? 'disabled' : ''}`} 
+                                    onClick={() => !isSuspended && handleAddToCart()}
+                                    style={isSuspended || (isUnverified && currentUser?.role !== 'admin') ? { opacity: 0.6, cursor: 'not-allowed' } : {}}
+                                >
                                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '8px' }}><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
-                                    Add to Cart
+                                    {isSuspended ? 'Account Suspended' : (isUnverified && currentUser?.role !== 'admin') ? 'Pending Approval' : 'Add to Cart'}
                                 </button>
                             )}
                         </div>
@@ -343,8 +446,10 @@ const ProductView = () => {
                             </button>
                             <button
                                 className="wishlist-btn"
-                                onClick={handleChat}
-                                style={{ color: 'inherit', border: '1px solid #e2e8f0' }}
+                                onClick={() => !isSuspended && handleChat()}
+                                disabled={isSuspended}
+                                style={{ color: 'inherit', border: '1px solid #e2e8f0', opacity: isSuspended ? 0.6 : 1, cursor: isSuspended ? 'not-allowed' : 'pointer' }}
+                                title={isSuspended ? "Account Suspended" : "Chat with seller"}
                             >
                                 💬 Chat
                             </button>
@@ -378,6 +483,13 @@ const ProductView = () => {
                             <p><strong>Campus Safety Tips</strong></p>
                         </div>
                         <p className="safety-text">Always meet in well-lit public areas on campus. Verify the item condition before any payment.</p>
+                        <button 
+                            className="report-item-btn" 
+                            onClick={() => !isSuspended && handleReport()}
+                            disabled={reporting || isSuspended}
+                        >
+                            <span className="icon">🚩</span> {reporting ? 'Reporting...' : 'Report this item'}
+                        </button>
                     </div>
                 </div>
             </main>
@@ -406,6 +518,14 @@ const ProductView = () => {
             </section>
 
             <Footer />
+            
+            <ReportModal 
+                isOpen={isReportModalOpen} 
+                onClose={() => setIsReportModalOpen(false)} 
+                targetId={product._id} 
+                targetType="product"
+                targetName={product.title}
+            />
         </div>
     );
 };

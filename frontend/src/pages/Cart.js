@@ -1,13 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
+import { useModal } from '../context/ModalContext';
+import Footer from '../Components/Footer';
 import '../styles/Cart.css';
+import '../styles/Dashboard.css';
 
 const Cart = () => {
     const [cartItems, setCartItems] = useState([]);
     const [loading, setLoading] = useState(true);
     const token = localStorage.getItem('token');
     const navigate = useNavigate();
+    const isSuspended = localStorage.getItem('isSuspended') === 'true';
+    const { showModal } = useModal();
 
     useEffect(() => {
         if (!token) {
@@ -31,15 +36,23 @@ const Cart = () => {
     };
 
     const removeFromCart = async (productId) => {
-        try {
-            await axios.delete(`http://localhost:5001/api/auth/cart/${productId}`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            setCartItems(prev => prev.filter(item => item.product._id !== productId));
-            window.dispatchEvent(new Event('cartUpdated'));
-        } catch (err) {
-            console.error("Error removing from cart:", err);
-        }
+        showModal({
+            title: 'Remove Item',
+            message: 'Are you sure you want to remove this item from your saved list?',
+            type: 'confirm',
+            onConfirm: async () => {
+                try {
+                    await axios.delete(`http://localhost:5001/api/auth/cart/${productId}`, {
+                        headers: { Authorization: `Bearer ${token}` }
+                    });
+                    setCartItems(prev => prev.filter(item => item.product._id !== productId));
+                    window.dispatchEvent(new Event('cartUpdated'));
+                } catch (err) {
+                    console.error("Error removing from cart:", err);
+                    showModal({ title: 'Error', message: 'Failed to remove item', type: 'alert' });
+                }
+            }
+        });
     };
 
     const calculateTotal = () => {
@@ -57,45 +70,72 @@ const Cart = () => {
         if (cartItems.length === 0) return;
 
         try {
-            // Initiate a chat with the seller of the first item to get them started
-            const firstItem = cartItems[0];
-            if (firstItem.product && firstItem.product.seller) {
-                await axios.post('http://localhost:5001/api/chat/send', {
-                    receiverId: firstItem.product.seller._id,
-                    productId: firstItem.product._id,
-                    content: `Hi! I'm interested in purchasing "${firstItem.product.title}" that I saved to my items list.`
-                }, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
+            let firstConvId = null;
+
+            // Loop through all cart items to ping every seller and trigger auto-orders
+            for (const item of cartItems) {
+                if (item.product && item.product.seller) {
+                    const response = await axios.post('http://localhost:5001/api/chat/send', {
+                        receiverId: item.product.seller._id,
+                        productId: item.product._id,
+                        content: `Hi, I'm interested in purchasing ${item.product.title}`
+                    }, {
+                        headers: { Authorization: `Bearer ${token}` }
+                    });
+                    
+                    if (!firstConvId && response.data?.conversationId) {
+                        firstConvId = response.data.conversationId;
+                    }
+                }
             }
-            navigate('/messages');
+
+            if (firstConvId) {
+                navigate(`/messages?convId=${firstConvId}`);
+            } else {
+                navigate('/messages');
+            }
         } catch (err) {
-            console.error("Chat error:", err);
+            console.error("Chat & Checkout error:", err);
             navigate('/messages');
         }
     };
 
     const handleCheckout = async () => {
         if (cartItems.length === 0) return;
-        if (!window.confirm("Confirming purchase will move these items to your 'Previous Orders' history. Continue?")) return;
-
-        try {
-            await axios.post('http://localhost:5001/api/orders/checkout', {}, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            alert("Order recorded successfully! You can find it in your Previous Orders.");
-            window.dispatchEvent(new Event('cartUpdated'));
-            navigate('/orders');
-        } catch (err) {
-            console.error("Checkout error:", err);
-            alert("Failed to record order. Please try again.");
-        }
+        
+        showModal({
+            title: 'Confirm Purchase',
+            message: "Confirming purchase will move these items to your 'Previous Orders' history. Continue?",
+            type: 'confirm',
+            onConfirm: async () => {
+                try {
+                    await axios.post('http://localhost:5001/api/orders/checkout', { status: 'completed' }, {
+                        headers: { Authorization: `Bearer ${token}` }
+                    });
+                    showModal({
+                        title: 'Success',
+                        message: "Order recorded successfully! You can find it in your Previous Orders.",
+                        type: 'alert'
+                    });
+                    window.dispatchEvent(new Event('cartUpdated'));
+                    navigate('/orders');
+                } catch (err) {
+                    console.error("Checkout error:", err);
+                    showModal({
+                        title: 'Checkout Failed',
+                        message: "Failed to record order. Please try again.",
+                        type: 'alert'
+                    });
+                }
+            }
+        });
     };
 
     if (loading) return <div className="cart-loading">Loading your cart...</div>;
 
     return (
-        <div className="cart-container-v2">
+        <div className="dashboard-page-container">
+            <div className="cart-container-v2">
             <div className="cart-main-layout">
                 <div className="cart-left-section">
                     <div className="cart-title-block">
@@ -178,6 +218,23 @@ const Cart = () => {
                 <div className="cart-right-section">
                     <div className="order-summary-card">
                         <h2>Meetup Summary</h2>
+                        {isSuspended && (
+                            <div className="suspension-warning-box" style={{ 
+                                backgroundColor: '#fef2f2', 
+                                border: '1px solid #fee2e2', 
+                                padding: '1rem', 
+                                borderRadius: '12px', 
+                                marginBottom: '1.5rem',
+                                display: 'flex',
+                                gap: '0.75rem',
+                                color: '#991b1b'
+                            }}>
+                                <span style={{ fontSize: '1.25rem' }}>🚫</span>
+                                <p style={{ margin: 0, fontSize: '0.85rem', lineHeight: '1.4' }}>
+                                    <strong>Checkout Restricted:</strong> Your account is currently suspended. You cannot initiate chats or confirm purchases.
+                                </p>
+                            </div>
+                        )}
                         <div className="summary-list">
                             <div className="summary-item">
                                 <span>Estimated Value ({totalItems} items)</span>
@@ -198,12 +255,22 @@ const Cart = () => {
                             <span className="total-price-v2">₹{calculateTotal().toFixed(2)}</span>
                         </div>
                         <div className="cart-action-buttons">
-                            <button className="checkout-btn-v2" onClick={handleChatWithSellers}>
-                                Chat with Sellers
+                            <button 
+                                className="checkout-btn-v2" 
+                                onClick={handleChatWithSellers}
+                                disabled={isSuspended}
+                                style={isSuspended ? { opacity: 0.6, cursor: 'not-allowed' } : {}}
+                            >
+                                {isSuspended ? 'Account Suspended' : 'Chat with Sellers'}
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
                             </button>
-                            <button className="confirm-order-btn" onClick={handleCheckout}>
-                                Confirm Purchase
+                            <button 
+                                className="confirm-order-btn" 
+                                onClick={handleCheckout}
+                                disabled={isSuspended}
+                                style={isSuspended ? { opacity: 0.6, cursor: 'not-allowed' } : {}}
+                            >
+                                {isSuspended ? 'Restricted' : 'Confirm Purchase'}
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"></path></svg>
                             </button>
                         </div>
@@ -215,6 +282,8 @@ const Cart = () => {
                     </div>
                 </div>
             </div>
+            </div>
+            <Footer />
         </div>
     );
 };

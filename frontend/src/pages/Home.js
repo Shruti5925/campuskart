@@ -73,7 +73,7 @@ const Home = () => {
             return p === a || p === a.replace(/s$/, '') || a === p.replace(/s$/, '');
         };
 
-        let filtered = allProducts.filter(p => p.status === 'active' || !p.status);
+        let filtered = allProducts.filter(p => !p.isFlagged && (p.status === 'active' || !p.status));
         if (activeCategory !== 'All Items') {
             filtered = filtered.filter(p => isCategoryMatch(p.category, activeCategory));
         }
@@ -83,7 +83,7 @@ const Home = () => {
     }, [activeCategory, allProducts]);
 
     const getPriceProducts = (maxPrice) => {
-        let filtered = allProducts.filter(p => (p.status === 'active' || !p.status) && p.price <= maxPrice);
+        let filtered = allProducts.filter(p => !p.isFlagged && (p.status === 'active' || !p.status) && p.price <= maxPrice);
         if (activeCategory !== 'All Items') {
             const isCategoryMatch = (pCat, activeCat) => {
                 if (!pCat || !activeCat) return false;

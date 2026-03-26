@@ -36,7 +36,7 @@
 
 .footer-column h4 {
     font-size: 0.875rem;
-    font-weight: 700;
+    font-weight: 800;
     text-transform: uppercase;
     color: #6366f1;
     /* Bright accent for headers */
@@ -67,7 +67,7 @@
 
 .newsletter h4 {
     font-size: 0.875rem;
-    font-weight: 700;
+    font-weight: 800;
     text-transform: uppercase;
     color: #6366f1;
     margin-bottom: 1.5rem;
@@ -120,6 +120,15 @@
     align-items: center;
     padding-top: 2rem;
     border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.footer.admin-footer {
+    padding: 1rem 3rem;
+}
+
+.footer.admin-footer .footer-bottom {
+    padding-top: 0;
+    border-top: none;
 }
 
 .footer-bottom p {

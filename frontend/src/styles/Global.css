@@ -57,6 +57,7 @@
 
 body {
     font-family: var(--font-family);
+    font-weight: 600;
     color: var(--text-main);
     background-color: var(--bg-light);
     line-height: 1.5;
@@ -102,4 +103,98 @@ body {
 @keyframes scaleIn {
     from { transform: scale(0.7); opacity: 0; }
     to   { transform: scale(1);   opacity: 1; }
+}
+
+/* Dashboard/Profile/Orders Balanced Layout */
+.dashboard-page-container {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+/* Standardized Category Badges */
+.cat-tag, .product-category, .category-badge {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    padding: 4px 10px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    width: fit-content;
+    white-space: nowrap;
+    line-height: 1;
+}
+
+/* Category Specific Colors */
+.cat-electronics, .cat-gadgets, .cat-mobile, .cat-laptop {
+    color: var(--accent-indigo) !important;
+    background: var(--accent-indigo-light) !important;
+    border: 1.5px solid var(--accent-indigo-border) !important;
+}
+
+.cat-books, .cat-book, .cat-study-material, .cat-notes, .cat-stationery {
+    color: var(--accent-rose) !important;
+    background: var(--accent-rose-light) !important;
+    border: 1.5px solid var(--accent-rose-border) !important;
+}
+
+.cat-fan, .cat-fans, .cat-cooler {
+    color: var(--accent-teal) !important;
+    background: var(--accent-teal-light) !important;
+    border: 1.5px solid var(--accent-teal-border) !important;
+}
+
+.cat-cycles, .cat-cycle, .cat-bicycle {
+    color: var(--accent-lime) !important;
+    background: var(--accent-lime-light) !important;
+    border: 1.5px solid var(--accent-lime-border) !important;
+}
+
+.cat-trunk, .cat-trunks, .cat-luggage, .cat-box {
+    color: var(--accent-amber) !important;
+    background: var(--accent-amber-light) !important;
+    border: 1.5px solid var(--accent-amber-border) !important;
+}
+
+.cat-fashion, .cat-clothing, .cat-clothes, .cat-shoes, .cat-accessories {
+    color: var(--accent-rose) !important;
+    background: var(--accent-rose-light) !important;
+    border: 1.5px solid var(--accent-rose-border) !important;
+}
+
+.cat-others, .cat-other, .cat-miscellaneous, .cat-misc {
+    color: var(--accent-purple) !important;
+    background: var(--accent-purple-light) !important;
+    border: 1.5px solid var(--accent-purple-border) !important;
+}
+
+/* Fallback for categories not explicitly matched */
+.cat-tag:not([class*="cat-"]), 
+.product-category:not([class*="cat-"]),
+.category-badge:not([class*="cat-"]) {
+    color: var(--text-muted);
+    background: var(--bg-alt);
+    border: 1.5px solid var(--border-color);
+}
+
+.dashboard-layout {
+    display: flex;
+    flex: 1;
+}
+
+.dashboard-main {
+    flex: 1;
+    margin-left: 0;
+    padding-top: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Sidebar sticky override for pages using .dashboard-layout */
+.dashboard-layout .app-sidebar {
+    position: sticky;
+    top: 0;
+    height: 100vh;
 }

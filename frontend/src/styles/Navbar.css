@@ -73,7 +73,7 @@ nav.navbar-container {
     padding: 4px 20px;
     color: #6b7280;
     text-decoration: none;
-    font-weight: 600;
+    font-weight: 700;
     font-size: 0.7rem;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
@@ -93,7 +93,7 @@ nav.navbar-container {
 .nav-label {
     transition: all 0.3s ease;
     font-size: 0.7rem;
-    font-weight: 600;
+    font-weight: 700;
     opacity: 0.8;
 }
 
@@ -191,7 +191,7 @@ nav.navbar-container {
 
 .pill-btn-label {
     font-size: 0.875rem;
-    font-weight: 700;
+    font-weight: 800;
 }
 
 .sell-icon-btn {
@@ -264,7 +264,7 @@ nav.navbar-container {
 }
 
 .dropdown-name {
-    font-weight: 700;
+    font-weight: 800;
     font-size: 0.9375rem;
     color: var(--text-main);
     margin: 0;
@@ -293,7 +293,7 @@ nav.navbar-container {
     color: var(--text-main);
     text-decoration: none;
     font-size: 0.875rem;
-    font-weight: 500;
+    font-weight: 600;
     border-radius: 8px;
     transition: all 0.2s;
     border: none;
@@ -337,4 +337,77 @@ nav.navbar-container {
     background-color: var(--hover-green) !important;
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(0, 209, 78, 0.2);
+}
+
+.suspension-banner {
+    background-color: #fef2f2;
+    border-bottom: 1px solid #fee2e2;
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    width: 100%;
+    z-index: 1001;
+    position: relative;
+    font-family: var(--font-family);
+}
+
+.warning-icon {
+    font-size: 1.25rem;
+}
+
+.suspension-text {
+    color: #991b1b;
+    font-size: 0.875rem;
+    line-height: 1.4;
+    text-align: center;
+}
+
+.suspension-text strong {
+    font-weight: 800;
+    margin-right: 4px;
+}
+
+.approval-banner {
+    background-color: #f0fdf4; /* Light green for info/pending */
+    border-bottom: 1px solid #dcfce7;
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    width: 100%;
+    z-index: 1001;
+    position: relative;
+    font-family: var(--font-family);
+}
+
+.info-icon {
+    font-size: 1.25rem;
+}
+
+.approval-text {
+    color: #166534; /* Dark green text */
+    font-size: 0.875rem;
+    line-height: 1.4;
+    text-align: center;
+}
+
+.approval-text strong {
+    font-weight: 800;
+    margin-right: 4px;
+}
+
+.disabled-btn {
+    opacity: 0.6;
+    cursor: not-allowed !important;
+    filter: grayscale(0.5);
+}
+
+.disabled-btn:hover {
+    transform: none !important;
+    box-shadow: none !important;
+    background: var(--primary-color) !important;
+    color: white !important;
 }

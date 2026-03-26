@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "../Components/Sidebar";
+import Footer from "../Components/Footer";
 import "../styles/AddProduct.css";
 import "../styles/Dashboard.css";
 
@@ -20,8 +21,27 @@ const AddProduct = () => {
   });
   const [images, setImages] = useState([]);
   const [previews, setPreviews] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [userData, setUserData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const res = await axios.get("http://localhost:5001/api/auth/me", {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setUserData(res.data);
+      } catch (err) {
+        console.error("Error fetching user:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    if (token) fetchUser();
+    else setLoading(false);
+  }, [token]);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -46,19 +66,25 @@ const AddProduct = () => {
     setPreviews(newPreviews);
   };
 
-  const nextStep = () => setStep(step + 1);
-  const prevStep = () => setStep(step - 1);
+  const nextStep = () => {
+    setStep(step + 1);
+    window.scrollTo(0, 0);
+  };
+  const prevStep = () => {
+    setStep(step - 1);
+    window.scrollTo(0, 0);
+  };
 
   const submitProduct = async (e) => {
     e.preventDefault();
-    if (loading) return;
-    setLoading(true);
+    if (isSubmitting) return;
+    setIsSubmitting(true);
     setError("");
 
     const formData = new FormData();
     Object.keys(form).forEach(key => formData.append(key, form[key]));
     images.forEach(img => formData.append('images', img));
-    formData.append('status', 'active'); // Ensure it's active when submitted
+    formData.append('status', 'pending'); // Ensure it goes under review
 
     try {
       await axios.post("http://localhost:5001/api/products", formData, {
@@ -71,18 +97,18 @@ const AddProduct = () => {
       console.error("error adding product", err);
       setError(err.response?.data?.message || "Failed to list product. Please try again.");
     } finally {
-      setLoading(false);
+      setIsSubmitting(false);
     }
   };
 
   const handleSaveDraft = async (e) => {
     e.preventDefault();
-    if (loading) return;
+    if (isSubmitting) return;
     if (!form.title) {
       setError("Please at least provide a title to save a draft.");
       return;
     }
-    setLoading(true);
+    setIsSubmitting(true);
     setError("");
 
     const formData = new FormData();
@@ -102,7 +128,7 @@ const AddProduct = () => {
       console.error("error saving draft", err);
       setError(err.response?.data?.message || "Failed to save draft. Please try again.");
     } finally {
-      setLoading(false);
+      setIsSubmitting(false);
     }
   };
 
@@ -110,10 +136,11 @@ const AddProduct = () => {
   const isStep2Complete = form.price && form.pickupPoint;
 
   return (
-    <div className="dashboard-layout">
-      <Sidebar />
-      <main className="dashboard-main">
-        <div className="list-item-content">
+    <div className="dashboard-page-container">
+      <div className="dashboard-layout">
+        <Sidebar />
+        <main className="dashboard-main">
+          <div className="list-item-content">
 
           <div className="content-left">
             <div className="page-title">
@@ -122,16 +149,61 @@ const AddProduct = () => {
               <button className="guidelines-btn">Posting Guidelines</button>
             </div>
 
-            <div className="step-card">
-              <div className="step-header">
-                <h3>Step {step}: {step === 1 ? 'Product Details' : 'Pricing & Location'}</h3>
-                <span className="step-indicator">{step} of 2</span>
+            {loading ? (
+              <div className="loading-state" style={{ padding: '4rem', textAlign: 'center' }}>
+                <div className="spinner"></div>
+                <p>Verifying account status...</p>
               </div>
-              <div className="progress-bar">
-                <div className="progress-fill" style={{ width: step === 1 ? '50%' : '100%' }}></div>
+            ) : userData?.isSuspended ? (
+              <div className="section-card suspension-notice-box" style={{ 
+                background: '#fef2f2', 
+                border: '1px solid #fee2e2', 
+                padding: '3rem', 
+                textAlign: 'center',
+                borderRadius: '24px'
+              }}>
+                <div style={{ fontSize: '4rem', marginBottom: '1.5rem' }}>🚫</div>
+                <h2 style={{ color: '#991b1b', fontWeight: '900', marginBottom: '1rem' }}>Access Restricted</h2>
+                <p style={{ color: '#b91c1c', fontSize: '1.1rem', lineHeight: '1.6', maxWidth: '500px', margin: '0 auto 2rem' }}>
+                  Your account has been suspended by the campus administrator. You are currently restricted from listing new products or saving drafts.
+                </p>
+                <div style={{ padding: '1rem', background: 'white', borderRadius: '12px', border: '1px solid #fee2e2', display: 'inline-block' }}>
+                   <p style={{ margin: 0, fontSize: '0.9rem', color: '#7f1d1d' }}>
+                     Please contact the help center if you believe this is an error.
+                   </p>
+                </div>
               </div>
-              <p className="next-step-hint">{step === 1 ? 'Next: Pricing & Location' : 'Next: Preview'}</p>
-            </div>
+            ) : (userData && userData.role !== 'admin' && !userData.isVerified) ? (
+              <div className="section-card approval-notice-box" style={{ 
+                background: '#f0fdf4', 
+                border: '1px solid #dcfce7', 
+                padding: '3rem', 
+                textAlign: 'center',
+                borderRadius: '24px'
+              }}>
+                <div style={{ fontSize: '4rem', marginBottom: '1.5rem' }}>⏳</div>
+                <h2 style={{ color: '#166534', fontWeight: '900', marginBottom: '1rem' }}>Account Pending Approval</h2>
+                <p style={{ color: '#15803d', fontSize: '1.1rem', lineHeight: '1.6', maxWidth: '500px', margin: '0 auto 2rem' }}>
+                  Your account is currently in the approval queue. You will be able to list new products and save drafts once an administrator has verified your account details.
+                </p>
+                <div style={{ padding: '1rem', background: 'white', borderRadius: '12px', border: '1px solid #dcfce7', display: 'inline-block' }}>
+                   <p style={{ margin: 0, fontSize: '0.9rem', color: '#14532d' }}>
+                     Most accounts are approved within 24 hours. Thank you for your patience!
+                   </p>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="step-card">
+                  <div className="step-header">
+                    <h3>Step {step}: {step === 1 ? 'Product Details' : 'Pricing & Location'}</h3>
+                    <span className="step-indicator">{step} of 2</span>
+                  </div>
+                  <div className="progress-bar">
+                    <div className="progress-fill" style={{ width: step === 1 ? '50%' : '100%' }}></div>
+                  </div>
+                  <p className="next-step-hint">{step === 1 ? 'Next: Pricing & Location' : 'Next: Preview'}</p>
+                </div>
 
             {step === 1 && (
               <>
@@ -276,17 +348,19 @@ const AddProduct = () => {
               ) : (
                 <>
                   <div className="step-actions">
-                    <button className="back-btn" onClick={prevStep} disabled={loading}>Back</button>
-                    <button className="continue-btn" onClick={submitProduct} disabled={!isStep2Complete || loading}>
-                      {loading ? 'Listing...' : 'List Product'}
+                    <button className="back-btn" onClick={prevStep} disabled={isSubmitting}>Back</button>
+                    <button className="continue-btn" onClick={submitProduct} disabled={!isStep2Complete || isSubmitting}>
+                      {isSubmitting ? 'Listing...' : 'List Product'}
                     </button>
                   </div>
-                  <button className="draft-btn" onClick={handleSaveDraft} disabled={loading}>
-                    {loading ? 'Saving...' : 'Save as Draft'}
+                  <button className="draft-btn" onClick={handleSaveDraft} disabled={isSubmitting}>
+                    {isSubmitting ? 'Saving...' : 'Save as Draft'}
                   </button>
                 </>
               )}
             </div>
+            </>
+            )}
           </div>
 
           <div className="content-right">
@@ -314,7 +388,9 @@ const AddProduct = () => {
         </div>
       </main>
     </div>
-  );
+    <Footer />
+  </div>
+);
 };
 
 export default AddProduct;

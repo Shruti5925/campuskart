@@ -10,7 +10,15 @@ const orderSchema = new mongoose.Schema({
     product: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Product",
-      required: true
+      required: false // Changed to false to allow deleted products
+    },
+    productTitle: {
+      type: String,
+      required: false
+    },
+    productImage: {
+      type: String,
+      required: false
     },
     quantity: {
       type: Number,
@@ -28,8 +36,8 @@ const orderSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ["pending", "completed", "cancelled"],
-    default: "completed"
+    enum: ["pending", "completed", "cancelled", "returned"],
+    default: "pending"
   },
   createdAt: {
     type: Date,

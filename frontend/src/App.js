@@ -16,9 +16,16 @@ import Guidelines from "./pages/Guidelines";
 import Cart from "./pages/Cart";
 import Messages from "./pages/Messages";
 import Orders from "./pages/Orders";
+import Settings from "./pages/Settings";
+import AdminDashboard from "./pages/AdminDashboard";
+import AdminLogs from "./pages/AdminLogs";
+import Notifications from "./pages/Notifications";
+import Support from "./pages/Support";
 import { useLocation, Navigate } from "react-router-dom";
 import ScrollToTop from "./Components/ScrollToTop";
 import Navbar from "./Components/Navbar";
+import { ModalProvider } from "./context/ModalContext";
+import CustomModal from "./Components/CustomModal";
 
 
 const ProtectedRoute = ({ children }) => {
@@ -31,17 +38,58 @@ const ProtectedRoute = ({ children }) => {
   return children;
 };
 
+const AdminRoute = ({ children }) => {
+  const token = localStorage.getItem("token");
+  const location = useLocation();
+  
+  if (!token) return <Navigate to="/login" replace state={{ from: location }} />;
+  
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    if (payload.role !== 'admin') return <Navigate to="/dashboard" replace />;
+  } catch (e) {
+    return <Navigate to="/login" replace />;
+  }
+  
+  return children;
+};
+
+const HomeRoute = () => {
+    const token = localStorage.getItem("token");
+    if (token) {
+        try {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            if (payload.role === 'admin') return <AdminDashboard />;
+        } catch (e) {
+            console.error("Token error in HomeRoute:", e);
+        }
+    }
+    return <Home />;
+};
+
 const AppContent = () => {
   const location = useLocation();
+  const token = localStorage.getItem("token");
+  let isAdmin = false;
+  if (token) {
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      isAdmin = payload.role === 'admin';
+    } catch (e) {}
+  }
+
   const showNavbarPaths = ["/", "/login", "/signup", "/products", "/wishlist", "/guidelines", "/cart"];
-  const shouldShowNavbar = showNavbarPaths.includes(location.pathname) ||
-    location.pathname.startsWith("/product/");
+  const shouldShowNavbar = (showNavbarPaths.includes(location.pathname) ||
+    location.pathname.startsWith("/product/")) && 
+    location.pathname !== "/admin" && 
+    !(location.pathname === "/" && isAdmin);
 
   return (
     <>
+      <CustomModal />
       {shouldShowNavbar && <Navbar />}
       <Routes>
-        <Route path="/" element={<Home />} />
+        <Route path="/" element={<HomeRoute />} />
         <Route path="/product/:id" element={<ProductView />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
@@ -92,6 +140,14 @@ const AppContent = () => {
           }
         />
         <Route
+          path="/settings"
+          element={
+            <ProtectedRoute>
+              <Settings />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/messages"
           element={
             <ProtectedRoute>
@@ -99,7 +155,32 @@ const AppContent = () => {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/admin"
+          element={
+            <AdminRoute>
+              <AdminDashboard />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/logs"
+          element={
+            <AdminRoute>
+              <AdminLogs />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/notifications"
+          element={
+            <ProtectedRoute>
+              <Notifications />
+            </ProtectedRoute>
+          }
+        />
         <Route path="/guidelines" element={<Guidelines />} />
+        <Route path="/support" element={<Support />} />
       </Routes>
     </>
   );
@@ -107,12 +188,13 @@ const AppContent = () => {
 
 function App() {
   return (
-    <BrowserRouter>
-      <ScrollToTop />
-      <AppContent />
-    </BrowserRouter>
+    <ModalProvider>
+      <BrowserRouter>
+        <ScrollToTop />
+        <AppContent />
+      </BrowserRouter>
+    </ModalProvider>
   );
 }
 
 export default App;
-
