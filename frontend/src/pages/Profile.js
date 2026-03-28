@@ -28,7 +28,7 @@ function Profile() {
     const [pendingRemovePhoto, setPendingRemovePhoto] = useState(false);
 
     const navigate = useNavigate();
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
 
 
 

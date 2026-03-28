@@ -10,7 +10,7 @@ import maleAvatar from '../assets/male-avatar.png';
 const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const token = localStorage.getItem('token');
+  const token = sessionStorage.getItem('token');
   const [userData, setUserData] = useState(null);
   const [cartCount, setCartCount] = useState(0);
   const [notifCount, setNotifCount] = useState(0);
@@ -24,8 +24,8 @@ const Navbar = () => {
           headers: { Authorization: `Bearer ${token}` }
         });
         setUserData(res.data);
-        localStorage.setItem('isSuspended', res.data.isSuspended);
-        localStorage.setItem('isVerified', res.data.isVerified);
+        sessionStorage.setItem('isSuspended', res.data.isSuspended);
+        sessionStorage.setItem('isVerified', res.data.isVerified);
         
         // Connect and register socket for real-time notifications
         if (res.data._id) {
@@ -39,7 +39,7 @@ const Navbar = () => {
       } catch (err) {
         console.error("Error fetching user data:", err);
         if (err.response?.status === 401) {
-          localStorage.removeItem('token');
+          sessionStorage.removeItem('token');
           setUserData(null);
         }
       }
@@ -127,8 +127,8 @@ const Navbar = () => {
       message: 'Are you sure you want to logout?',
       type: 'confirm',
       onConfirm: () => {
-        localStorage.removeItem('token');
-        localStorage.removeItem('isSuspended');
+        sessionStorage.removeItem('token');
+        sessionStorage.removeItem('isSuspended');
         disconnectSocket();
         setUserData(null);
         setShowDropdown(false);

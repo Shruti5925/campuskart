@@ -29,8 +29,8 @@ function Login() {
         { email: sanitizedEmail, password: sanitizedPassword }
       );
 
-      localStorage.setItem("token", res.data.token);
-      localStorage.setItem("user", JSON.stringify(res.data.user));
+      sessionStorage.setItem("token", res.data.token);
+      sessionStorage.setItem("user", JSON.stringify(res.data.user));
       setMessage("Login successful ✅");
       
       const redirectPath = res.data.role === 'admin' ? '/admin' : from;

@@ -16,7 +16,7 @@ const Home = () => {
     const [trendingProducts, setTrendingProducts] = useState([]);
     const [recentProducts, setRecentProducts] = useState([]);
     const [wishlist, setWishlist] = useState([]);
-    const token = localStorage.getItem('token');
+    const token = sessionStorage.getItem('token');
 
     const categories = [
         { name: 'All Items', icon: '📦', id: 'all' },

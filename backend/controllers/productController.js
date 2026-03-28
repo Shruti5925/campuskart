@@ -35,6 +35,8 @@ exports.createProduct = async (req, res) => {
 };
 
 // READ ALL
+exports.getProducts = async (req, res) => {
+  try {
     // Regular users should only see active and explicitly unflagged items, excluding support markers
     const query = { 
       status: "active", 
@@ -59,7 +61,7 @@ exports.createProduct = async (req, res) => {
 exports.getAdminPendingProducts = async (req, res) => {
   try {
     const products = await Product.find({ status: "pending" })
-      .populate("seller", "firstName lastName email gender profilePhoto collegeId department mobileNumber")
+      .populate("seller", "firstName lastName email gender profilePhoto collegeId department mobileNumber address")
       .sort("-createdAt");
     res.json(products);
   } catch (err) {
@@ -71,7 +73,7 @@ exports.getAdminPendingProducts = async (req, res) => {
 exports.getAdminApprovedProducts = async (req, res) => {
   try {
     const products = await Product.find({ status: { $in: ["approved", "active", "sold"] } })
-      .populate("seller", "firstName lastName email gender profilePhoto")
+      .populate("seller", "firstName lastName email gender profilePhoto address")
       .sort("-updatedAt");
     res.json(products);
   } catch (err) {
@@ -83,7 +85,7 @@ exports.getAdminApprovedProducts = async (req, res) => {
 exports.getAdminFlaggedProducts = async (req, res) => {
   try {
     const products = await Product.find({ isFlagged: true })
-      .populate("seller", "firstName lastName email gender profilePhoto")
+      .populate("seller", "firstName lastName email gender profilePhoto address")
       .sort("-updatedAt");
     res.json(products);
   } catch (err) {
@@ -198,7 +200,7 @@ exports.rejectProduct = async (req, res) => {
 exports.getProduct = async (req, res) => {
   try {
     const product = await Product.findById(req.params.id)
-      .populate("seller", "firstName lastName email gender");
+      .populate("seller", "firstName lastName email gender address");
 
     if (!product) return res.status(404).json({ message: "Product not found" });
     
@@ -434,8 +436,9 @@ exports.deleteReview = async (req, res) => {
 
 exports.getAdminStats = async (req, res) => {
   try {
-    const cutoffDate = process.env.STATS_CUTOFF_DATE ? new Date(process.env.STATS_CUTOFF_DATE) : new Date(0);
-    const dateFilter = { createdAt: { $gte: cutoffDate } };
+    const dateFilter = process.env.STATS_CUTOFF_DATE 
+        ? { createdAt: { $gte: new Date(process.env.STATS_CUTOFF_DATE) } } 
+        : {};
 
     const totalProducts = await Product.countDocuments(dateFilter);
     const pendingApprovals = await Product.countDocuments({ ...dateFilter, status: "pending" });

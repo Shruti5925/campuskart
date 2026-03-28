@@ -10,7 +10,7 @@ import '../styles/Wishlist.css';
 const Wishlist = () => {
     const [wishlist, setWishlist] = useState([]);
     const [loading, setLoading] = useState(true);
-    const token = localStorage.getItem('token');
+    const token = sessionStorage.getItem('token');
     const { showModal } = useModal();
 
     useEffect(() => {

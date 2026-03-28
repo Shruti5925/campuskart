@@ -25,7 +25,7 @@ const Dashboard = () => {
     const [activeTab, setActiveTab] = useState('Active Listings');
     const [searchTerm, setSearchTerm] = useState('');
     const [isSearchFocused, setIsSearchFocused] = useState(false);
-    const token = localStorage.getItem('token');
+    const token = sessionStorage.getItem('token');
     const [userData, setUserData] = useState(null);
     const { showModal } = useModal();
 

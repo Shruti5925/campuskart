@@ -48,7 +48,7 @@ const ProductView = () => {
     const { showModal } = useModal();
     
 
-    const token = localStorage.getItem('token');
+    const token = sessionStorage.getItem('token');
     let currentUser = null;
     if (token) {
         try {
@@ -60,9 +60,9 @@ const ProductView = () => {
             console.error("JWT Decode Error:", e);
         }
     }
-    const isSuspended = localStorage.getItem('isSuspended') === 'true';
-    const isVerified = localStorage.getItem('isVerified') !== 'false'; // Default to true if not set (to avoid blocking on load), but Navbar will set it precisely
-    const isUnverified = localStorage.getItem('isVerified') === 'false';
+    const isSuspended = sessionStorage.getItem('isSuspended') === 'true';
+    const isVerified = sessionStorage.getItem('isVerified') !== 'false'; // Default to true if not set (to avoid blocking on load), but Navbar will set it precisely
+    const isUnverified = sessionStorage.getItem('isVerified') === 'false';
 
     const fetchProductData = async () => {
         try {

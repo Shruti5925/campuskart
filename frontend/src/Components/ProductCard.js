@@ -9,7 +9,7 @@ import '../styles/ProductCard.css';
 
 const ProductCard = ({ product, isSeller, onDelete, isWishlistPage, onRemove, showContactBtn, initialIsWishlisted, isAdmin, variant = 'grid' }) => {
     const navigate = useNavigate();
-    const token = localStorage.getItem('token');
+    const token = sessionStorage.getItem('token');
     const { showModal } = useModal();
     let currentUser = null;
     if (token) {
@@ -22,8 +22,8 @@ const ProductCard = ({ product, isSeller, onDelete, isWishlistPage, onRemove, sh
             console.error("JWT Decode Error:", e);
         }
     }
-    const isSuspended = localStorage.getItem('isSuspended') === 'true';
-    const isUnverified = localStorage.getItem('isVerified') === 'false';
+    const isSuspended = sessionStorage.getItem('isSuspended') === 'true';
+    const isUnverified = sessionStorage.getItem('isVerified') === 'false';
     const currentUserId = currentUser?.id || currentUser?._id;
     const isOwnProduct = currentUserId && (product.seller?._id || product.seller) === currentUserId;
 

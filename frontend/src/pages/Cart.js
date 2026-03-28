@@ -9,9 +9,9 @@ import '../styles/Dashboard.css';
 const Cart = () => {
     const [cartItems, setCartItems] = useState([]);
     const [loading, setLoading] = useState(true);
-    const token = localStorage.getItem('token');
+    const token = sessionStorage.getItem('token');
     const navigate = useNavigate();
-    const isSuspended = localStorage.getItem('isSuspended') === 'true';
+    const isSuspended = sessionStorage.getItem('isSuspended') === 'true';
     const { showModal } = useModal();
 
     useEffect(() => {

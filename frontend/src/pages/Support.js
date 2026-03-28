@@ -11,7 +11,7 @@ const Support = () => {
     const { showModal } = useModal();
     const [searchQuery, setSearchQuery] = useState('');
     const [activeTopic, setActiveTopic] = useState(null);
-    const token = localStorage.getItem('token');
+    const token = sessionStorage.getItem('token');
 
     const handleLiveChat = async () => {
         try {

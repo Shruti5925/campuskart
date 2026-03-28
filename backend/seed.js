@@ -11,7 +11,7 @@ mongoose
 const seedUser = async () => {
     try {
         // Check if user exists
-        const existingUser = await User.findOne({ email: "admin@example.com" });
+        const existingUser = await User.findOne({ email: "admin@banasthali.in" });
         if (existingUser) {
             console.log("User already exists");
             process.exit();
@@ -19,7 +19,7 @@ const seedUser = async () => {
 
         // Hash password
         const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash("password123", salt);
+        const hashedPassword = await bcrypt.hash("Admin@CampusKart2026", salt);
 
         // Create user
         const newUser = new User({
@@ -28,9 +28,8 @@ const seedUser = async () => {
             lastName: "User",
             gender: "Male",
             address: "Campus Hostel A",
-            email: "admin@example.com",
+            email: "admin@banasthali.in",
             password: hashedPassword,
-            // ... (rest of the code snippet)
             role: "admin",
             collegeId: "ADMIN001",
             department: "IT",
@@ -41,8 +40,8 @@ const seedUser = async () => {
 
         await newUser.save();
         console.log("User seeded successfully");
-        console.log("Email: admin@example.com");
-        console.log("Password: password123");
+        console.log("Email: admin@banasthali.in");
+        console.log("Password: Admin@CampusKart2026");
         process.exit();
     } catch (err) {
         console.error(err);

@@ -100,7 +100,7 @@ function Signup() {
       };
 
       const res = await axios.post("http://localhost:5001/api/auth/signup", sanitizedData);
-      localStorage.setItem("token", res.data.token);
+      sessionStorage.setItem("token", res.data.token);
       setMessage("Registration successful! 🎉 Your account is now in the approval queue. An administrator will review your details shortly.");
       setTimeout(() => navigate(from, { replace: true }), 3000);
     } catch (err) {

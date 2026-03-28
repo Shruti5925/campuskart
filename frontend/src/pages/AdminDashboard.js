@@ -49,7 +49,7 @@ const AdminDashboard = () => {
     const [editUserData, setEditUserData] = useState(null);
     const [reviewTimeRange, setReviewTimeRange] = useState('all'); // all, 30days
     const [reportFilterStatus, setReportFilterStatus] = useState('all'); // all, pending, resolved, dismissed
-    const token = localStorage.getItem('token');
+    const token = sessionStorage.getItem('token');
     const { showModal } = useModal();
     const profileDropdownRef = useRef(null);
 
@@ -1630,7 +1630,7 @@ const AdminDashboard = () => {
                                                     message: 'Are you sure you want to logout from Admin?',
                                                     type: 'confirm',
                                                     onConfirm: () => {
-                                                        localStorage.removeItem('token');
+                                                        sessionStorage.removeItem('token');
                                                         window.location.href='/login';
                                                     }
                                                 });

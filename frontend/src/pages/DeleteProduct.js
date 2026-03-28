@@ -3,8 +3,8 @@ import axios from "axios";
 // Function to delete a product
 export const deleteProduct = async (productId) => {
   try {
-    // Get token from localStorage (assuming you saved it on login)
-    const token = localStorage.getItem("token");
+    // Get token from sessionStorage (assuming you saved it on login)
+    const token = sessionStorage.getItem("token");
 
     if (!token) {
       console.error("No token found. Please login first.");

@@ -6,7 +6,7 @@ import '../styles/Auth.css'; // Reuse premium card styles
 
 const SellerGate = () => {
     const navigate = useNavigate();
-    const token = localStorage.getItem('token');
+    const token = sessionStorage.getItem('token');
 
     const handleAction = (path) => {
         // If they click Login or Signup, we want them redirected to /want-to-sell after success

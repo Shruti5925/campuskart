@@ -27,7 +27,7 @@ const Messages = ({ hideSidebar = false, isAdmin = false, propTargetUserId = nul
     const messagesListRef = useRef(null);
     const messagesEndRef = useRef(null);
     const socketRef = useRef(null);
-    const token = localStorage.getItem('token');
+    const token = sessionStorage.getItem('token');
 
     const scrollToBottom = () => {
         if (messagesListRef.current) {
@@ -123,7 +123,7 @@ const Messages = ({ hideSidebar = false, isAdmin = false, propTargetUserId = nul
     };
 
     const handleLogout = () => {
-        localStorage.removeItem('token');
+        sessionStorage.removeItem('token');
         window.location.href = '/login';
     };
 

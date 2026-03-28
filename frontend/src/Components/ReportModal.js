@@ -29,7 +29,7 @@ const ReportModal = ({ isOpen, onClose, targetId, targetType, targetName }) => {
 
         setLoading(true);
         try {
-            const token = localStorage.getItem('token');
+            const token = sessionStorage.getItem('token');
             await axios.post('http://localhost:5001/api/reports', {
                 targetType,
                 targetId,

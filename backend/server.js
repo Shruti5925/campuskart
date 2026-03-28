@@ -2,6 +2,7 @@ const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 require("dotenv").config();
+const PORT = process.env.PORT || 5001;
 
 const authRoutes = require("./routes/authRoutes");
 const productRoutes = require("./routes/productRoutes");
@@ -57,22 +58,6 @@ app.use((req, res, next) => {
   next();
 });
 
-const fs = require("fs");
-
-// Request logging middleware to file for debugging
-app.use((req, res, next) => {
-  const logEntry = `[${new Date().toISOString()}] ${req.method} ${req.url}\n`;
-  fs.appendFileSync(path.join(__dirname, "debug_api.log"), logEntry);
-
-  const oldResJson = res.json;
-  res.json = function (data) {
-    fs.appendFileSync(path.join(__dirname, "debug_api.log"), `[${new Date().toISOString()}] Response: ${res.statusCode} for ${req.url}\n`);
-    return oldResJson.apply(res, arguments);
-  };
-
-  next();
-});
-
 // Routes
 console.log("Mounting /api/auth...");
 app.use("/api/auth", authRoutes);
@@ -109,5 +94,6 @@ app.post("/api/subscribe", async (req, res) => {
   }
 });
 
-const PORT = process.env.PORT || 5001;
+
+// Start Server
 server.listen(PORT, () => console.log(`Server running on port ${PORT}`));

@@ -10,7 +10,7 @@ const AdminLogs = () => {
     const [showProfileDropdown, setShowProfileDropdown] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
     const navigate = useNavigate();
-    const token = localStorage.getItem('token');
+    const token = sessionStorage.getItem('token');
     const profileDropdownRef = useRef(null);
 
     // Close dropdown on click outside
@@ -151,7 +151,7 @@ const AdminLogs = () => {
                                         <button 
                                             className="logout-btn" 
                                             onClick={() => {
-                                                localStorage.removeItem('token');
+                                                sessionStorage.removeItem('token');
                                                 window.location.href='/login';
                                             }}
                                             style={{

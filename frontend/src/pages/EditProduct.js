@@ -9,7 +9,7 @@ import "../styles/Dashboard.css";
 const EditProduct = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const token = localStorage.getItem("token");
+  const token = sessionStorage.getItem("token");
 
   const [form, setForm] = useState({
     title: "",

@@ -14,7 +14,7 @@ const Orders = () => {
     const [activeTab, setActiveTab] = useState('All Orders');
     const [searchTerm, setSearchTerm] = useState('');
     const [isSearchFocused, setIsSearchFocused] = useState(false);
-    const token = localStorage.getItem('token');
+    const token = sessionStorage.getItem('token');
     const { showModal } = useModal();
 
     useEffect(() => {

@@ -8,7 +8,7 @@ import "../styles/Dashboard.css";
 
 const AddProduct = () => {
   const navigate = useNavigate();
-  const token = localStorage.getItem("token");
+  const token = sessionStorage.getItem("token");
   const [step, setStep] = useState(1);
   const [form, setForm] = useState({
     title: "",

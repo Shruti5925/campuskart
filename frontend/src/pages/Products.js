@@ -10,7 +10,7 @@ import "../styles/Dashboard.css";
 const Products = ({ isSeller = false }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const token = localStorage.getItem("token");
+  const token = sessionStorage.getItem("token");
   const searchInputRef = useRef(null);
   const { showModal } = useModal();
 

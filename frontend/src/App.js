@@ -22,6 +22,8 @@ import AdminLogs from "./pages/AdminLogs";
 import Notifications from "./pages/Notifications";
 import Support from "./pages/Support";
 import { useLocation, Navigate } from "react-router-dom";
+import { useEffect } from "react";
+import axios from "axios";
 import ScrollToTop from "./Components/ScrollToTop";
 import Navbar from "./Components/Navbar";
 import { ModalProvider } from "./context/ModalContext";
@@ -29,7 +31,7 @@ import CustomModal from "./Components/CustomModal";
 
 
 const ProtectedRoute = ({ children }) => {
-  const token = localStorage.getItem("token");
+  const token = sessionStorage.getItem("token");
   const location = useLocation();
 
   if (!token) {
@@ -39,7 +41,7 @@ const ProtectedRoute = ({ children }) => {
 };
 
 const AdminRoute = ({ children }) => {
-  const token = localStorage.getItem("token");
+  const token = sessionStorage.getItem("token");
   const location = useLocation();
   
   if (!token) return <Navigate to="/login" replace state={{ from: location }} />;
@@ -55,21 +57,12 @@ const AdminRoute = ({ children }) => {
 };
 
 const HomeRoute = () => {
-    const token = localStorage.getItem("token");
-    if (token) {
-        try {
-            const payload = JSON.parse(atob(token.split('.')[1]));
-            if (payload.role === 'admin') return <AdminDashboard />;
-        } catch (e) {
-            console.error("Token error in HomeRoute:", e);
-        }
-    }
     return <Home />;
 };
 
 const AppContent = () => {
   const location = useLocation();
-  const token = localStorage.getItem("token");
+  const token = sessionStorage.getItem("token");
   let isAdmin = false;
   if (token) {
     try {

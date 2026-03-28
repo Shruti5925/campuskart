@@ -14,7 +14,7 @@ const Sidebar = () => {
     const [hasActiveProducts, setHasActiveProducts] = useState(false);
     const [notifCount, setNotifCount] = useState(0);
     const { showModal } = useModal();
-    const token = localStorage.getItem('token');
+    const token = sessionStorage.getItem('token');
 
     useEffect(() => {
         const fetchData = async () => {
@@ -145,7 +145,7 @@ const Sidebar = () => {
                             message: 'Are you sure you want to logout?',
                             type: 'confirm',
                             onConfirm: () => {
-                                localStorage.removeItem('token');
+                                sessionStorage.removeItem('token');
                                 disconnectSocket();
                                 navigate('/');
                             }
