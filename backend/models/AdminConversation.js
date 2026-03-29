@@ -31,6 +31,11 @@ const adminConversationSchema = new mongoose.Schema({
         type: String,
         enum: ['active', 'resolved'],
         default: 'active'
+    },
+    interactionKey: {
+        type: String,
+        unique: true,
+        required: true
     }
 }, { 
     timestamps: true,

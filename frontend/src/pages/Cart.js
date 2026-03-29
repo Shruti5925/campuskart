@@ -70,22 +70,38 @@ const Cart = () => {
         if (cartItems.length === 0) return;
 
         try {
+            // Group items by seller to avoid multiple chats/messages for the same seller
+            const sellerMap = new Map();
+            cartItems.forEach(item => {
+                if (item.product && item.product.seller) {
+                    const sid = item.product.seller._id.toString();
+                    if (!sellerMap.has(sid)) {
+                        sellerMap.set(sid, {
+                            sellerId: item.product.seller._id,
+                            products: []
+                        });
+                    }
+                    sellerMap.get(sid).products.push(item.product);
+                }
+            });
+
             let firstConvId = null;
 
-            // Loop through all cart items to ping every seller and trigger auto-orders
-            for (const item of cartItems) {
-                if (item.product && item.product.seller) {
-                    const response = await axios.post('http://localhost:5001/api/chat/send', {
-                        receiverId: item.product.seller._id,
-                        productId: item.product._id,
-                        content: `Hi, I'm interested in purchasing ${item.product.title}`
-                    }, {
-                        headers: { Authorization: `Bearer ${token}` }
-                    });
-                    
-                    if (!firstConvId && response.data?.conversationId) {
-                        firstConvId = response.data.conversationId;
-                    }
+            // Loop through each unique seller found in cart
+            for (const [sid, data] of sellerMap) {
+                const productTitles = data.products.map(p => p.title).join(", ");
+                const primaryProduct = data.products[0];
+
+                const response = await axios.post('http://localhost:5001/api/chat/send', {
+                    receiverId: data.sellerId,
+                    productId: primaryProduct._id,
+                    content: `Hi, I'm interested in purchasing: ${productTitles}`
+                }, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+
+                if (!firstConvId && response.data?.conversationId) {
+                    firstConvId = response.data.conversationId;
                 }
             }
 

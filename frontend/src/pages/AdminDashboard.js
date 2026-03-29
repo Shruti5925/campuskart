@@ -737,6 +737,7 @@ const AdminDashboard = () => {
                                     </div>
 
                                     <div className="modal-actions">
+                                        <button className="btn-chat-seller" onClick={() => { handleStartChat(selectedItem.seller); setSelectedItem(null); }}>💬 Message Seller</button>
                                         <button className="btn-reject" onClick={() => handleReject(selectedItem._id)}>Reject Item</button>
                                         <button className="btn-flag" onClick={() => handleToggleFlag(selectedItem._id)}>
                                             {selectedItem.isFlagged ? 'Unflag' : 'Flag for Review'}
@@ -1309,6 +1310,15 @@ const AdminDashboard = () => {
                                                         </>
                                                     ) : (
                                                         <span className="handled-text">Resolved on {new Date(report.updatedAt).toLocaleDateString()}</span>
+                                                    )}
+                                                    {report.reporter && (
+                                                        <button 
+                                                            className="action-btn chat-mini" 
+                                                            title="Message Reporter"
+                                                            onClick={() => handleStartChat(report.reporter)}
+                                                        >
+                                                            💬 Reporter
+                                                        </button>
                                                     )}
                                                 </div>
                                             </td>

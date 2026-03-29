@@ -132,10 +132,10 @@ const ProductView = () => {
             }, {
                 headers: { Authorization: `Bearer ${token}` }
             });
-            navigate('/messages');
+            navigate(`/messages?userId=${product.seller._id}&productId=${product._id}`);
         } catch (err) {
             console.error("Chat error:", err);
-            navigate('/messages'); // Still navigate if failed (maybe conv exists)
+            navigate(`/messages?userId=${product.seller._id}&productId=${product._id}`);
         }
     };
 

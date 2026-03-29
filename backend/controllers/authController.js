@@ -44,6 +44,15 @@ exports.uploadProfilePhoto = async (req, res) => {
     res.json({ message: "Profile photo updated", profilePhoto: photoUrl, user });
   } catch (err) {
     console.error("Upload Photo Error:", err);
+    // Cleanup: Delete uploaded file if DB update fails
+    if (req.file) {
+      try {
+        const filePath = path.resolve(req.file.path);
+        if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+      } catch (unlinkErr) {
+        console.error("Failed to delete orphaned avatar:", req.file.path, unlinkErr);
+      }
+    }
     res.status(500).json({ message: "Server error uploading photo" });
   }
 };

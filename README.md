@@ -33,10 +33,17 @@ Follow these steps to get the project running on your local machine.
 4. **Seed Administrative User**:
    Run this to create the default admin account:
    ```bash
-   node seed.js
+   node scripts/SeedAdmin.js
    ```
    *Default Admin: `admin@banasthali.in` / `Admin@CampusKart2026`*
-5. **Start the server**:
+
+5. **Cleanup Orphaned Files** (*Optional*):
+   If you notice unexpected images in the `uploads` folder, run:
+   ```bash
+   npm run cleanup
+   ```
+
+6. **Start the server**:
    ```bash
    node server.js
    ```

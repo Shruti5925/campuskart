@@ -133,17 +133,19 @@ const ProductCard = ({ product, isSeller, onDelete, isWishlistPage, onRemove, sh
             return;
         }
         try {
+            const sellerId = product.seller?._id || product.seller;
             await axios.post('http://localhost:5001/api/chat/send', {
-                receiverId: product.seller?._id || product.seller,
+                receiverId: sellerId,
                 productId: product._id,
                 content: `Hi, I'm interested in "${product.title}".`
             }, {
                 headers: { Authorization: `Bearer ${token}` }
             });
-            navigate('/messages');
+            navigate(`/messages?userId=${sellerId}&productId=${product._id}`);
         } catch (err) {
             console.error("Chat error:", err);
-            navigate('/messages');
+            const sellerId = product.seller?._id || product.seller;
+            navigate(`/messages?userId=${sellerId}&productId=${product._id}`);
         }
     };
 

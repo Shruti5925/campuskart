@@ -3,6 +3,9 @@ const Review = require("../models/Review");
 const Notification = require("../models/Notification");
 const AdminActivity = require("../models/AdminActivity");
 const User = require("../models/User");
+const fs = require("fs");
+const path = require("path");
+
 
 // CREATE
 exports.createProduct = async (req, res) => {
@@ -30,6 +33,17 @@ exports.createProduct = async (req, res) => {
     res.status(201).json(product);
   } catch (err) {
     console.error("Create Product Error:", err);
+    // Cleanup: Delete uploaded files if DB save fails
+    if (req.files && req.files.length > 0) {
+      req.files.forEach(file => {
+        try {
+          const filePath = path.resolve(file.path);
+          if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+        } catch (unlinkErr) {
+          console.error("Failed to delete orphaned file:", file.path, unlinkErr);
+        }
+      });
+    }
     res.status(500).json({ message: err.message });
   }
 };
@@ -279,6 +293,18 @@ exports.updateProduct = async (req, res) => {
     );
     res.json(updated);
   } catch (err) {
+    console.error("Update Product Error:", err);
+    // Cleanup: Delete newly uploaded files if DB update fails
+    if (req.files && req.files.length > 0) {
+      req.files.forEach(file => {
+        try {
+          const filePath = path.resolve(file.path);
+          if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+        } catch (unlinkErr) {
+          console.error("Failed to delete orphaned file:", file.path, unlinkErr);
+        }
+      });
+    }
     res.status(500).json({ message: err.message });
   }
 };

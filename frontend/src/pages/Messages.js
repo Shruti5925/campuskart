@@ -142,10 +142,17 @@ const Messages = ({ hideSidebar = false, isAdmin = false, propTargetUserId = nul
                 setConversations(res.data);
                 
                 if (targetUserIdParam && targetProductId) {
-                    const existingConv = res.data.find(c => 
+                    // Try exact product match first, then fallback to user match (unified thread model)
+                    const exactConv = res.data.find(c => 
                         c.product?._id?.toString() === targetProductId?.toString() && 
                         c.participants?.some(p => (p._id?._id || p._id || p).toString() === targetUserIdParam.toString())
                     );
+                    
+                    const userOnlyMatch = !exactConv ? res.data.find(c => 
+                        c.participants?.some(p => (p._id?._id || p._id || p).toString() === targetUserIdParam.toString())
+                    ) : null;
+
+                    const existingConv = exactConv || userOnlyMatch;
                     
                     if (existingConv) {
                         setSelectedConv(existingConv);
@@ -330,9 +337,10 @@ const Messages = ({ hideSidebar = false, isAdmin = false, propTargetUserId = nul
                 productId: selectedConv.product?._id || selectedConv.product
             };
 
-            if (isAdmin) {
+            const isNewChat = selectedConv.isNew || selectedConv._id?.toString().startsWith('new_');
+
+            if (isAdmin && !isNewChat) {
                 payload.conversationId = selectedConv._id;
-                // If we have receiverId, also pass it to be safe
                 if (receiver) payload.receiverId = (receiver._id?._id || receiver._id || receiver);
             } else {
                 payload.receiverId = receiver?._id?._id || receiver?._id || receiver;
@@ -816,17 +824,20 @@ const Messages = ({ hideSidebar = false, isAdmin = false, propTargetUserId = nul
                         {selectedConv ? (
                             <>
                                 <header className="chat-header">
-                                    <div className="product-summary">
-                                        <div className="prod-img">
-                                            <img src={(selectedConv.product?.images && selectedConv.product.images.length > 0) ? selectedConv.product.images[0] : (selectedConv.product?.image || 'https://via.placeholder.com/40')} alt="prod" />
-                                        </div>
-                                        <div className="prod-details">
-                                            <h3>{selectedConv.product?.title || 'Product Deleted'}</h3>
-                                            {selectedConv.product?.title !== 'Support & Help' && (
-                                                <p>₹{selectedConv.product?.price || 0} • Posted {formatPostedDate(selectedConv.product)}</p>
-                                            )}
-                                        </div>
-                                    </div>
+                                    {(() => {
+                                        const otherParticipant = selectedConv.participants?.find(p => (p._id?._id || p._id || p)?.toString() !== currentUserId?.toString());
+                                        return (
+                                            <div className="chat-header-user">
+                                                <div className="header-avatar">
+                                                    <img src={getProfileIcon(otherParticipant)} alt="user" />
+                                                </div>
+                                                <div className="header-user-details">
+                                                    <h3>{otherParticipant?.firstName} {otherParticipant?.lastName}</h3>
+                                                    <span className="user-status-online">Active Now</span>
+                                                </div>
+                                            </div>
+                                        );
+                                    })()}
                                     <div className="chat-actions">
                                         <button 
                                             className="archive-btn" 
@@ -835,25 +846,7 @@ const Messages = ({ hideSidebar = false, isAdmin = false, propTargetUserId = nul
                                         >
                                             {selectedConv.archivedBy?.some(id => id.toString() === currentUserId.toString()) ? "📥" : "📦"}
                                         </button>
-                                        {selectedConv.product?.title !== 'Support & Help' && (
-                                            <div className="offer-action-container">
-                                                {showOfferInput ? (
-                                                    <div className="offer-input-box">
-                                                        <input 
-                                                            type="number" 
-                                                            placeholder="Enter ₹" 
-                                                            value={offerAmount}
-                                                            onChange={(e) => setOfferAmount(e.target.value)}
-                                                            autoFocus
-                                                        />
-                                                        <button className="confirm-offer-btn" onClick={handleSendOffer}>Send</button>
-                                                        <button className="cancel-offer-btn" onClick={() => setShowOfferInput(false)}>✕</button>
-                                                    </div>
-                                                ) : (
-                                                    <button className="make-offer-btn" onClick={() => setShowOfferInput(true)}>Make Offer</button>
-                                                )}
-                                            </div>
-                                        )}
+                                        {/* Offer functionality removed as per user request to streamline header */}
                                         <button className="close-conv-btn" onClick={() => setSelectedConv(null)} title="Close Conversation">
                                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                                         </button>

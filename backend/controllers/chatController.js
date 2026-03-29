@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const Message = require('../models/Message');
 const Conversation = require('../models/Conversation');
 const AdminMessage = require('../models/AdminMessage');
@@ -12,29 +13,93 @@ exports.getConversations = async (req, res) => {
         const userId = req.user.id;
         const isAdmin = req.user.role === 'admin';
         
-        // Fetch from standard conversations
-        let stdQuery = { participants: userId };
-        if (isAdmin) stdQuery = {}; // Admin sees all (though usually support is in admin_conv)
-        
-        const stdConvs = await Conversation.find(stdQuery)
-            .populate({
-                path: 'participants',
-                select: 'firstName middleName lastName profilePhoto gender role email collegeId department mobileNumber address isVerified isSuspended createdAt'
-            })
-            .populate('product', 'title price images image createdAt')
-            .sort({ updatedAt: -1 });
 
-        // Fetch from admin conversations
-        const adminConvs = await AdminConversation.find({ participants: userId })
-            .populate({
-                path: 'participants',
-                select: 'firstName middleName lastName profilePhoto gender role email collegeId department mobileNumber address isVerified isSuspended createdAt'
-            })
-            .populate('product', 'title price images image createdAt')
-            .sort({ updatedAt: -1 });
+        // Standard conversations: filter by participants for everyone (privacy for marketplace)
+        const stdConvsMatch = await Conversation.aggregate([
+            { $match: { participants: new mongoose.Types.ObjectId(userId) } },
+            { $sort: { updatedAt: -1 } },
+            {
+                $addFields: {
+                    sortedParticipants: {
+                        $cond: {
+                            if: { $lt: [{ $arrayElemAt: ["$participants", 0] }, { $arrayElemAt: ["$participants", 1] }] },
+                            then: ["$participants"], // Actually this doesn't sort. I'll use a better approach.
+                            else: ["$participants"] // Same thing. 
+                        }
+                    }
+                }
+            },
+            // Let's use string concatenation of sorted ID strings for grouping
+            {
+                $project: {
+                    doc: "$$ROOT",
+                    p0: { $toString: { $arrayElemAt: ["$participants", 0] } },
+                    p1: { $toString: { $arrayElemAt: ["$participants", 1] } }
+                }
+            },
+            {
+                $addFields: {
+                    groupId: {
+                        $cond: {
+                            if: { $lt: ["$p0", "$p1"] },
+                            then: { $concat: ["$p0", "_", "$p1"] },
+                            else: { $concat: ["$p1", "_", "$p0"] }
+                        }
+                    }
+                }
+            },
+            {
+                $group: {
+                    _id: "$groupId",
+                    doc: { $first: "$doc" }
+                }
+            },
+            { $replaceRoot: { newRoot: "$doc" } }
+        ]);
+
+        const populatedStd = await Conversation.populate(stdConvsMatch, [
+            { path: 'participants', select: 'firstName middleName lastName profilePhoto gender role email collegeId department mobileNumber address isVerified isSuspended createdAt' },
+            { path: 'product', select: 'title price images image createdAt' }
+        ]);
+
+        // Admin conversations: Same stable grouping
+        const adminConvsMatch = await AdminConversation.aggregate([
+            { $match: { participants: new mongoose.Types.ObjectId(userId) } },
+            { $sort: { updatedAt: -1 } },
+            {
+                $project: {
+                    doc: "$$ROOT",
+                    p0: { $toString: { $arrayElemAt: ["$participants", 0] } },
+                    p1: { $toString: { $arrayElemAt: ["$participants", 1] } }
+                }
+            },
+            {
+                $addFields: {
+                    groupId: {
+                        $cond: {
+                            if: { $lt: ["$p0", "$p1"] },
+                            then: { $concat: ["$p0", "_", "$p1"] },
+                            else: { $concat: ["$p1", "_", "$p0"] }
+                        }
+                    }
+                }
+            },
+            {
+                $group: {
+                    _id: "$groupId",
+                    doc: { $first: "$doc" }
+                }
+            },
+            { $replaceRoot: { newRoot: "$doc" } }
+        ]);
+
+        const populatedAdmin = await AdminConversation.populate(adminConvsMatch, [
+            { path: 'participants', select: 'firstName middleName lastName profilePhoto gender role email collegeId department mobileNumber address isVerified isSuspended createdAt' },
+            { path: 'product', select: 'title price images image createdAt' }
+        ]);
 
         // Merge and sort
-        const allConversations = [...stdConvs, ...adminConvs].sort((a, b) => 
+        const allConversations = [...populatedStd, ...populatedAdmin].sort((a, b) => 
             new Date(b.updatedAt) - new Date(a.updatedAt)
         );
 
@@ -48,7 +113,26 @@ exports.getConversations = async (req, res) => {
 exports.getMessages = async (req, res) => {
     try {
         const { conversationId } = req.params;
+        const userId = req.user.id;
+        const isAdmin = req.user.role === 'admin';
         
+        // Find conversation in either model and check participants
+        let conversation = await Conversation.findById(conversationId);
+        if (!conversation) {
+            conversation = await AdminConversation.findById(conversationId);
+        }
+
+        if (!conversation) {
+            return res.status(404).json({ message: 'Conversation not found' });
+        }
+
+        // Security Layer: Only participants can view messages
+        // (Admins can only view if they are a participant too, per your strict privacy request)
+        const isParticipant = conversation.participants.some(p => p.toString() === userId);
+        if (!isParticipant) {
+            return res.status(403).json({ message: 'Unauthorized access to this conversation' });
+        }
+
         // Try finding in standard first
         let messages = await Message.find({ conversationId })
             .sort({ createdAt: 1 })
@@ -79,7 +163,7 @@ exports.sendMessage = async (req, res) => {
         let ConvModel = Conversation;
         let MsgModel = Message;
 
-        if (conversationId) {
+        if (conversationId && mongoose.Types.ObjectId.isValid(conversationId)) {
             // Check if it's an admin conversation
             conversation = await AdminConversation.findById(conversationId);
             if (conversation) {
@@ -98,27 +182,34 @@ exports.sendMessage = async (req, res) => {
             ConvModel = isAdminInvolved ? AdminConversation : Conversation;
             MsgModel = isAdminInvolved ? AdminMessage : Message;
 
-            const query = {
-                participants: { $all: [senderId, receiverId] }
-            };
-            if (productId) {
-                query.product = productId;
-            } else {
-                query.product = null;
-            }
+            // Generate stable interaction key (sorted IDs)
+            const p0 = senderId.toString();
+            const p1 = receiverId.toString();
+            const interactionKey = p0 < p1 ? `${p0}_${p1}` : `${p1}_${p0}`;
             
-            conversation = await ConvModel.findOne(query);
-
-            if (!conversation) {
-                conversation = new ConvModel({
-                    participants: [senderId, receiverId],
-                    product: productId || null
-                });
-            }
+            // Atomic Find or Create (Upsert)
+            conversation = await ConvModel.findOneAndUpdate(
+                { interactionKey },
+                { 
+                    $setOnInsert: { 
+                        participants: [senderId, receiverId],
+                        product: productId || null,
+                        status: 'active'
+                    } 
+                },
+                { upsert: true, new: true, setDefaultsOnInsert: true }
+            );
         }
 
         if (!conversation) {
             return res.status(404).json({ message: 'Conversation not found or insufficient data' });
+        }
+
+        // Consolidated Product Context Update:
+        // Every time a message is sent with a productId, update the conversation's product subject
+        // to match the latest point of interest between these two users.
+        if (productId) {
+            conversation.product = productId;
         }
 
         // Only create auto-order if user is NOT admin and it's a new or existing sale chat (standard only)
