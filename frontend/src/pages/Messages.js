@@ -2,11 +2,13 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import axios from 'axios';
 import { useModal } from '../context/ModalContext';
+import { formatNumericDate } from '../utils/dateUtils';
 import socket, { connectSocket } from '../socket';
 import Sidebar from '../Components/Sidebar';
 import Footer from '../Components/Footer';
 import femaleAvatar from '../assets/female-avatar.png';
 import maleAvatar from '../assets/male-avatar.png';
+import ReportModal from '../Components/ReportModal';
 import '../styles/Messages.css';
 
 const Messages = ({ hideSidebar = false, isAdmin = false, propTargetUserId = null }) => {
@@ -24,6 +26,8 @@ const Messages = ({ hideSidebar = false, isAdmin = false, propTargetUserId = nul
     const [showProfileDropdown, setShowProfileDropdown] = useState(false);
     const [userStats, setUserStats] = useState({ rating: '0.0', sold: 0, active: 0 });
     const { showModal } = useModal();
+    const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+    const [reportTarget, setReportTarget] = useState({ id: null, type: 'user', name: '' });
     const messagesListRef = useRef(null);
     const messagesEndRef = useRef(null);
     const socketRef = useRef(null);
@@ -48,7 +52,7 @@ const Messages = ({ hideSidebar = false, isAdmin = false, propTargetUserId = nul
 
         if (isSameDay(msgDate, today)) return 'Today';
         if (isSameDay(msgDate, yesterday)) return 'Yesterday';
-        return msgDate.toLocaleDateString([], { day: 'numeric', month: 'short', year: 'numeric' });
+        return msgDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
     };
 
     const formatConvTime = (dateStr) => {
@@ -62,13 +66,13 @@ const Messages = ({ hideSidebar = false, isAdmin = false, propTargetUserId = nul
         if (isSameDay(msgDate, today)) {
             return msgDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         }
-        return msgDate.toLocaleDateString([], { day: 'numeric', month: 'short' });
+        return msgDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
     };
 
     const formatPostedDate = (product) => {
         if (!product) return 'N/A';
-        if (product.createdAt) return new Date(product.createdAt).toLocaleDateString();
-        return "05 Mar 2026";
+        if (product.createdAt) return formatNumericDate(product.createdAt);
+        return "05/03/2026";
     };
 
     const getCurrentUserId = () => {
@@ -427,16 +431,19 @@ const Messages = ({ hideSidebar = false, isAdmin = false, propTargetUserId = nul
     if (!currentUserId) return <div className="loading">Session expired. Please login.</div>;
 
     const renderAdminContent = () => {
-        const activeConversations = conversations.filter(c => {
+        const filteredDocs = conversations.filter(c => {
             const searchStr = searchQuery ? searchQuery.trim().toLowerCase() : '';
             const otherUser = c.participants?.find(p => (p._id?._id || p._id || p)?.toString() !== currentUserId?.toString());
             const fullName = `${otherUser?.firstName || ''} ${otherUser?.lastName || ''}`.toLowerCase();
             const prodTitle = (c.product?.title || '').toLowerCase();
 
-            const matchesSearch = !searchStr || fullName.includes(searchStr) || prodTitle.includes(searchStr);
-
-            return matchesSearch;
+            return !searchStr || fullName.includes(searchStr) || prodTitle.includes(searchStr);
         });
+
+        const openConversations = filteredDocs.filter(c => c.status !== 'resolved');
+        const resolvedConversations = filteredDocs.filter(c => c.status === 'resolved');
+        
+        const activeConversations = activeTab === 'Open' ? openConversations : resolvedConversations;
         
         const displayedConv = selectedConv;
         // Exceptionally robust "otherUser" identification
@@ -454,16 +461,16 @@ const Messages = ({ hideSidebar = false, isAdmin = false, propTargetUserId = nul
                         <h3>Conversations</h3>
                         <div className="admin-tabs">
                             <button className={`admin-tab ${activeTab === 'Open' ? 'active' : ''}`} onClick={() => setActiveTab('Open')}>
-                                Open ({activeConversations.length})
+                                Open ({openConversations.length})
                             </button>
-                            <button className={`admin-tab ${activeTab === 'Waiting' ? 'active' : ''}`} onClick={() => setActiveTab('Waiting')}>
-                                Waiting (0)
+                            <button className={`admin-tab ${activeTab === 'Resolved' ? 'active' : ''}`} onClick={() => setActiveTab('Resolved')}>
+                                Resolved ({resolvedConversations.length})
                             </button>
                         </div>
                     </div>
                     <div className="admin-conv-list">
                         {activeConversations.length === 0 ? (
-                            <div className="no-conv-list">No conversations present</div>
+                            <div className="no-conv-list">No {activeTab.toLowerCase()} conversations</div>
                         ) : (
                             activeConversations.map(conv => {
                                 const u = conv.participants?.find(p => (p._id?._id || p._id || p)?.toString() !== currentUserId?.toString());
@@ -472,7 +479,7 @@ const Messages = ({ hideSidebar = false, isAdmin = false, propTargetUserId = nul
                                     <div key={conv._id} className={`admin-conv-item ${isSelected ? 'selected' : ''}`} onClick={() => setSelectedConv(conv)}>
                                         <div className="admin-avatar">
                                             <img src={u?.gender === 'Female' ? femaleAvatar : maleAvatar} alt="av" />
-                                            <span className="online-dot"></span>
+                                            {conv.status !== 'resolved' && <span className="online-dot"></span>}
                                         </div>
                                         <div className="admin-conv-info">
                                             <div className="info-top">
@@ -508,28 +515,34 @@ const Messages = ({ hideSidebar = false, isAdmin = false, propTargetUserId = nul
                                     {selectedConv.status !== 'resolved' && (
                                         <button 
                                             className="admin-action-btn resolve"
-                                            onClick={async () => {
-                                                console.log("Attempting to resolve ticket:", selectedConv._id);
-                                                if (window.confirm("Mark this ticket as resolved? This will notify the user.")) {
-                                                    try {
-                                                        const res = await axios.post(`http://localhost:5001/api/chat/resolve/${selectedConv._id}`, {}, {
-                                                            headers: { Authorization: `Bearer ${token}` }
-                                                        });
-                                                        console.log("Resolve response:", res.data);
-                                                        // Update local state
-                                                        setConversations(prev => prev.map(c => c._id === selectedConv._id ? res.data.conversation : c));
-                                                        setSelectedConv(res.data.conversation);
-                                                        showModal({ title: 'Success', message: 'Ticket marked as resolved. User has been notified.', type: 'alert' });
-                                                    } catch (err) {
-                                                        console.error("Error resolving ticket:", err);
-                                                        showModal({ title: 'Error', message: `Failed to resolve ticket: ${err.response?.data?.message || err.message}`, type: 'alert' });
+                                            onClick={() => {
+                                                showModal({
+                                                    title: 'Resolve Ticket',
+                                                    message: 'Mark this ticket as resolved? This will notify the user.',
+                                                    type: 'confirm',
+                                                    onConfirm: async () => {
+                                                        try {
+                                                            const res = await axios.post(`http://localhost:5001/api/chat/resolve/${selectedConv._id}`, {}, {
+                                                                headers: { Authorization: `Bearer ${token}` }
+                                                            });
+                                                            // Update local state
+                                                            setConversations(prev => prev.map(c => c._id === selectedConv._id ? res.data.conversation : c));
+                                                            setSelectedConv(res.data.conversation);
+                                                            showModal({ title: 'Success', message: 'Ticket marked as resolved. User has been notified.', type: 'alert' });
+                                                        } catch (err) {
+                                                            console.error("Error resolving ticket:", err);
+                                                            showModal({ title: 'Error', message: `Failed to resolve ticket: ${err.response?.data?.message || err.message}`, type: 'alert' });
+                                                        }
                                                     }
-                                                }
+                                                });
                                             }}
                                         >
                                             Resolve Ticket
                                         </button>
                                     )}
+                                    <button className="admin-close-btn" onClick={() => setSelectedConv(null)} title="Close Conversation">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                                    </button>
                                 </div>
                             </header>
 
@@ -609,11 +622,9 @@ const Messages = ({ hideSidebar = false, isAdmin = false, propTargetUserId = nul
                                              otherUser?.role?.toLowerCase() === 'admin' ? '🛡️' : '👤'} 
                                             {(otherUser?.role || 'STUDENT').toUpperCase()}
                                         </div>
-                                        {otherUser?.isVerified && (
-                                            <div className="verified-pill">
-                                                🛡️ VERIFIED
-                                            </div>
-                                        )}
+                                        <div className={`status-pill-mini ${otherUser?.isSuspended ? 'danger' : otherUser?.isVerified ? 'success' : 'warning'}`}>
+                                            {otherUser?.isSuspended ? '🚫 SUSPENDED' : otherUser?.isVerified ? '✅ VERIFIED' : '⏳ PENDING'}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -641,6 +652,10 @@ const Messages = ({ hideSidebar = false, isAdmin = false, propTargetUserId = nul
                                         <div className="detail-box">
                                             <label>Email Address</label>
                                             <p>{otherUser?.email || 'N/A'}</p>
+                                        </div>
+                                        <div className="detail-box">
+                                            <label>Joined On</label>
+                                            <p>{otherUser?.createdAt ? formatNumericDate(otherUser.createdAt) : 'N/A'}</p>
                                         </div>
                                         <div className="detail-box full-width">
                                             <label>Campus Address / Hostel</label>
@@ -846,7 +861,21 @@ const Messages = ({ hideSidebar = false, isAdmin = false, propTargetUserId = nul
                                         >
                                             {selectedConv.archivedBy?.some(id => id.toString() === currentUserId.toString()) ? "📥" : "📦"}
                                         </button>
-                                        {/* Offer functionality removed as per user request to streamline header */}
+                                        <button 
+                                            className="report-user-btn" 
+                                            onClick={() => {
+                                                const otherParticipant = selectedConv.participants?.find(p => (p._id?._id || p._id || p)?.toString() !== currentUserId?.toString());
+                                                setReportTarget({ 
+                                                    id: (otherParticipant._id?._id || otherParticipant._id || otherParticipant), 
+                                                    type: 'user', 
+                                                    name: `${otherParticipant.firstName} ${otherParticipant.lastName}` 
+                                                });
+                                                setIsReportModalOpen(true);
+                                            }}
+                                            title="Report User"
+                                        >
+                                            🚩
+                                        </button>
                                         <button className="close-conv-btn" onClick={() => setSelectedConv(null)} title="Close Conversation">
                                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                                         </button>
@@ -927,7 +956,18 @@ const Messages = ({ hideSidebar = false, isAdmin = false, propTargetUserId = nul
         );
     };
 
-    if (hideSidebar) return renderMainContent();
+    if (hideSidebar) return (
+        <>
+            {renderMainContent()}
+            <ReportModal 
+                isOpen={isReportModalOpen}
+                onClose={() => setIsReportModalOpen(false)}
+                targetId={reportTarget.id}
+                targetType={reportTarget.type}
+                targetName={reportTarget.name}
+            />
+        </>
+    );
 
     return (
         <div className="dashboard-page-container">
@@ -936,6 +976,13 @@ const Messages = ({ hideSidebar = false, isAdmin = false, propTargetUserId = nul
                 {renderMainContent()}
             </div>
             <Footer />
+            <ReportModal 
+                isOpen={isReportModalOpen}
+                onClose={() => setIsReportModalOpen(false)}
+                targetId={reportTarget.id}
+                targetType={reportTarget.type}
+                targetName={reportTarget.name}
+            />
         </div>
     );
 };

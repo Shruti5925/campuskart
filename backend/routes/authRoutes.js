@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 
-const { login, signup, getSecurityQuestion, resetPassword, getCurrentUser, updateProfile, getCaptcha, uploadProfilePhoto, removeProfilePhoto, avatarUploadMiddleware, getSupportAdmin, getUserById } = require("../controllers/authController");
+const { login, signup, getSecurityQuestion, resetPassword, getCurrentUser, updateProfile, getCaptcha, uploadProfilePhoto, removeProfilePhoto, avatarUploadMiddleware, getSupportAdmin, getUserById, updateAccountSettings } = require("../controllers/authController");
 const protect = require("../middleware/authMiddleware");
 const { adminOnly, checkSuspended, checkVerified } = protect;
 
@@ -13,6 +13,7 @@ router.get("/test", (req, res) => {
 
 router.get("/me", protect, getCurrentUser);
 router.put("/me", protect, checkVerified, updateProfile);
+router.put("/account-settings", protect, updateAccountSettings);
 router.post("/avatar", protect, avatarUploadMiddleware, uploadProfilePhoto);
 router.delete("/avatar", protect, removeProfilePhoto);
 router.get("/captcha", getCaptcha);

@@ -5,6 +5,7 @@ import { useModal } from '../context/ModalContext';
 import Sidebar from '../Components/Sidebar';
 import Footer from '../Components/Footer';
 import itemStandard from '../assets/image.webp';
+import { formatNumericDate } from '../utils/dateUtils';
 import '../styles/Dashboard.css';
 
 const StarRating = ({ rating }) => {
@@ -289,7 +290,7 @@ const Dashboard = () => {
                                                             <StarRating rating={review.rating} />
                                                         </div>
                                                         <p className="review-comment-text">"{review.comment}"</p>
-                                                        <p className="review-date-text">Left on {new Date(review.createdAt).toLocaleDateString()}</p>
+                                                        <p className="review-date-text">Left on {formatNumericDate(review.createdAt)}</p>
                                                     </div>
                                                 </div>
                                                 <div className="listing-actions">
@@ -322,7 +323,7 @@ const Dashboard = () => {
                                                             <span className={`badge ${product.isFlagged ? 'badge-rejected' : (product.status === 'sold' ? 'badge-sold' : product.status === 'draft' ? 'badge-draft' : product.status === 'pending' ? 'badge-pending' : product.status === 'rejected' ? 'badge-rejected' : 'badge-live')}`}>
                                                                 {product.isFlagged ? 'Flagged by Admin' : (product.status === 'sold' ? 'Sold' : product.status === 'draft' ? 'Draft' : product.status === 'pending' ? 'Pending' : product.status === 'rejected' ? 'Rejected' : 'Live')}
                                                             </span>
-                                                            <span className="post-date">• Posted on {product.createdAt ? new Date(product.createdAt).toLocaleDateString() : "05 Mar 2026"}</span>
+                                                            <span className="post-date">• Posted on {product.createdAt ? formatNumericDate(product.createdAt) : "05/03/2026"}</span>
                                                         </div>
                                                         <h4>{product.title}</h4>
                                                         <p className="listing-desc">{product.description?.substring(0, 80)}...</p>

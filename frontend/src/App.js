@@ -19,6 +19,7 @@ import Orders from "./pages/Orders";
 import Settings from "./pages/Settings";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminLogs from "./pages/AdminLogs";
+import AdminNotifications from "./pages/AdminNotifications";
 import Notifications from "./pages/Notifications";
 import Support from "./pages/Support";
 import { useLocation, Navigate } from "react-router-dom";
@@ -161,6 +162,14 @@ const AppContent = () => {
           element={
             <AdminRoute>
               <AdminLogs />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/notifications"
+          element={
+            <AdminRoute>
+              <AdminNotifications />
             </AdminRoute>
           }
         />

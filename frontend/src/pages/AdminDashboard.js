@@ -7,6 +7,9 @@ import Messages from './Messages';
 import Footer from '../Components/Footer';
 import femaleAvatar from '../assets/female-avatar.png';
 import maleAvatar from '../assets/male-avatar.png';
+import itemStandard from '../assets/image.webp';
+import { formatNumericDate } from '../utils/dateUtils';
+import ModerationModal from '../Components/ModerationModal';
 import '../styles/AdminDashboard.css';
 
 const AdminDashboard = () => {
@@ -46,12 +49,28 @@ const AdminDashboard = () => {
     const [showFilterMenu, setShowFilterMenu] = useState(false);
     const [selectedUserDir, setSelectedUserDir] = useState(null);
     const [isEditingUser, setIsEditingUser] = useState(false);
-    const [editUserData, setEditUserData] = useState(null);
+    const [editUserData, setEditUserData] = useState({});
+    const [reportFilterStatus, setReportFilterStatus] = useState('all');
+    const [isModModalOpen, setIsModModalOpen] = useState(false);
+    const [selectedReport, setSelectedReport] = useState(null);
+    const profileDropdownRef = useRef(null);
     const [reviewTimeRange, setReviewTimeRange] = useState('all'); // all, 30days
-    const [reportFilterStatus, setReportFilterStatus] = useState('all'); // all, pending, resolved, dismissed
+    const [reviewRatingFilter, setReviewRatingFilter] = useState('all'); // all, 1, 2, 3, 4, 5
+    const [showFlaggedOnly, setShowFlaggedOnly] = useState(false);
     const token = sessionStorage.getItem('token');
     const { showModal } = useModal();
-    const profileDropdownRef = useRef(null);
+
+    // Admin Account Settings state
+    const [adminEmailData, setAdminEmailData] = useState({ newEmail: '', currentPassword: '' });
+    const [adminPasswordData, setAdminPasswordData] = useState({ currentPassword: '', newPassword: '', confirmNewPassword: '' });
+    const [isUpdatingAdminEmail, setIsUpdatingAdminEmail] = useState(false);
+    const [isUpdatingAdminPassword, setIsUpdatingAdminPassword] = useState(false);
+
+    // Admin Notifications state
+    const [adminNotifications, setAdminNotifications] = useState([]);
+    const [showNotifDropdown, setShowNotifDropdown] = useState(false);
+    const notifDropdownRef = useRef(null);
+    const adminUnreadCount = adminNotifications.filter(n => !n.isRead).length;
 
     // Close dropdown on click outside
     useEffect(() => {
@@ -77,6 +96,55 @@ const AdminDashboard = () => {
     useEffect(() => {
         fetchInitialData();
     }, []);
+
+    // Fetch admin notifications
+    useEffect(() => {
+        const fetchAdminNotifications = async () => {
+            if (!token) return;
+            try {
+                const res = await axios.get('http://localhost:5001/api/notifications', {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                setAdminNotifications(res.data || []);
+            } catch (err) {
+                console.error('[Admin] Notification fetch error:', err.message);
+            }
+        };
+        fetchAdminNotifications();
+    }, [token]);
+
+    // Close notification dropdown on outside click
+    useEffect(() => {
+        const handleClick = (e) => {
+            if (notifDropdownRef.current && !notifDropdownRef.current.contains(e.target)) {
+                setShowNotifDropdown(false);
+            }
+        };
+        if (showNotifDropdown) document.addEventListener('mousedown', handleClick);
+        return () => document.removeEventListener('mousedown', handleClick);
+    }, [showNotifDropdown]);
+
+    const handleMarkAdminNotifRead = async (notifId) => {
+        try {
+            await axios.put(`http://localhost:5001/api/notifications/${notifId}/read`, {}, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            setAdminNotifications(prev => prev.map(n => n._id === notifId ? { ...n, isRead: true } : n));
+        } catch (err) {
+            console.error('Mark read error:', err.message);
+        }
+    };
+
+    const handleMarkAllAdminRead = async () => {
+        try {
+            await axios.put('http://localhost:5001/api/notifications/mark-all-read', {}, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            setAdminNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+        } catch (err) {
+            console.error('Mark all read error:', err.message);
+        }
+    };
 
     const fetchInitialData = async () => {
         setLoading(true);
@@ -139,7 +207,11 @@ const AdminDashboard = () => {
     };
 
     const getProfileIcon = (user) => {
-        if (user?.profilePhoto) return `http://localhost:5001${user.profilePhoto}`;
+        if (user?.profilePhoto) {
+            if (user.profilePhoto.startsWith('http')) return user.profilePhoto;
+            const separator = user.profilePhoto.startsWith('/') ? '' : '/';
+            return `http://localhost:5001${separator}${user.profilePhoto}`;
+        }
         if (!user || !user.gender) return maleAvatar;
         if (user.gender === "Female") return femaleAvatar;
         return maleAvatar;
@@ -203,23 +275,24 @@ const AdminDashboard = () => {
         }
     };
 
-    const handleUpdateReportStatus = async (reportId, status, adminNotes = "") => {
+    const handleUpdateReportStatus = async (reportId, status, adminNotes = "", action = null) => {
         try {
             await axios.patch(`http://localhost:5001/api/reports/${reportId}/status`, { 
                 status, 
-                adminNotes 
+                adminNotes,
+                action 
             }, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             
             setReports(prev => prev.map(r => r._id === reportId ? { ...r, status, adminNotes } : r));
-            showModal({ title: 'Report Updated', message: `Report marked as ${status}`, type: 'alert' });
+            showModal({ title: 'Success', message: `Report marked as ${status}. Action executed.`, type: 'alert' });
             
             // Refresh stats/activities
             fetchInitialData();
         } catch (err) {
             console.error("Error updating report status:", err);
-            showModal({ title: 'Error', message: 'Failed to update report status', type: 'alert' });
+            showModal({ title: 'Error', message: 'Failed to update report status.', type: 'alert' });
         }
     };
 
@@ -544,7 +617,7 @@ const AdminDashboard = () => {
                             No recent activity found.
                         </div>
                     ) : (
-                        activities.slice(0, 5).map((act) => (
+                        activities.slice(0, 4).map((act) => (
                             <div key={act._id} className="activity-item">
                                 <div className="activity-icon-wrapper" style={{background: act.action.includes('REJECT') || act.action.includes('SUSPEND') ? '#fee2e2' : '#e2e8f0'}}>
                                     {act.action.includes('APPROVE') || act.action.includes('VERIF') ? '🛡️' : (act.action.includes('REJECT') || act.action.includes('SUSPEND') ? '🚫' : (act.action.includes('FLAG') ? '🚩' : '📑'))}
@@ -612,7 +685,15 @@ const AdminDashboard = () => {
                             <tbody>
                                 {(queueTab === 'pending' ? pendingProducts : 
                                   queueTab === 'approved' ? approvedProductsList : 
-                                  flaggedProductsList).map(product => (
+                                  flaggedProductsList)
+                                  .filter(product => {
+                                      const searchLower = searchTerm.toLowerCase();
+                                      const title = (product.title || '').toLowerCase();
+                                      const seller = `${product.seller?.firstName || ''} ${product.seller?.lastName || ''}`.toLowerCase();
+                                      const category = (product.category || '').toLowerCase();
+                                      return title.includes(searchLower) || seller.includes(searchLower) || category.includes(searchLower);
+                                  })
+                                  .map(product => (
                                     <tr 
                                         key={product._id} 
                                         className={selectedItem?._id === product._id ? 'selected' : ''}
@@ -650,9 +731,17 @@ const AdminDashboard = () => {
                         </table>
                         {(queueTab === 'pending' ? pendingProducts : 
                           queueTab === 'approved' ? approvedProductsList : 
-                          flaggedProductsList).length === 0 && (
+                          flaggedProductsList)
+                          .filter(product => {
+                              const searchLower = searchTerm.toLowerCase();
+                              const title = (product.title || '').toLowerCase();
+                              const seller = `${product.seller?.firstName || ''} ${product.seller?.lastName || ''}`.toLowerCase();
+                              const category = (product.category || '').toLowerCase();
+                              return title.includes(searchLower) || seller.includes(searchLower) || category.includes(searchLower);
+                          })
+                          .length === 0 && (
                             <div className="empty-table">
-                                <p>No products found in this category.</p>
+                                <p>{searchTerm ? `No products matching "${searchTerm}"` : 'No products found in this category.'}</p>
                             </div>
                         )}
                     </div>
@@ -689,11 +778,16 @@ const AdminDashboard = () => {
 
                                 <div className="modal-details-section">
                                     <div className="modal-header" style={{ marginBottom: '1.5rem' }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.5rem' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
                                             <h2 className="modal-title" style={{ margin: 0, fontSize: '1.75rem', fontWeight: 900 }}>{selectedItem.title}</h2>
-                                            <span className={`cat-tag cat-${(selectedItem.category || 'other').toLowerCase().replace(/\s+/g, '-')}`}>
-                                                {selectedItem.category || 'Other'}
-                                            </span>
+                                            <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                                <span className={`cat-tag cat-${(selectedItem.category || 'other').toLowerCase().replace(/\s+/g, '-')}`}>
+                                                    {selectedItem.category || 'Other'}
+                                                </span>
+                                                <span className={`status-pill ${selectedItem.status || 'pending'}`} style={{ fontSize: '0.7rem', height: 'fit-content', padding: '4px 10px' }}>
+                                                    {(selectedItem.status || 'PENDING').toUpperCase()}
+                                                </span>
+                                            </div>
                                         </div>
                                         <p className="modal-price" style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--primary-color)' }}>₹{selectedItem.price?.toLocaleString()}</p>
                                     </div>
@@ -713,7 +807,7 @@ const AdminDashboard = () => {
                                         </div>
                                         <div className="spec-item">
                                             <span className="spec-label">Listed On</span>
-                                            <span className="spec-value">{new Date(selectedItem.createdAt).toLocaleDateString()}</span>
+                                            <span className="spec-value">{formatNumericDate(selectedItem.createdAt)}</span>
                                         </div>
                                     </div>
 
@@ -852,7 +946,7 @@ const AdminDashboard = () => {
                                 escapeCSV(u.gender || 'N/A'),
                                 u.isVerified ? 'Yes' : 'No',
                                 u.isSuspended ? 'Yes' : 'No',
-                                escapeCSV(u.createdAt ? new Date(u.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }))
+                                escapeCSV(formatNumericDate(u.createdAt || new Date()))
                             ]);
 
                             const csvContent = [
@@ -1160,7 +1254,27 @@ const AdminDashboard = () => {
     };
 
     const renderMarketplaceView = () => {
-        const allProducts = [...approvedProductsList, ...pendingProducts, ...flaggedProductsList];
+        // A "Live look" should only show products that users see: Status === approved/active AND not flagged
+        const liveProducts = [...approvedProductsList, ...flaggedProductsList]
+            .filter(product => {
+                const searchLower = searchTerm.toLowerCase();
+                const title = (product.title || '').toLowerCase();
+                const seller = `${product.seller?.firstName || ''} ${product.seller?.lastName || ''}`.toLowerCase();
+                const category = (product.category || '').toLowerCase();
+                const matchesSearch = title.includes(searchLower) || seller.includes(searchLower) || category.includes(searchLower);
+                
+                // For "Live Look", only show what users actually see
+                const isLive = (product.status === 'approved' || product.status === 'active') && !product.isFlagged;
+                
+                return matchesSearch && isLive;
+            });
+
+        const mktStats = [
+            { label: 'Total Live Items', value: approvedProductsList.filter(p => !p.isFlagged && p.status !== 'sold').length, icon: '🌟', color: 'blue' },
+            { label: 'Recently Sold', value: approvedProductsList.filter(p => p.status === 'sold').length, icon: '🤝', color: 'green' },
+            { label: 'Flagged (Hidden)', value: flaggedProductsList.length, icon: '🚩', color: 'red' },
+            { label: 'Available Value', value: `₹${approvedProductsList.filter(p => p.status !== 'sold').reduce((acc, p) => acc + (p.price || 0), 0).toLocaleString()}`, icon: '💰', color: 'gold' }
+        ];
 
         return (
             <div className="tab-content marketplace-view">
@@ -1169,22 +1283,32 @@ const AdminDashboard = () => {
                     <p>Live look at how users experience the campus marketplace.</p>
                 </header>
 
+                <div className="marketplace-stats-grid">
+                    {mktStats.map((stat, i) => (
+                        <div key={i} className={`mkt-stat-card ${stat.color}`}>
+                            <div className="stat-icon">{stat.icon}</div>
+                            <div className="stat-info">
+                                <span className="label">{stat.label}</span>
+                                <span className="value">{stat.value}</span>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
                 <div className="admin-products-grid">
-                    {allProducts.length === 0 ? (
+                    {liveProducts.length === 0 ? (
                         <div className="empty-state">
-                            <p>No products currently in the marketplace.</p>
+                            <p>No live products currently match your search.</p>
                         </div>
                     ) : (
-                        allProducts.map(product => (
+                        liveProducts.map(product => (
                             <div key={product._id} className="admin-product-wrapper">
-                                <div className={`status-badge ${product.status}`}>
-                                    {product.status?.toUpperCase() || 'PENDING'}
-                                </div>
                                 <ProductCard
                                     product={product}
                                     isSeller={false}
                                     showContactBtn={true}
                                     isAdmin={true}
+                                    variant="grid"
                                 />
                             </div>
                         ))
@@ -1250,10 +1374,9 @@ const AdminDashboard = () => {
                             <table className="admin-table reports-table">
                                 <thead>
                                     <tr>
-                                        <th>TYPE</th>
-                                        <th>TARGET ID</th>
+                                        <th>TARGET ITEM</th>
                                         <th>REPORTER</th>
-                                        <th>REASON</th>
+                                        <th>REASON / DESC</th>
                                         <th>STATUS</th>
                                         <th>ACTIONS</th>
                                     </tr>
@@ -1262,11 +1385,33 @@ const AdminDashboard = () => {
                                     {filteredReports.map(report => (
                                         <tr key={report._id}>
                                             <td>
-                                                <span className={`type-tag ${report.targetType}`}>
-                                                    {report.targetType.toUpperCase()}
-                                                </span>
+                                                <div className="target-preview-cell">
+                                                    <span className={`type-tag ${report.targetType}`}>
+                                                        {report.targetType.toUpperCase()}
+                                                    </span>
+                                                    <div className="preview-snippet">
+                                                        {report.targetType === 'product' && report.targetId && (
+                                                            <>
+                                                                <img src={report.targetId.images?.[0]?.startsWith('http') ? report.targetId.images[0] : `http://localhost:5001/${report.targetId.images?.[0]}`} alt="" className="mini-thumb" />
+                                                                <span className="title-text">{report.targetId.title}</span>
+                                                            </>
+                                                        )}
+                                                        {report.targetType === 'user' && report.targetId && (
+                                                            <>
+                                                                <span className="user-initials">{report.targetId.firstName?.charAt(0)}{report.targetId.lastName?.charAt(0)}</span>
+                                                                <span className="title-text">{report.targetId.firstName} {report.targetId.lastName}</span>
+                                                            </>
+                                                        )}
+                                                        {report.targetType === 'review' && report.targetId && (
+                                                            <>
+                                                                <span className="title-text rating">{'⭐'.repeat(report.targetId.rating)}</span>
+                                                                <span className="snippet">"{report.targetId.comment?.substring(0, 20)}..."</span>
+                                                            </>
+                                                        )}
+                                                        {!report.targetId && <span className="title-text deleted">Item Deleted/Not Found</span>}
+                                                    </div>
+                                                </div>
                                             </td>
-                                            <td className="id-cell">#{report.targetId ? report.targetId.toString().slice(-4) : 'N/A'}</td>
                                             <td>
                                                 <div className="reporter-cell">
                                                     <p className="name">{report.reporter ? `${report.reporter.firstName} ${report.reporter.lastName}` : 'Anonymous'}</p>
@@ -1291,25 +1436,24 @@ const AdminDashboard = () => {
                                                             <button 
                                                                 className="action-btn resolve"
                                                                 onClick={() => {
-                                                                    showModal({
-                                                                        title: 'Resolve Report',
-                                                                        message: 'Add admin notes for this resolution:',
-                                                                        type: 'prompt',
-                                                                        onConfirm: (notes) => handleUpdateReportStatus(report._id, 'resolved', notes)
-                                                                    });
+                                                                    setSelectedReport(report);
+                                                                    setIsModModalOpen(true);
                                                                 }}
                                                             >
                                                                 Take Action
                                                             </button>
                                                             <button 
                                                                 className="action-btn dismiss"
-                                                                onClick={() => handleUpdateReportStatus(report._id, 'dismissed', 'Reason irrelevant or false positive.')}
+                                                                onClick={() => handleUpdateReportStatus(report._id, 'dismissed', 'Reason irrelevant or false positive.', 'dismiss')}
                                                             >
                                                                 Dismiss
                                                             </button>
                                                         </>
                                                     ) : (
-                                                        <span className="handled-text">Resolved on {new Date(report.updatedAt).toLocaleDateString()}</span>
+                                                        <div className="resolved-info">
+                                                            <span className="handled-text">Resolved on {formatNumericDate(report.updatedAt)}</span>
+                                                            {report.adminNotes && <p className="notes-tooltip" title={report.adminNotes}>📄 View Notes</p>}
+                                                        </div>
                                                     )}
                                                     {report.reporter && (
                                                         <button 
@@ -1346,14 +1490,48 @@ const AdminDashboard = () => {
             thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
             const matchesTime = reviewTimeRange === 'all' || reviewDate >= thirtyDaysAgo;
             
-            return (productTitle.includes(searchLower) || userName.includes(searchLower) || comment.includes(searchLower)) && matchesTime;
+            // Rating filtering logic
+            const matchesRating = reviewRatingFilter === 'all' || review.rating === Number(reviewRatingFilter);
+            
+            // Flag filtering logic
+            const matchesFlag = !showFlaggedOnly || review.isFlagged;
+            
+            return (productTitle.includes(searchLower) || userName.includes(searchLower) || comment.includes(searchLower)) && matchesTime && matchesRating && matchesFlag;
         });
 
+        // Calculate dynamic stats
+        const now = new Date();
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        const sixtyDaysAgo = new Date();
+        sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
+
+        const last30DaysReviews = allReviews.filter(r => new Date(r.createdAt) >= thirtyDaysAgo);
+        const prev30DaysReviews = allReviews.filter(r => {
+            const date = new Date(r.createdAt);
+            return date >= sixtyDaysAgo && date < thirtyDaysAgo;
+        });
+
+        const countChange = prev30DaysReviews.length === 0 
+            ? (last30DaysReviews.length > 0 ? "+100% NEW" : "NO NEW REVIEWS")
+            : `${last30DaysReviews.length >= prev30DaysReviews.length ? '+' : ''}${Math.round(((last30DaysReviews.length - prev30DaysReviews.length) / prev30DaysReviews.length) * 100)}% VS PREV 30D`;
+
+        const totalAvg = allReviews.length === 0 ? 0 : allReviews.reduce((acc, r) => acc + r.rating, 0) / allReviews.length;
+        const recentAvg = last30DaysReviews.length === 0 ? totalAvg : last30DaysReviews.reduce((acc, r) => acc + r.rating, 0) / last30DaysReviews.length;
+        const avgRatingTrend = last30DaysReviews.length === 0 ? "STEADY" : (recentAvg > totalAvg + 0.1 ? "IMPROVING 📈" : (recentAvg < totalAvg - 0.1 ? "DECLINING 📉" : "STEADY"));
+
+        const flaggedCount = allReviews.filter(r => r.isFlagged).length;
+        const flaggedStatus = flaggedCount > 0 ? "NEEDS ACTION" : "ALL CLEAR";
+
+        const latestReviewDate = allReviews.length === 0 ? null : new Date(Math.max(...allReviews.map(r => new Date(r.createdAt).getTime())));
+        const hoursSince = latestReviewDate ? Math.round((now - latestReviewDate) / 3600000) : null;
+        const recentActivityText = hoursSince === null ? "NO DATA" : (hoursSince < 1 ? "JUST NOW" : (hoursSince < 24 ? `${hoursSince}h AGO` : `${Math.floor(hoursSince/24)}d AGO`));
+
         const statsData = [
-            { label: 'Total Reviews', value: allReviews.length.toLocaleString(), icon: '💬', color: 'green', change: '+12% VS LY' },
-            { label: 'Average Rating', value: (allReviews.reduce((acc, r) => acc + r.rating, 0) / (allReviews.length || 1)).toFixed(1), icon: '⭐', color: 'yellow', change: 'STEADY' },
-            { label: 'Flagged Reviews', value: allReviews.filter(r => r.isFlagged).length, icon: '🚩', color: 'red', change: 'NEEDS ACTION' },
-            { label: 'Recent Activity', value: '156 hr', icon: '⚡', color: 'blue', change: 'REAL-TIME' }
+            { label: 'Total Reviews', value: allReviews.length.toLocaleString(), icon: '💬', color: 'green', change: countChange },
+            { label: 'Average Rating', value: totalAvg.toFixed(1), icon: '⭐', color: 'yellow', change: avgRatingTrend },
+            { label: 'Flagged Reviews', value: flaggedCount, icon: '🚩', color: 'red', change: flaggedStatus },
+            { label: 'Recent Activity', value: recentActivityText, icon: '⚡', color: 'blue', change: 'LIVE UPDATES' }
         ];
 
         return (
@@ -1400,9 +1578,24 @@ const AdminDashboard = () => {
 
                 <div className="reviews-filter-bar">
                     <div className="filter-pills">
-                        <button className="active">All Reviews ({filteredReviews.length})</button>
-                        <button onClick={() => setSearchTerm("1")}>1-Star Only</button>
-                        <button onClick={() => { /* Toggle Flagged */ }}>Flagged</button>
+                        <button 
+                            className={reviewRatingFilter === 'all' && !showFlaggedOnly ? 'active' : ''} 
+                            onClick={() => { setReviewRatingFilter('all'); setShowFlaggedOnly(false); setSearchTerm(""); }}
+                        >
+                            All Reviews ({allReviews.length})
+                        </button>
+                        <button 
+                            className={reviewRatingFilter === 1 ? 'active' : ''} 
+                            onClick={() => setReviewRatingFilter(reviewRatingFilter === 1 ? 'all' : 1)}
+                        >
+                            1-Star Only
+                        </button>
+                        <button 
+                            className={showFlaggedOnly ? 'active' : ''} 
+                            onClick={() => setShowFlaggedOnly(!showFlaggedOnly)}
+                        >
+                            Flagged
+                        </button>
                     </div>
                     <div className="filter-search">
                         <input 
@@ -1425,8 +1618,8 @@ const AdminDashboard = () => {
                                     <div className="rev-prod-img-container">
                                         <img 
                                             src={review.product?.images?.[0] 
-                                                ? (review.product.images[0].startsWith('http') ? review.product.images[0] : `http://localhost:5001${review.product.images[0]}`) 
-                                                : '/assets/image.webp'} 
+                                                ? (review.product.images[0].startsWith('http') ? review.product.images[0] : `http://localhost:5001/${review.product.images[0].startsWith('/') ? review.product.images[0].substring(1) : review.product.images[0]}`) 
+                                                : itemStandard} 
                                             alt="" 
                                             className="rev-prod-img" 
                                         />
@@ -1457,7 +1650,7 @@ const AdminDashboard = () => {
                                                          review.user?.role?.toLowerCase() === 'admin' ? '🛡️' : '👤'} 
                                                         {(review.user?.role || 'UNKNOWN').toUpperCase()}
                                                     </span>
-                                                    <span className="rev-date"> • {new Date(review.createdAt).toLocaleDateString()}</span>
+                                                    <span className="rev-date"> • {formatNumericDate(review.createdAt)}</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -1547,6 +1740,208 @@ const AdminDashboard = () => {
         );
     };
 
+    const handleAdminEmailUpdate = async (e) => {
+        e.preventDefault();
+        if (!adminEmailData.newEmail || !adminEmailData.currentPassword) {
+            showModal({ title: 'Missing Fields', message: 'Both new email and current password are required.', type: 'alert' });
+            return;
+        }
+        setIsUpdatingAdminEmail(true);
+        try {
+            const res = await axios.put('http://localhost:5001/api/auth/account-settings', {
+                currentPassword: adminEmailData.currentPassword,
+                newEmail: adminEmailData.newEmail
+            }, { headers: { Authorization: `Bearer ${token}` } });
+
+            showModal({ title: '✅ Email Updated', message: res.data.message, type: 'alert' });
+            if (res.data.logout) {
+                setTimeout(() => {
+                    sessionStorage.removeItem('token');
+                    window.location.href = '/login';
+                }, 2000);
+            }
+        } catch (err) {
+            showModal({ title: 'Update Failed', message: err.response?.data?.message || 'Error updating email.', type: 'alert' });
+        } finally {
+            setIsUpdatingAdminEmail(false);
+        }
+    };
+
+    const handleAdminPasswordUpdate = async (e) => {
+        e.preventDefault();
+        if (!adminPasswordData.currentPassword || !adminPasswordData.newPassword || !adminPasswordData.confirmNewPassword) {
+            showModal({ title: 'Missing Fields', message: 'All password fields are required.', type: 'alert' });
+            return;
+        }
+        if (adminPasswordData.newPassword !== adminPasswordData.confirmNewPassword) {
+            showModal({ title: 'Password Mismatch', message: 'New passwords do not match. Please try again.', type: 'alert' });
+            return;
+        }
+        setIsUpdatingAdminPassword(true);
+        try {
+            const res = await axios.put('http://localhost:5001/api/auth/account-settings', {
+                currentPassword: adminPasswordData.currentPassword,
+                newPassword: adminPasswordData.newPassword
+            }, { headers: { Authorization: `Bearer ${token}` } });
+
+            showModal({ title: '🔒 Password Changed', message: res.data.message, type: 'alert' });
+            if (res.data.logout) {
+                setTimeout(() => {
+                    sessionStorage.removeItem('token');
+                    window.location.href = '/login';
+                }, 2000);
+            }
+        } catch (err) {
+            showModal({ title: 'Update Failed', message: err.response?.data?.message || 'Error updating password.', type: 'alert' });
+        } finally {
+            setIsUpdatingAdminPassword(false);
+        }
+    };
+
+    const renderAdminSettings = () => {
+        const q = searchTerm.toLowerCase().trim();
+
+        // Define keyword sets for each setting section
+        const emailKeywords  = ['email', 'mail', 'address', 'login', 'username', 'contact', 'notification', 'change email', 'update email'];
+        const passKeywords   = ['password', 'pass', 'security', 'credentials', 'change password', 'update password', 'lock', 'secret', 'auth', 'authentication'];
+
+        const showEmail    = !q || emailKeywords.some(k => k.includes(q) || q.includes(k.split(' ')[0]));
+        const showPassword = !q || passKeywords.some(k => k.includes(q) || q.includes(k.split(' ')[0]));
+        const nothingFound = q && !showEmail && !showPassword;
+
+        return (
+        <div className="tab-content settings-view">
+            <header className="view-header">
+                <h1>Admin Security Settings</h1>
+                <p>Manage your administrator credentials. All changes require password verification and will log you out.</p>
+            </header>
+
+            {nothingFound ? (
+                <div className="empty-state" style={{ marginTop: '3rem' }}>
+                    <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🔍</div>
+                    <h3 style={{ fontWeight: '800', color: '#1e293b' }}>No settings found for "{searchTerm}"</h3>
+                    <p style={{ color: '#64748b', marginTop: '0.5rem' }}>Try searching for <strong>email</strong>, <strong>password</strong>, or <strong>security</strong>.</p>
+                </div>
+            ) : (
+            <div className="admin-settings-grid">
+                {/* Change Email Card */}
+                {showEmail && (
+                <div className="admin-settings-card">
+                    <div className="settings-card-header">
+                        <div className="settings-card-icon blue">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                                <polyline points="22,6 12,13 2,6"></polyline>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3>Change Admin Email</h3>
+                            <p>Update your administrator login and notification address.</p>
+                        </div>
+                    </div>
+                    <form onSubmit={handleAdminEmailUpdate} className="settings-form">
+                        <div className="settings-field">
+                            <label>New Email Address <span className="domain-hint">(@banasthali.in)</span></label>
+                            <input
+                                type="email"
+                                placeholder="Enter new admin email..."
+                                value={adminEmailData.newEmail}
+                                onChange={e => setAdminEmailData({ ...adminEmailData, newEmail: e.target.value })}
+                                className="settings-input"
+                            />
+                        </div>
+                        <div className="settings-field">
+                            <label>Verify Current Password</label>
+                            <input
+                                type="password"
+                                placeholder="Enter your current password to confirm..."
+                                value={adminEmailData.currentPassword}
+                                onChange={e => setAdminEmailData({ ...adminEmailData, currentPassword: e.target.value })}
+                                className="settings-input"
+                            />
+                        </div>
+                        <div className="settings-warning">
+                            <span>⚠️</span> You will be logged out after this change.
+                        </div>
+                        <button type="submit" className="settings-submit-btn blue" disabled={isUpdatingAdminEmail}>
+                            {isUpdatingAdminEmail ? (
+                                <><span className="btn-spinner"></span> Updating Email...</>
+                            ) : (
+                                <><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg> Update Admin Email</>
+                            )}
+                        </button>
+                    </form>
+                </div>
+                )}
+
+                {/* Change Password Card */}
+                {showPassword && (
+                <div className="admin-settings-card">
+                    <div className="settings-card-header">
+                        <div className="settings-card-icon red">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3>Change Admin Password</h3>
+                            <p>Strengthen account security with a new strong password.</p>
+                        </div>
+                    </div>
+                    <form onSubmit={handleAdminPasswordUpdate} className="settings-form">
+                        <div className="settings-field">
+                            <label>Current Password</label>
+                            <input
+                                type="password"
+                                placeholder="Enter your current password..."
+                                value={adminPasswordData.currentPassword}
+                                onChange={e => setAdminPasswordData({ ...adminPasswordData, currentPassword: e.target.value })}
+                                className="settings-input"
+                            />
+                        </div>
+                        <div className="settings-field">
+                            <label>New Password</label>
+                            <input
+                                type="password"
+                                placeholder="Enter a strong new password..."
+                                value={adminPasswordData.newPassword}
+                                onChange={e => setAdminPasswordData({ ...adminPasswordData, newPassword: e.target.value })}
+                                className="settings-input"
+                            />
+                        </div>
+                        <div className="settings-field">
+                            <label>Confirm New Password</label>
+                            <input
+                                type="password"
+                                placeholder="Re-enter your new password..."
+                                value={adminPasswordData.confirmNewPassword}
+                                onChange={e => setAdminPasswordData({ ...adminPasswordData, confirmNewPassword: e.target.value })}
+                                className={`settings-input ${adminPasswordData.confirmNewPassword && adminPasswordData.newPassword !== adminPasswordData.confirmNewPassword ? 'input-error' : ''}`}
+                            />
+                            {adminPasswordData.confirmNewPassword && adminPasswordData.newPassword !== adminPasswordData.confirmNewPassword && (
+                                <span className="field-error">Passwords do not match</span>
+                            )}
+                        </div>
+                        <div className="settings-warning">
+                            <span>⚠️</span> You will be logged out after this change.
+                        </div>
+                        <button type="submit" className="settings-submit-btn red" disabled={isUpdatingAdminPassword}>
+                            {isUpdatingAdminPassword ? (
+                                <><span className="btn-spinner"></span> Updating Password...</>
+                            ) : (
+                                <><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg> Update Admin Password</>
+                            )}
+                        </button>
+                    </form>
+                </div>
+                )}
+            </div>
+            )}
+        </div>
+        );
+    };
+
     return (
         <div className="admin-page-container">
             <div className="admin-layout-wrapper">
@@ -1584,8 +1979,6 @@ const AdminDashboard = () => {
                             <span className="icon">⚙️</span> SETTINGS
                         </button>
                     </nav>
-
-                    {/* Sidebar footer removed as per request (Logout and other buttons) */}
                 </aside>
 
                 <main className="admin-main">
@@ -1594,13 +1987,37 @@ const AdminDashboard = () => {
                             <span className="search-icon">🔍</span>
                             <input
                                 type="text"
-                                placeholder={activeTab === 'users' ? "Search users by name or email..." : "Search analytics or items..."}
+                                placeholder={
+                                    activeTab === 'users' ? "Search users by name or email..." :
+                                    activeTab === 'queue' ? "Search products by title, seller or category..." :
+                                    activeTab === 'marketplace' ? "Search live products by title or seller..." :
+                                    activeTab === 'reviews' ? "Search reviews by content or user..." :
+                                    activeTab === 'reports' ? "Search reports by reason or reporter..." :
+                                    activeTab === 'settings' ? "Search settings (e.g. email, password, security...)" :
+                                    "Search analytics or items..."
+                                }
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                             />
+                            {searchTerm && (
+                                <button className="search-clear-btn" onClick={() => setSearchTerm("")} title="Clear search">
+                                    ✕
+                                </button>
+                            )}
                         </div>
                         <div className="nav-actions">
-                            <button className="nav-btn notification" title="Messages" onClick={() => setActiveTab('messages')} style={{ border: 'none', background: 'none', cursor: 'pointer', fontSize: '1.2rem' }}>🔔</button>
+                            {/* Notification Bell */}
+                            <button
+                                className="admin-notif-bell"
+                                onClick={() => navigate('/admin/notifications')}
+                                title="Notifications"
+                                style={{ border: 'none', background: 'none', cursor: 'pointer', fontSize: '1.2rem', position: 'relative' }}
+                            >
+                                🔔
+                                {adminUnreadCount > 0 && (
+                                    <span className="admin-notif-badge">{adminUnreadCount > 9 ? '9+' : adminUnreadCount}</span>
+                                )}
+                            </button>
                             <div className="admin-profile" ref={profileDropdownRef} style={{ position: 'relative' }}>
                                 <div 
                                     className="profile-avatar" 
@@ -1686,17 +2103,7 @@ const AdminDashboard = () => {
                                     </div>
                                 )}
                                 {activeTab === 'reports' && renderReports()}
-                                {activeTab === 'settings' && (
-                                    <div className="tab-content settings-view">
-                                        <header className="view-header">
-                                            <h1>Settings</h1>
-                                            <p>Configure platform-wide parameters and admin access.</p>
-                                        </header>
-                                        <div className="card">
-                                            <p>Settings configuration coming soon...</p>
-                                        </div>
-                                    </div>
-                                )}
+                                {activeTab === 'settings' && renderAdminSettings()}
                             </>
                         )}
                     </div>

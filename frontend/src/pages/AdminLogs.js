@@ -118,7 +118,7 @@ const AdminLogs = () => {
                             />
                         </div>
                         <div className="nav-actions">
-                            <button className="nav-btn notification" title="Messages" onClick={() => navigate('/admin', { state: { activeTab: 'messages' } })} style={{ border: 'none', background: 'none', cursor: 'pointer', fontSize: '1.2rem' }}>🔔</button>
+                            <button className="nav-btn notification" title="Notifications" onClick={() => navigate('/admin/notifications')} style={{ border: 'none', background: 'none', cursor: 'pointer', fontSize: '1.2rem' }}>🔔</button>
                             <div className="admin-profile" ref={profileDropdownRef} style={{ position: 'relative' }}>
                                 <div 
                                     className="profile-avatar" 

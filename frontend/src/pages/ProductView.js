@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import { useModal } from '../context/ModalContext';
+import { formatNumericDate } from '../utils/dateUtils';
 import defaultProduct from '../assets/default-product.svg';
 import itemStandard from '../assets/image.webp';
 import ProductCard from '../Components/ProductCard';
@@ -45,6 +46,7 @@ const ProductView = () => {
     const [reporting, setReporting] = useState(false);
     const [isFlaggedError, setIsFlaggedError] = useState(false);
     const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+    const [reportTarget, setReportTarget] = useState({ id: null, type: 'product', name: '' });
     const { showModal } = useModal();
     
 
@@ -253,11 +255,12 @@ const ProductView = () => {
         callback(e);
     };
 
-    const handleReport = () => {
+    const handleReport = (type = 'product', targetId = id, targetName = product?.title) => {
         if (!token) {
             navigate('/login');
             return;
         }
+        setReportTarget({ id: targetId, type, name: targetName });
         setIsReportModalOpen(true);
     };
 
@@ -363,20 +366,31 @@ const ProductView = () => {
                             {product.reviews && product.reviews.length > 0 ? (
                                 product.reviews.map((review) => (
                                     <div key={review._id} className="review-item">
-                                        <div className="review-user">
-                                            <img
-                                                src={review.user?.gender === 'Female' ? femaleAvatar : maleAvatar}
-                                                alt="user"
-                                                className="review-user-avatar"
-                                            />
-                                            <div className="review-user-info">
-                                                <p className="user-name">{review.user?.firstName} {review.user?.lastName}</p>
-                                                <StarRating rating={review.rating} />
+                                            <div className="review-user">
+                                                <img
+                                                    src={review.user?.gender === 'Female' ? femaleAvatar : maleAvatar}
+                                                    alt="user"
+                                                    className="review-user-avatar"
+                                                />
+                                                <div className="review-user-info">
+                                                    <p className="user-name">{review.user?.firstName} {review.user?.lastName}</p>
+                                                    <StarRating rating={review.rating} />
+                                                </div>
+                                                <div className="review-meta-actions">
+                                                    <span className="review-date">{formatNumericDate(review.createdAt)}</span>
+                                                    {review.user?._id !== currentUser?.id && (
+                                                        <button 
+                                                            className="report-review-mini" 
+                                                            onClick={() => handleReport('review', review._id, `Review by ${review.user?.firstName}`)}
+                                                            title="Report inappropriate review"
+                                                        >
+                                                            🚩
+                                                        </button>
+                                                    )}
+                                                </div>
                                             </div>
-                                            <span className="review-date">{new Date(review.createdAt).toLocaleDateString()}</span>
+                                            <p className="review-comment">{review.comment}</p>
                                         </div>
-                                        <p className="review-comment">{review.comment}</p>
-                                    </div>
                                 ))
                             ) : (
                                 <p className="no-reviews">No reviews yet. Be the first to review!</p>
@@ -522,9 +536,9 @@ const ProductView = () => {
             <ReportModal 
                 isOpen={isReportModalOpen} 
                 onClose={() => setIsReportModalOpen(false)} 
-                targetId={product._id} 
-                targetType="product"
-                targetName={product.title}
+                targetId={reportTarget.id} 
+                targetType={reportTarget.type}
+                targetName={reportTarget.name}
             />
         </div>
     );

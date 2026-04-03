@@ -64,10 +64,15 @@ exports.createReport = async (req, res) => {
 exports.getReports = async (req, res) => {
     try {
         const reports = await Report.find()
-            .populate("reporter", "firstName lastName email")
+            .populate("reporter", "firstName lastName email avatar role")
             .populate({
                 path: "targetId",
-                refPath: "targetModel"
+                // Dynamically populate based on model type
+                populate: [
+                    { path: "seller", select: "firstName lastName email" }, // for products
+                    { path: "user", select: "firstName lastName avatar" },  // for reviews
+                    { path: "product", select: "title images price" }      // for reviews
+                ]
             })
             .sort("-createdAt");
         
@@ -81,22 +86,71 @@ exports.getReports = async (req, res) => {
 // UPDATE REPORT STATUS (Admin Only)
 exports.updateReportStatus = async (req, res) => {
     try {
-        const { status, adminNotes } = req.body;
+        const { status, adminNotes, action } = req.body;
         const reportId = req.params.id;
 
-        const report = await Report.findById(reportId);
+        const report = await Report.findById(reportId)
+            .populate("reporter", "_id email firstName")
+            .populate("targetId");
+            
         if (!report) return res.status(404).json({ message: "Report not found." });
 
         report.status = status || report.status;
         report.adminNotes = adminNotes || report.adminNotes;
         report.resolvedBy = req.user.id;
 
+        // PERFORM MODERATION ACTION IF REQUESTED
+        let actionResult = "Status updated.";
+        if (status === 'resolved' && action && report.targetId) {
+            const Review = require("../models/Review"); // Lazy load locally
+
+            if (action === 'flag_product' && report.targetType === 'product') {
+                await Product.findByIdAndUpdate(report.targetId, { isFlagged: true, status: 'rejected' });
+                actionResult = "Product flagged and hidden.";
+            } 
+            else if (action === 'suspend_user' && report.targetType === 'user') {
+                await User.findByIdAndUpdate(report.targetId, { isSuspended: true });
+                actionResult = "User account suspended.";
+            }
+            else if (action === 'delete_review' && report.targetType === 'review') {
+                await Review.findByIdAndDelete(report.targetId);
+                actionResult = "Review permanently removed.";
+            }
+        }
+
         await report.save();
+
+        // NOTIFY REPORTER
+        if (status === 'resolved' && report.reporter) {
+            const reporterNotif = new Notification({
+                user: report.reporter._id,
+                type: 'info',
+                title: 'Report Processed ✅',
+                message: `The report you filed regarding ${report.targetType} #${report._id.toString().slice(-4)} has been ${status}. Decision: ${adminNotes || "Action taken by moderator."}`,
+                link: '/profile'
+            });
+            await reporterNotif.save();
+        }
+
+        // NOTIFY TARGET (Only if action was taken)
+        if (action && report.targetType !== 'review') {
+            let targetUserId = report.targetType === 'user' ? report.targetId._id : report.targetId.seller;
+            if (targetUserId) {
+                const targetNotif = new Notification({
+                    user: targetUserId,
+                    type: 'warning',
+                    title: 'Account/Listing Update ⚠️',
+                    message: `Action recorded on your ${report.targetType}: ${actionResult}. Reason: ${adminNotes}`,
+                    link: '/profile'
+                });
+                await targetNotif.save();
+            }
+        }
 
         // Log Activity
         const activity = new AdminActivity({
             admin: req.user.id,
-            action: `REPORT_${status.toUpperCase()}`,
+            action: `REPORT_${status.toUpperCase()}${action ? `_${action.toUpperCase()}` : ''}`,
             targetType: "Report",
             targetId: report._id,
             targetName: `Report #${report._id.toString().slice(-4)}`,
@@ -104,7 +158,7 @@ exports.updateReportStatus = async (req, res) => {
         });
         await activity.save();
 
-        res.json({ message: `Report marked as ${status}`, report });
+        res.json({ message: `Report marked as ${status}. ${actionResult}`, report });
     } catch (err) {
         console.error("Update Report Status Error:", err);
         res.status(500).json({ message: err.message });

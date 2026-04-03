@@ -746,21 +746,45 @@
 }
 
 .review-item {
-    border-bottom: 1px solid #f3f4f6;
-    padding-bottom: 1.5rem;
+    margin-bottom: 2rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid #f1f5f9;
 }
 
 .review-item:last-child {
     border-bottom: none;
-    padding-bottom: 0;
 }
 
 .review-user {
     display: flex;
     align-items: center;
     gap: 1rem;
-    margin-bottom: 0.75rem;
+    margin-bottom: 1rem;
     position: relative;
+}
+
+.review-meta-actions {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.report-review-mini {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 0.9rem;
+    padding: 4px;
+    border-radius: 4px;
+    transition: all 0.2s;
+    opacity: 0.3;
+}
+
+.report-review-mini:hover {
+    opacity: 1;
+    background: #fef2f2;
+    transform: scale(1.1);
 }
 
 .review-user-avatar {

@@ -61,8 +61,8 @@ const ReportModal = ({ isOpen, onClose, targetId, targetType, targetName }) => {
         <div className="report-modal-overlay" onClick={onClose}>
             <div className="report-modal-container" onClick={(e) => e.stopPropagation()}>
                 <header className="report-modal-header">
-                    <h2>Report {targetType === 'product' ? 'Product' : 'User'}</h2>
-                    <p className="target-name">Item: <strong>{targetName}</strong></p>
+                    <h2>Report {targetType === 'product' ? 'Product' : targetType === 'user' ? 'User' : 'Review'}</h2>
+                    <p className="target-name">Target: <strong>{targetName}</strong></p>
                     <button className="close-btn" onClick={onClose}>✕</button>
                 </header>
 

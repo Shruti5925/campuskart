@@ -326,67 +326,44 @@
     align-items: center;
 }
 
-.make-offer-btn {
-    background: #f0fdf4;
-    color: #166534;
+.report-user-btn, .archive-btn, .close-conv-btn {
+    background: #f1f5f9;
     border: none;
-    padding: 0.6rem 1.25rem;
+    width: 38px;
+    height: 38px;
     border-radius: 10px;
-    font-weight: 900;
-    font-size: 0.85rem;
-    cursor: pointer;
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-}
-
-.make-offer-btn::before {
-    content: '🤝';
-}
-
-.more-btn {
-    background: white;
-    border: 1px solid #f1f5f9;
-    padding: 6px 12px;
-    border-radius: 8px;
+    justify-content: center;
     cursor: pointer;
+    transition: all 0.2s;
+    color: #64748b;
+    font-size: 1.1rem;
+}
+
+.report-user-btn:hover {
+    background: #fef2f2;
+    color: #ef4444;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.15);
+}
+
+.archive-btn:hover {
+    background: #eff6ff;
+    color: #3b82f6;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
 }
 
 .close-conv-btn {
     background: #fef2f2;
     color: #ef4444;
-    border: none;
-    padding: 8px;
-    border-radius: 10px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .close-conv-btn:hover {
     background: #fee2e2;
     transform: rotate(90deg) scale(1.05);
     box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
-}
-
-.archive-btn {
-    background: #f8fafc;
-    border: 1px solid #f1f5f9;
-    padding: 8px 12px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 1.1rem;
-    transition: all 0.2s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.archive-btn:hover {
-    background: #f1f5f9;
-    border-color: #cbd5e1;
 }
 
 .offer-action-container {
@@ -605,7 +582,8 @@
 /* Admin 3-Pane Layout Styles */
 .admin-messages-container {
     display: flex;
-    height: calc(100vh - 200px); /* Increased offset to move it up and avoid cutoff */
+    height: calc(100vh - 220px); /* Refined offset to avoid screen cutoff */
+    min-height: 600px;
     background: #f8fafc;
     overflow: hidden;
     margin-bottom: 1rem;
@@ -800,6 +778,25 @@
 .header-actions-admin {
     display: flex;
     gap: 0.75rem;
+}
+
+.admin-close-btn {
+    background: #fef2f2;
+    color: #ef4444;
+    border: none;
+    padding: 8px;
+    border-radius: 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.admin-close-btn:hover {
+    background: #fee2e2;
+    transform: rotate(90deg) scale(1.05);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
 }
 
 .admin-action-btn {
@@ -1397,3 +1394,17 @@
     border-radius: 8px;
     object-fit: cover;
 }
+
+/* Status Pill Mini */
+.status-pill-mini {
+    padding: 0.25rem 0.6rem;
+    border-radius: 6px;
+    font-size: 0.65rem;
+    font-weight: 850;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+
+.status-pill-mini.success { background: #dcfce7; color: #16a34a; }
+.status-pill-mini.danger { background: #fee2e2; color: #dc2626; }
+.status-pill-mini.warning { background: #fffbeb; color: #d97706; }

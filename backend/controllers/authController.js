@@ -276,6 +276,70 @@ exports.updateProfile = async (req, res) => {
   }
 };
 
+exports.updateAccountSettings = async (req, res) => {
+  try {
+    const { currentPassword, newEmail, newPassword } = req.body;
+    
+    if (!currentPassword) {
+      return res.status(400).json({ message: "Current password is required for security verification" });
+    }
+
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // 1. Verify Current Password
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: "Incorrect current password" });
+    }
+
+    let changed = false;
+
+    // 2. Handle Email Update
+    if (newEmail && newEmail.toLowerCase() !== user.email) {
+      const email = newEmail.trim().toLowerCase();
+      
+      // Domain validation
+      if (!email.endsWith("@banasthali.in")) {
+        return res.status(400).json({ message: "Invalid email domain. Please use @banasthali.in" });
+      }
+
+      // Check for duplicates
+      const existingUser = await User.findOne({ email });
+      if (existingUser) {
+        return res.status(400).json({ message: "Email is already in use by another account" });
+      }
+
+      user.email = email;
+      changed = true;
+    }
+
+    // 3. Handle Password Update
+    if (newPassword) {
+      const salt = await bcrypt.genSalt(10);
+      user.password = await bcrypt.hash(newPassword.trim(), salt);
+      changed = true;
+    }
+
+    if (!changed) {
+      return res.status(400).json({ message: "No new information provided to update" });
+    }
+
+    await user.save();
+    
+    res.json({ 
+      message: "Account settings updated successfully. For security, you will be logged out.",
+      logout: true 
+    });
+
+  } catch (err) {
+    console.error("Update Account Settings Error:", err);
+    res.status(500).json({ message: "Server error updating account settings" });
+  }
+};
+
 exports.getCaptcha = async (req, res) => {
   try {
     const captcha = generateCaptcha();

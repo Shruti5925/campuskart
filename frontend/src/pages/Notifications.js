@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
 import { useModal } from '../context/ModalContext';
+import { formatNumericDate } from '../utils/dateUtils';
 import Sidebar from '../Components/Sidebar';
 import Footer from '../Components/Footer';
 import socket from '../socket';
@@ -79,7 +80,7 @@ const Notifications = () => {
         const days = Math.floor(hours / 24);
         if (days === 1) return "Yesterday";
         if (days < 7) return `${days} day${days > 1 ? 's' : ''} ago`;
-        return new Date(date).toLocaleDateString();
+        return formatNumericDate(date);
     };
 
     const getSenderName = (notification) => {
