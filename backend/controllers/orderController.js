@@ -2,19 +2,34 @@ const Order = require("../models/Order");
 const User = require("../models/User");
 const Product = require("../models/Product");
 const Notification = require("../models/Notification");
+const Conversation = require("../models/Conversation");
+const Message = require("../models/Message");
 
 exports.checkout = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).populate("cart.product");
+    const user = await User.findById(req.user.id).populate({
+      path: "cart.product",
+      populate: { path: "seller", select: "firstName lastName" }
+    });
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    if (!user.cart || user.cart.length === 0) {
-      return res.status(400).json({ message: "Cart is empty" });
-    }
+    const productId = req.body.productId;
+    
+    // Filter out items where product might have been deleted or user is buying their own product
+    let validCart = user.cart.filter(item => {
+        if (!item.product) return false;
+        if (item.product.seller && item.product.seller.toString() === req.user.id) return false;
+        
+        // If a specific productId is provided, only include that one
+        if (productId && item.product._id.toString() !== productId) return false;
+        
+        return true;
+    });
 
-    // Filter out items where product might have been deleted
-    const validCart = user.cart.filter(item => item.product);
     if (validCart.length === 0) {
+      if (productId) {
+          return res.status(404).json({ message: "Product not found in your cart or is invalid" });
+      }
       user.cart = [];
       await user.save();
       return res.status(400).json({ message: "No valid products in cart" });
@@ -28,6 +43,8 @@ exports.checkout = async (req, res) => {
         product: item.product._id,
         productTitle: item.product.title,
         productImage: (item.product.images && item.product.images.length > 0) ? item.product.images[0] : item.product.image,
+        seller: item.product.seller?._id,
+        sellerName: item.product.seller ? `${item.product.seller.firstName} ${item.product.seller.lastName}` : "Banasthali Student",
         quantity: item.quantity,
         priceAtPurchase: price
       };
@@ -63,8 +80,11 @@ exports.checkout = async (req, res) => {
         }
     }
 
-    // Clear user cart
-    user.cart = [];
+    // Remove only the purchased items from the cart
+    const purchasedIds = validCart.map(item => item.product._id.toString());
+    user.cart = user.cart.filter(item => 
+        !item.product || !purchasedIds.includes(item.product._id.toString())
+    );
     await user.save();
 
     res.status(201).json({ message: "Order placed successfully! 🎉", order });
@@ -80,7 +100,11 @@ exports.getMyOrders = async (req, res) => {
       buyer: req.user.id,
       'products.productTitle': { $ne: 'CampusKart Support' }
     })
-      .populate("products.product")
+      .populate({
+        path: "products.product",
+        populate: { path: "seller", select: "firstName lastName" }
+      })
+      .populate("products.seller", "firstName lastName")
       .sort({ createdAt: -1 });
     res.json(orders);
   } catch (err) {
@@ -91,7 +115,7 @@ exports.getMyOrders = async (req, res) => {
 
 exports.returnOrder = async (req, res) => {
   try {
-    const order = await Order.findById(req.params.id);
+    const order = await Order.findById(req.params.id).populate("products.product");
     if (!order) return res.status(404).json({ message: "Order not found" });
 
     // Ensure order belongs to the requester
@@ -103,7 +127,6 @@ exports.returnOrder = async (req, res) => {
       return res.status(400).json({ message: "Only completed orders can be returned" });
     }
 
-    // Check if within 3 days (3 * 24 * 60 * 60 * 1000 ms)
     const threeDaysInMs = 3 * 24 * 60 * 60 * 1000;
     const timeElapsed = Date.now() - new Date(order.createdAt).getTime();
 
@@ -114,7 +137,57 @@ exports.returnOrder = async (req, res) => {
     order.status = "returned";
     await order.save();
 
-    res.json({ message: "Order returned successfully! 📦", order });
+    // -- AUTOMATION START --
+    const buyer = await User.findById(req.user.id);
+    const firstProductItem = order.products[0];
+    const product = firstProductItem.product;
+    const sellerId = product ? product.seller : firstProductItem.seller;
+
+    if (sellerId) {
+      // 1. Notify Seller
+      const sellerNotification = new Notification({
+        user: sellerId,
+        type: "info",
+        title: "Return Requested",
+        message: `${buyer.firstName} has requested a return for "${firstProductItem.productTitle || product.title}". Please check your messages.`,
+        link: `/messages`
+      });
+      await sellerNotification.save();
+
+      // 2. Auto-Message the Seller
+      const p0 = buyer._id.toString();
+      const p1 = sellerId.toString();
+      const interactionKey = p0 < p1 ? `${p0}_${p1}` : `${p1}_${p0}`;
+
+      const conversation = await Conversation.findOneAndUpdate(
+        { interactionKey },
+        { 
+          $setOnInsert: { 
+            participants: [p0, p1],
+            product: product ? product._id : null,
+            status: 'active'
+          } 
+        },
+        { upsert: true, new: true, setDefaultsOnInsert: true }
+      );
+
+      const autoMessageContent = `Hi! I have initiated a return for the item "${firstProductItem.productTitle || product.title}". I would like to coordinate a meetup to return the item and finalize the refund. Please let me know when you're available!`;
+      
+      const message = new Message({
+        conversationId: conversation._id,
+        sender: buyer._id,
+        content: autoMessageContent,
+        type: 'text'
+      });
+      await message.save();
+
+      conversation.lastMessage = autoMessageContent;
+      conversation.lastMessageSender = buyer._id;
+      await conversation.save();
+    }
+    // -- AUTOMATION END --
+
+    res.json({ message: "Order returned successfully! 📦 Seller has been notified to coordinate the refund.", order });
   } catch (err) {
     console.error("Return Order Error:", err);
     res.status(500).json({ message: "Server error during order return" });

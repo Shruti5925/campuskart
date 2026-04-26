@@ -218,17 +218,32 @@ const Support = () => {
                         <section className="support-cta-banner">
                             <div className="cta-content">
                                 <h2 className="cta-title">Still need help?</h2>
-                                <p className="cta-text">Our dedicated support team is available 24/7 to assist you with any questions or concerns.</p>
+                                <p className="cta-text">Our dedicated support team is available to assist you with any questions or concerns.</p>
                             </div>
                             <div className="cta-actions">
                                 <button className="cta-btn btn-chat-premium" onClick={handleLiveChat}>
                                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
                                     Start a Live Chat
                                 </button>
-                                <button className="cta-btn btn-email-premium">
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
-                                    Email Support
-                                </button>
+                                <div style={{ 
+                                    display: 'flex', 
+                                    alignItems: 'center', 
+                                    gap: '0.6rem', 
+                                    background: 'rgba(255,255,255,0.6)', 
+                                    padding: '0.5rem 0.8rem', 
+                                    borderRadius: '14px', 
+                                    border: '1px dashed #cbd5e1',
+                                    backdropFilter: 'blur(4px)',
+                                    width: 'fit-content'
+                                }}>
+                                    <div style={{ width: '32px', height: '32px', background: 'white', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" strokeWidth="3"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                                    </div>
+                                    <p style={{ margin: 0, fontWeight: '800', color: '#1e293b', fontSize: '0.9rem', lineHeight: '1.4' }}>
+                                        If any queries then email on this:<br />
+                                        <span style={{ color: '#3B82F6' }}>support@banasthali.in</span>
+                                    </p>
+                                </div>
                             </div>
                         </section>
                     </div>

@@ -15,17 +15,26 @@ import '../styles/ProductView.css';
 
 
 const StarRating = ({ rating, interactive, onRatingChange }) => {
+    const [hoverRating, setHoverRating] = React.useState(0);
+
     return (
-        <div className="star-rating">
-            {[1, 2, 3, 4, 5].map((star) => (
-                <span
-                    key={star}
-                    className={`star ${star <= rating ? 'filled' : ''} ${interactive ? 'interactive' : ''}`}
-                    onClick={() => interactive && onRatingChange(star)}
-                >
-                    ★
-                </span>
-            ))}
+        <div className={`star-rating ${interactive ? 'is-interactive' : ''}`}>
+            {[1, 2, 3, 4, 5].map((star) => {
+                const isSelected = star <= rating;
+                const isHovered = star <= hoverRating;
+                
+                return (
+                    <span
+                        key={star}
+                        className={`star ${isSelected ? 'filled' : ''} ${isHovered ? 'hovered' : ''} ${interactive ? 'interactive' : ''}`}
+                        onClick={() => interactive && onRatingChange(star)}
+                        onMouseEnter={() => interactive && setHoverRating(star)}
+                        onMouseLeave={() => interactive && setHoverRating(0)}
+                    >
+                        ★
+                    </span>
+                );
+            })}
         </div>
     );
 };
@@ -331,72 +340,6 @@ const ProductView = () => {
                             <p><strong>Safe Exchange:</strong> Meet the seller in person at {product.pickupPoint || 'the campus'} to inspect the item before buying.</p>
                         </div>
                     </div>
-
-                    <div className="reviews-section">
-                        <div className="reviews-header">
-                            <h3>Reviews & Ratings ({product.reviewCount || 0})</h3>
-                            {product.averageRating > 0 && (
-                                <div className="avg-rating-display">
-                                    <StarRating rating={Math.round(product.averageRating)} />
-                                    <span>{product.averageRating.toFixed(1)} out of 5</span>
-                                </div>
-                            )}
-                        </div>
-
-                        {canReview && (
-                            <form className="add-review-form" onSubmit={handleReviewSubmit}>
-                                <h4>Add your review</h4>
-                                <div className="rating-input">
-                                    <label>Rate this item:</label>
-                                    <StarRating rating={newRating} interactive={true} onRatingChange={setNewRating} />
-                                </div>
-                                <textarea
-                                    placeholder="Write your experience with this item..."
-                                    value={newComment}
-                                    onChange={(e) => setNewComment(e.target.value)}
-                                    rows="3"
-                                />
-                                <button type="submit" className="submit-review-btn" disabled={submittingReview || isSuspended}>
-                                    {isSuspended ? 'Account Suspended' : submittingReview ? 'Submitting...' : 'Post Review'}
-                                </button>
-                            </form>
-                        )}
-
-                        <div className="reviews-list">
-                            {product.reviews && product.reviews.length > 0 ? (
-                                product.reviews.map((review) => (
-                                    <div key={review._id} className="review-item">
-                                            <div className="review-user">
-                                                <img
-                                                    src={review.user?.gender === 'Female' ? femaleAvatar : maleAvatar}
-                                                    alt="user"
-                                                    className="review-user-avatar"
-                                                />
-                                                <div className="review-user-info">
-                                                    <p className="user-name">{review.user?.firstName} {review.user?.lastName}</p>
-                                                    <StarRating rating={review.rating} />
-                                                </div>
-                                                <div className="review-meta-actions">
-                                                    <span className="review-date">{formatNumericDate(review.createdAt)}</span>
-                                                    {review.user?._id !== currentUser?.id && (
-                                                        <button 
-                                                            className="report-review-mini" 
-                                                            onClick={() => handleReport('review', review._id, `Review by ${review.user?.firstName}`)}
-                                                            title="Report inappropriate review"
-                                                        >
-                                                            🚩
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            </div>
-                                            <p className="review-comment">{review.comment}</p>
-                                        </div>
-                                ))
-                            ) : (
-                                <p className="no-reviews">No reviews yet. Be the first to review!</p>
-                            )}
-                        </div>
-                    </div>
                 </div>
 
                 <div className="view-right">
@@ -480,7 +423,7 @@ const ProductView = () => {
                         <div className="seller-info">
                             <img src={sellerAvatar} alt="seller" />
                             <div className="seller-details">
-                                <h4>{product.seller?.firstName} {product.seller?.lastName} ✅</h4>
+                                <h4>{product.seller?.firstName ? `${product.seller.firstName} ${product.seller.lastName || ''}`.trim() : 'Banasthali Student'} ✅</h4>
                                 <p>{product.seller?.email}</p>
                             </div>
                         </div>
@@ -497,16 +440,78 @@ const ProductView = () => {
                             <p><strong>Campus Safety Tips</strong></p>
                         </div>
                         <p className="safety-text">Always meet in well-lit public areas on campus. Verify the item condition before any payment.</p>
-                        <button 
-                            className="report-item-btn" 
-                            onClick={() => !isSuspended && handleReport()}
-                            disabled={reporting || isSuspended}
-                        >
-                            <span className="icon">🚩</span> {reporting ? 'Reporting...' : 'Report this item'}
-                        </button>
+
                     </div>
                 </div>
             </main>
+
+            <section className="product-reviews-full">
+                <div className="reviews-section">
+                    <div className="reviews-header">
+                        <h3>Reviews & Ratings ({product.reviewCount || 0})</h3>
+                        {product.averageRating > 0 && (
+                            <div className="avg-rating-display">
+                                <StarRating rating={Math.round(product.averageRating)} />
+                                <span>{product.averageRating.toFixed(1)} out of 5</span>
+                            </div>
+                        )}
+                    </div>
+
+                    {canReview && (
+                        <form className="add-review-form" onSubmit={handleReviewSubmit}>
+                            <h4>Add your review</h4>
+                            <div className="rating-input">
+                                <label>Rate this item:</label>
+                                <StarRating rating={newRating} interactive={true} onRatingChange={setNewRating} />
+                            </div>
+                            <textarea
+                                placeholder="Write your experience with this item..."
+                                value={newComment}
+                                onChange={(e) => setNewComment(e.target.value)}
+                                rows="3"
+                            />
+                            <button type="submit" className="submit-review-btn" disabled={submittingReview || isSuspended}>
+                                {isSuspended ? 'Account Suspended' : submittingReview ? 'Submitting...' : 'Post Review'}
+                            </button>
+                        </form>
+                    )}
+
+                    <div className="reviews-list">
+                        {product.reviews && product.reviews.length > 0 ? (
+                            product.reviews.map((review) => (
+                                <div key={review._id} className="review-item">
+                                    <div className="review-user">
+                                        <img
+                                            src={review.user?.gender === 'Female' ? femaleAvatar : maleAvatar}
+                                            alt="user"
+                                            className="review-user-avatar"
+                                        />
+                                        <div className="review-user-info">
+                                            <p className="user-name">{review.user?.firstName} {review.user?.lastName}</p>
+                                            <StarRating rating={review.rating} />
+                                        </div>
+                                        <div className="review-meta-actions">
+                                            <span className="review-date">{formatNumericDate(review.createdAt)}</span>
+                                            {review.user?._id !== currentUser?.id && (
+                                                <button 
+                                                    className="report-review-mini" 
+                                                    onClick={() => handleReport('review', review._id, `Review by ${review.user?.firstName}`)}
+                                                    title="Report inappropriate review"
+                                                >
+                                                    🚩
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <p className="review-comment">{review.comment}</p>
+                                </div>
+                            ))
+                        ) : (
+                            <p className="no-reviews">No reviews yet. Be the first to review!</p>
+                        )}
+                    </div>
+                </div>
+            </section>
 
             <section className="similar-section">
                 <div className="section-header">

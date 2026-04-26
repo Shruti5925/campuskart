@@ -71,31 +71,17 @@ const Footer = ({ isAdmin }) => {
                         </ul>
                     </div>
 
-                    <div className="footer-column newsletter">
-                        <h4>Stay Connected</h4>
-                        <p>Get notified about the latest items in your campus.</p>
-                        <form className="newsletter-form" onSubmit={handleSubmit}>
-                            <input
-                                type="email"
-                                placeholder="Campus Email"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                required
-                                disabled={loading}
-                            />
-                            <button type="submit" className="newsletter-btn" disabled={loading}>
-                                {loading ? (
-                                    <div className="spinner"></div>
-                                ) : (
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
-                                )}
-                            </button>
-                        </form>
-                        {status.message && (
-                            <div className={`subscription-message ${status.type}`}>
-                                {status.message}
+                    <div className="footer-column support-column">
+                        <h4>Support Center</h4>
+                        <p>Have questions or need assistance? Our team is here to help you with any issues.</p>
+                        <div className="support-links">
+                            <Link to="/support" className="support-btn">
+                                <span>🎧</span> Visit support page
+                            </Link>
+                            <div className="support-info">
+                                <p>Email: support@banasthali.in</p>
                             </div>
-                        )}
+                        </div>
                     </div>
                 </div>
             )}

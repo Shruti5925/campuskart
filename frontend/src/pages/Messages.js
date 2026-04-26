@@ -649,13 +649,14 @@ const Messages = ({ hideSidebar = false, isAdmin = false, propTargetUserId = nul
                                             <label>Mobile Number</label>
                                             <p>{otherUser?.mobileNumber || 'N/A'}</p>
                                         </div>
-                                        <div className="detail-box">
-                                            <label>Email Address</label>
-                                            <p>{otherUser?.email || 'N/A'}</p>
-                                        </div>
+
                                         <div className="detail-box">
                                             <label>Joined On</label>
                                             <p>{otherUser?.createdAt ? formatNumericDate(otherUser.createdAt) : 'N/A'}</p>
+                                        </div>
+                                        <div className="detail-box full-width">
+                                            <label>Email Address</label>
+                                            <p>{otherUser?.email || 'N/A'}</p>
                                         </div>
                                         <div className="detail-box full-width">
                                             <label>Campus Address / Hostel</label>

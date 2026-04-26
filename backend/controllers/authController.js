@@ -278,7 +278,7 @@ exports.updateProfile = async (req, res) => {
 
 exports.updateAccountSettings = async (req, res) => {
   try {
-    const { currentPassword, newEmail, newPassword } = req.body;
+    const { currentPassword, newEmail, newPassword, securityAnswer } = req.body;
     
     if (!currentPassword) {
       return res.status(400).json({ message: "Current password is required for security verification" });
@@ -293,6 +293,16 @@ exports.updateAccountSettings = async (req, res) => {
     const isMatch = await bcrypt.compare(currentPassword, user.password);
     if (!isMatch) {
       return res.status(400).json({ message: "Incorrect current password" });
+    }
+
+    // 2. Verify Security Answer (Specifically for high-security changes like password)
+    if (newPassword) {
+      if (!securityAnswer) {
+        return res.status(400).json({ message: "Security answer is required for password change" });
+      }
+      if (securityAnswer.trim() !== user.securityAnswer) {
+        return res.status(400).json({ message: "Incorrect security answer" });
+      }
     }
 
     let changed = false;
@@ -337,6 +347,24 @@ exports.updateAccountSettings = async (req, res) => {
   } catch (err) {
     console.error("Update Account Settings Error:", err);
     res.status(500).json({ message: "Server error updating account settings" });
+  }
+};
+
+exports.deleteCurrentUser = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    // 1. Delete all products by this user
+    await Product.deleteMany({ seller: req.user.id });
+
+    // 2. Delete the user
+    await User.findByIdAndDelete(req.user.id);
+
+    res.json({ message: "Account and all associated listings have been permanently removed." });
+  } catch (err) {
+    console.error("Delete Account Error:", err);
+    res.status(500).json({ message: "Server error during account removal" });
   }
 };
 

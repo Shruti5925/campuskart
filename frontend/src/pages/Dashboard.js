@@ -194,7 +194,11 @@ const Dashboard = () => {
                                         displayedSearchProducts.map(p => (
                                             <div 
                                                 key={p._id} 
-                                                onClick={() => navigate(`/product/${p._id}`)}
+                                                onMouseDown={() => {
+                                                    navigate(`/product/${p._id}`);
+                                                    setIsSearchFocused(false);
+                                                    setSearchTerm('');
+                                                }}
                                                 style={{
                                                     padding: '0.75rem 1rem',
                                                     cursor: 'pointer',
@@ -277,7 +281,7 @@ const Dashboard = () => {
                                 {activeTab === 'My Reviews' ? (
                                     myReviews.length > 0 ? (
                                         myReviews.map(review => (
-                                            <div key={review._id} className="listing-item-card review-dashboard-card" onClick={() => navigate(`/product/${review.product?._id}`)}>
+                                            <div key={review._id} className="listing-item-card review-dashboard-card">
                                                 <div className="listing-item-left">
                                                     <img
                                                         src={(review.product?.images && review.product.images.length > 0) ? review.product.images[0] : (review.product?.image || itemStandard)}
@@ -302,7 +306,7 @@ const Dashboard = () => {
                                                     >
                                                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
                                                     </button>
-                                                    <button className="view-product-btn">View Item</button>
+
                                                 </div>
                                             </div>
                                         ))

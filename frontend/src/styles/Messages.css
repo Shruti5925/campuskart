@@ -12,7 +12,7 @@
 
 .messages-header {
     height: 70px;
-    background: white;
+    background: linear-gradient(90deg, var(--white) 0%, #EFF6FF 100%);
     border-bottom: 1px solid #f1f5f9;
     padding: 0 2rem;
     display: flex;
@@ -1201,7 +1201,18 @@
 .profile-details-scroll {
     flex: 1;
     overflow-y: auto;
-    padding: 0 1.5rem 1.5rem;
+    padding: 0 1.5rem 8rem; /* Dramatically increased bottom padding */
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+}
+
+.profile-details-scroll::-webkit-scrollbar {
+    width: 6px;
+}
+
+.profile-details-scroll::-webkit-scrollbar-thumb {
+    background-color: #cbd5e1;
+    border-radius: 10px;
 }
 
 .info-group {

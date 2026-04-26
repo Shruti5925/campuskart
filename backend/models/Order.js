@@ -20,6 +20,15 @@ const orderSchema = new mongoose.Schema({
       type: String,
       required: false
     },
+    seller: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: false
+    },
+    sellerName: {
+      type: String,
+      required: false
+    },
     quantity: {
       type: Number,
       required: true,

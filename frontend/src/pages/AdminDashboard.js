@@ -12,6 +12,7 @@ import { formatNumericDate } from '../utils/dateUtils';
 import ModerationModal from '../Components/ModerationModal';
 import '../styles/AdminDashboard.css';
 
+
 const AdminDashboard = () => {
     const navigate = useNavigate();
     const location = useLocation();
@@ -28,7 +29,7 @@ const AdminDashboard = () => {
     const [flaggedProductsList, setFlaggedProductsList] = useState([]);
     const [allReviews, setAllReviews] = useState([]);
     const [allUsers, setAllUsers] = useState([]);
-    const [reports, setReports] = useState([]);
+
     const [stats, setStats] = useState({
         totalUsers: 0,
         pendingApprovals: 0,
@@ -50,10 +51,10 @@ const AdminDashboard = () => {
     const [selectedUserDir, setSelectedUserDir] = useState(null);
     const [isEditingUser, setIsEditingUser] = useState(false);
     const [editUserData, setEditUserData] = useState({});
-    const [reportFilterStatus, setReportFilterStatus] = useState('all');
-    const [isModModalOpen, setIsModModalOpen] = useState(false);
-    const [selectedReport, setSelectedReport] = useState(null);
+
+
     const profileDropdownRef = useRef(null);
+    const growthDropdownRef = useRef(null);
     const [reviewTimeRange, setReviewTimeRange] = useState('all'); // all, 30days
     const [reviewRatingFilter, setReviewRatingFilter] = useState('all'); // all, 1, 2, 3, 4, 5
     const [showFlaggedOnly, setShowFlaggedOnly] = useState(false);
@@ -88,6 +89,23 @@ const AdminDashboard = () => {
             document.removeEventListener('mousedown', handleClickOutside);
         };
     }, [showProfileDropdown]);
+    
+    // Close growth dropdown on click outside
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (growthDropdownRef.current && !growthDropdownRef.current.contains(event.target)) {
+                setShowGrowthMenu(false);
+            }
+        };
+
+        if (showGrowthMenu) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [showGrowthMenu]);
     
     useEffect(() => {
         setModalImageIndex(0);
@@ -171,7 +189,7 @@ const AdminDashboard = () => {
                 fetchData('http://localhost:5001/api/products/admin/flagged', setFlaggedProductsList, 'Flagged Products'),
                 fetchData('http://localhost:5001/api/products/admin/reviews', setAllReviews, 'Reviews'),
                 fetchData('http://localhost:5001/api/auth/users', setAllUsers, 'Users'),
-                fetchData('http://localhost:5001/api/reports', setReports, 'Reports'),
+    
                 fetchData('http://localhost:5001/api/admin-activities', setActivities, 'Activities')
             ]);
             console.log("Admin Dashboard Load Complete");
@@ -272,27 +290,6 @@ const AdminDashboard = () => {
         } catch (err) {
             console.error("Error toggling review flag:", err);
             showModal({ title: 'Error', message: 'Failed to toggle review flag', type: 'alert' });
-        }
-    };
-
-    const handleUpdateReportStatus = async (reportId, status, adminNotes = "", action = null) => {
-        try {
-            await axios.patch(`http://localhost:5001/api/reports/${reportId}/status`, { 
-                status, 
-                adminNotes,
-                action 
-            }, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            
-            setReports(prev => prev.map(r => r._id === reportId ? { ...r, status, adminNotes } : r));
-            showModal({ title: 'Success', message: `Report marked as ${status}. Action executed.`, type: 'alert' });
-            
-            // Refresh stats/activities
-            fetchInitialData();
-        } catch (err) {
-            console.error("Error updating report status:", err);
-            showModal({ title: 'Error', message: 'Failed to update report status.', type: 'alert' });
         }
     };
 
@@ -521,7 +518,7 @@ const AdminDashboard = () => {
                 <div className="admin-stat-card">
                     <div className="card-icon flagged">🚩</div>
                     <div className="card-info">
-                        <span className="label">Flagged Reports</span>
+                        <span className="label">Flagged Items</span>
                         <h2 className="value">{flaggedProductsList.length}</h2>
                         {flaggedProductsList.length > 0 ? (
                             <span className="tag alert">{flaggedProductsList.length} Alert{flaggedProductsList.length !== 1 && 's'}</span>
@@ -541,7 +538,7 @@ const AdminDashboard = () => {
                                 {growthTimeframe === '7days' ? 'Signups for the last 7 days' : 'Signups for the last 12 months'}
                             </p>
                         </div>
-                        <div className="growth-dropdown-container">
+                        <div className="growth-dropdown-container" ref={growthDropdownRef}>
                             <span className="filter-label">
                                 {growthTimeframe === '7days' ? 'Last 7 Days' : 'Last 12 Months'}
                                 <span 
@@ -563,14 +560,30 @@ const AdminDashboard = () => {
                     <div className={`mock-chart ${growthTimeframe}`}>
                         {getUserGrowthData().map((day, idx) => (
                             <div key={idx} className="bar-group">
-                                <div className="bar-wrapper">
+                                <div className="bar-wrapper" style={{ overflow: 'visible' }}>
                                     <div 
                                         className="bar" 
                                         style={{ 
                                             height: `${Math.max(day.heightPercent, 3)}%`,
                                             transition: 'height 0.5s ease-out',
+                                            position: 'relative',
+                                            borderRadius: '10px 10px 2px 2px'
                                         }}
-                                    ></div>
+                                    >
+                                        <span style={{
+                                            position: 'absolute',
+                                            bottom: '100%',
+                                            width: '100%',
+                                            textAlign: 'center',
+                                            marginBottom: '4px',
+                                            fontSize: '0.75rem',
+                                            fontWeight: '800',
+                                            color: '#1e40af',
+                                            lineHeight: 1
+                                        }}>
+                                            {day.count > 0 ? day.count : ''}
+                                        </span>
+                                    </div>
                                 </div>
                                 <span className="bar-label">
                                     {day.label}
@@ -1318,164 +1331,7 @@ const AdminDashboard = () => {
         );
     };
 
-    const renderReports = () => {
-        const filteredReports = reports.filter(report => {
-            const searchLower = searchTerm.toLowerCase();
-            const reason = report.reason?.toLowerCase() || "";
-            const description = report.description?.toLowerCase() || "";
-            const reporterName = report.reporter ? `${report.reporter.firstName} ${report.reporter.lastName}`.toLowerCase() : "";
-            
-            const matchesSearch = reason.includes(searchLower) || description.includes(searchLower) || reporterName.includes(searchLower);
-            const matchesStatus = reportFilterStatus === 'all' || report.status === reportFilterStatus;
-            
-            return matchesSearch && matchesStatus;
-        });
 
-        const reportStats = [
-            { label: 'Total Reports', value: reports.length, icon: '📊', color: 'blue' },
-            { label: 'Pending', value: reports.filter(r => r.status === 'pending').length, icon: '⏳', color: 'orange' },
-            { label: 'Resolved', value: reports.filter(r => r.status === 'resolved').length, icon: '✅', color: 'green' },
-            { label: 'Dismissed', value: reports.filter(r => r.status === 'dismissed').length, icon: '🚫', color: 'gray' }
-        ];
-
-        return (
-            <div className="tab-content reports-view">
-                <header className="view-header">
-                    <h1>Platform Reports</h1>
-                    <p>Monitor and resolve user-submitted reports for products, users, and reviews.</p>
-                </header>
-
-                <div className="reports-stats-grid">
-                    {reportStats.map((stat, i) => (
-                        <div key={i} className={`report-stat-card ${stat.color}`}>
-                            <span className="stat-icon">{stat.icon}</span>
-                            <div className="stat-info">
-                                <span className="label">{stat.label}</span>
-                                <h2 className="value">{stat.value}</h2>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-
-                <div className="reports-filter-bar">
-                    <div className="filter-pills">
-                        <button className={reportFilterStatus === 'all' ? 'active' : ''} onClick={() => setReportFilterStatus('all')}>All</button>
-                        <button className={reportFilterStatus === 'pending' ? 'active' : ''} onClick={() => setReportFilterStatus('pending')}>Pending</button>
-                        <button className={reportFilterStatus === 'resolved' ? 'active' : ''} onClick={() => setReportFilterStatus('resolved')}>Resolved</button>
-                        <button className={reportFilterStatus === 'dismissed' ? 'active' : ''} onClick={() => setReportFilterStatus('dismissed')}>Dismissed</button>
-                    </div>
-                </div>
-
-                <div className="reports-list">
-                    {filteredReports.length === 0 ? (
-                        <div className="empty-state">No reports found matching your criteria.</div>
-                    ) : (
-                        <div className="admin-table-container">
-                            <table className="admin-table reports-table">
-                                <thead>
-                                    <tr>
-                                        <th>TARGET ITEM</th>
-                                        <th>REPORTER</th>
-                                        <th>REASON / DESC</th>
-                                        <th>STATUS</th>
-                                        <th>ACTIONS</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {filteredReports.map(report => (
-                                        <tr key={report._id}>
-                                            <td>
-                                                <div className="target-preview-cell">
-                                                    <span className={`type-tag ${report.targetType}`}>
-                                                        {report.targetType.toUpperCase()}
-                                                    </span>
-                                                    <div className="preview-snippet">
-                                                        {report.targetType === 'product' && report.targetId && (
-                                                            <>
-                                                                <img src={report.targetId.images?.[0]?.startsWith('http') ? report.targetId.images[0] : `http://localhost:5001/${report.targetId.images?.[0]}`} alt="" className="mini-thumb" />
-                                                                <span className="title-text">{report.targetId.title}</span>
-                                                            </>
-                                                        )}
-                                                        {report.targetType === 'user' && report.targetId && (
-                                                            <>
-                                                                <span className="user-initials">{report.targetId.firstName?.charAt(0)}{report.targetId.lastName?.charAt(0)}</span>
-                                                                <span className="title-text">{report.targetId.firstName} {report.targetId.lastName}</span>
-                                                            </>
-                                                        )}
-                                                        {report.targetType === 'review' && report.targetId && (
-                                                            <>
-                                                                <span className="title-text rating">{'⭐'.repeat(report.targetId.rating)}</span>
-                                                                <span className="snippet">"{report.targetId.comment?.substring(0, 20)}..."</span>
-                                                            </>
-                                                        )}
-                                                        {!report.targetId && <span className="title-text deleted">Item Deleted/Not Found</span>}
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div className="reporter-cell">
-                                                    <p className="name">{report.reporter ? `${report.reporter.firstName} ${report.reporter.lastName}` : 'Anonymous'}</p>
-                                                    <p className="email">{report.reporter?.email || ''}</p>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div className="reason-cell">
-                                                    <p className="reason-text">{report.reason}</p>
-                                                    <p className="desc-text">{report.description}</p>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <span className={`status-pill ${report.status}`}>
-                                                    {report.status.toUpperCase()}
-                                                </span>
-                                            </td>
-                                            <td>
-                                                <div className="action-cell">
-                                                    {report.status === 'pending' ? (
-                                                        <>
-                                                            <button 
-                                                                className="action-btn resolve"
-                                                                onClick={() => {
-                                                                    setSelectedReport(report);
-                                                                    setIsModModalOpen(true);
-                                                                }}
-                                                            >
-                                                                Take Action
-                                                            </button>
-                                                            <button 
-                                                                className="action-btn dismiss"
-                                                                onClick={() => handleUpdateReportStatus(report._id, 'dismissed', 'Reason irrelevant or false positive.', 'dismiss')}
-                                                            >
-                                                                Dismiss
-                                                            </button>
-                                                        </>
-                                                    ) : (
-                                                        <div className="resolved-info">
-                                                            <span className="handled-text">Resolved on {formatNumericDate(report.updatedAt)}</span>
-                                                            {report.adminNotes && <p className="notes-tooltip" title={report.adminNotes}>📄 View Notes</p>}
-                                                        </div>
-                                                    )}
-                                                    {report.reporter && (
-                                                        <button 
-                                                            className="action-btn chat-mini" 
-                                                            title="Message Reporter"
-                                                            onClick={() => handleStartChat(report.reporter)}
-                                                        >
-                                                            💬 Reporter
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    )}
-                </div>
-            </div>
-        );
-    };
 
     const renderReviews = () => {
         const filteredReviews = allReviews.filter(review => {
@@ -1972,9 +1828,7 @@ const AdminDashboard = () => {
                         <button className={activeTab === 'messages' ? 'active' : ''} onClick={() => setActiveTab('messages')}>
                             <span className="icon">💬</span> MESSAGES
                         </button>
-                        <button className={activeTab === 'reports' ? 'active' : ''} onClick={() => setActiveTab('reports')}>
-                            <span className="icon">📊</span> REPORTS
-                        </button>
+
                         <button className={activeTab === 'settings' ? 'active' : ''} onClick={() => setActiveTab('settings')}>
                             <span className="icon">⚙️</span> SETTINGS
                         </button>
@@ -1983,28 +1837,29 @@ const AdminDashboard = () => {
 
                 <main className="admin-main">
                     <header className="admin-top-nav">
-                        <div className="search-bar">
-                            <span className="search-icon">🔍</span>
-                            <input
-                                type="text"
-                                placeholder={
-                                    activeTab === 'users' ? "Search users by name or email..." :
-                                    activeTab === 'queue' ? "Search products by title, seller or category..." :
-                                    activeTab === 'marketplace' ? "Search live products by title or seller..." :
-                                    activeTab === 'reviews' ? "Search reviews by content or user..." :
-                                    activeTab === 'reports' ? "Search reports by reason or reporter..." :
-                                    activeTab === 'settings' ? "Search settings (e.g. email, password, security...)" :
-                                    "Search analytics or items..."
-                                }
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                            />
-                            {searchTerm && (
-                                <button className="search-clear-btn" onClick={() => setSearchTerm("")} title="Clear search">
-                                    ✕
-                                </button>
-                            )}
-                        </div>
+                        {activeTab !== 'overview' && (
+                            <div className="search-bar">
+                                <span className="search-icon">🔍</span>
+                                <input
+                                    type="text"
+                                    placeholder={
+                                        activeTab === 'users' ? "Search users by name or email..." :
+                                        activeTab === 'queue' ? "Search products by title, seller or category..." :
+                                        activeTab === 'marketplace' ? "Search live products by title or seller..." :
+                                        activeTab === 'reviews' ? "Search reviews by content or user..." :
+                                        activeTab === 'settings' ? "Search settings (e.g. email, password, security...)" :
+                                        "Search analytics or items..."
+                                    }
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                />
+                                {searchTerm && (
+                                    <button className="search-clear-btn" onClick={() => setSearchTerm("")} title="Clear search">
+                                        ✕
+                                    </button>
+                                )}
+                            </div>
+                        )}
                         <div className="nav-actions">
                             {/* Notification Bell */}
                             <button
@@ -2102,7 +1957,7 @@ const AdminDashboard = () => {
                                          <Messages hideSidebar={true} isAdmin={true} propTargetUserId={targetChatUser} />
                                     </div>
                                 )}
-                                {activeTab === 'reports' && renderReports()}
+        
                                 {activeTab === 'settings' && renderAdminSettings()}
                             </>
                         )}

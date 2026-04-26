@@ -65,14 +65,11 @@
     border-radius: 24px;
     border: 1px solid #f1f5f9;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    cursor: pointer;
 }
 
 .order-card-large:hover {
     background: #fdfdfd;
-    border-color: #00D14E;
-    transform: translateY(-2px);
-    box-shadow: 0 12px 24px rgba(0, 209, 78, 0.08); /* Green shadow on hover */
+    border-color: #f1f5f9;
 }
 
 .order-card-left .order-img-large {

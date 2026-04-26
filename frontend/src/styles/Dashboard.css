@@ -11,7 +11,7 @@
 
 .dashboard-header {
     height: 80px;
-    background: white;
+    background: linear-gradient(90deg, var(--white) 0%, #EFF6FF 100%);
     padding: 0 4rem;
     display: flex;
     align-items: center;
@@ -349,15 +349,12 @@
 
 /* My Reviews Specific Styles */
 .review-dashboard-card {
-    cursor: pointer;
     border: 1px solid #f3f4f6 !important;
     margin-bottom: 1rem;
 }
 
 .review-dashboard-card:hover {
-    border-color: #3B82F6 !important;
-    background: #f0f7ff !important;
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.08);
+    background: #f9fafb !important;
 }
 
 .review-product-header {

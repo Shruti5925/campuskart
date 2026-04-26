@@ -33,7 +33,7 @@ const Orders = () => {
         if (token) fetchOrders();
     }, [token]);
 
-    const tabs = ['All Orders', 'Active', 'Completed', 'Cancelled'];
+    const tabs = ['All Orders', 'Active', 'Completed', 'Cancelled', 'Returned'];
 
     // Consolidate valid orders (Remove broken entries immediately)
     const validOrders = orders.filter(o => {
@@ -47,6 +47,7 @@ const Orders = () => {
         if (status === 'active') filtered = filtered.filter(o => o.status === 'pending');
         else if (status === 'completed') filtered = filtered.filter(o => o.status === 'completed');
         else if (status === 'cancelled') filtered = filtered.filter(o => o.status === 'cancelled');
+        else if (status === 'returned') filtered = filtered.filter(o => o.status === 'returned');
 
         if (searchTerm) {
             filtered = filtered.filter(o => 
@@ -73,7 +74,11 @@ const Orders = () => {
                         headers: { Authorization: `Bearer ${token}` }
                     });
                     setOrders(res.data);
-                    showModal({ title: 'Success', message: "Order return initiated successfully! 📦", type: 'alert' });
+                    showModal({ 
+                        title: 'Return Initiated', 
+                        message: "Success! We've automatically sent a message to the seller to coordinate your refund. Please check your messages. 📦", 
+                        type: 'alert' 
+                    });
                 } catch (err) {
                     console.error("Return Error:", err);
                     showModal({ title: 'Error', message: err.response?.data?.message || "Failed to initiate return", type: 'alert' });
@@ -137,7 +142,7 @@ const Orders = () => {
         const orderIdDisplay = order?._id ? (order._id.toString().slice(-4).toUpperCase()) : '????';
 
         return (
-            <div key={order._id} className="order-card-large" onClick={() => mainProduct?._id && navigate(`/product/${mainProduct._id}`)}>
+            <div key={order._id} className="order-card-large">
                 <div className="order-card-left">
                     <img 
                         src={displayImage} 
@@ -152,23 +157,13 @@ const Orders = () => {
                         <span className="order-id-label">Order #CK-{orderIdDisplay}</span>
                     </div>
                     <h2 className="order-title-large">{displayTitle}</h2>
-                    <p className="order-seller">Seller: <span>{mainProduct?.seller?.firstName || 'Banasthali Student'}</span></p>
+                    <p className="order-seller">Seller: <span>{firstItem?.sellerName || (firstItem?.seller?.firstName ? `${firstItem.seller.firstName} ${firstItem.seller.lastName || ''}`.trim() : (mainProduct?.seller?.firstName ? `${mainProduct.seller.firstName} ${mainProduct.seller.lastName || ''}`.trim() : 'Banasthali Student'))}</span></p>
                     
                     <div className="order-actions">
                         {isCancelled ? (
                             <>
                                 <button className="reorder-btn" onClick={(e) => { e.stopPropagation(); navigate(`/product/${mainProduct?._id}`); }}>
                                     Reorder Item
-                                </button>
-                                <button className="view-reason-btn" onClick={(e) => {
-                                    e.stopPropagation();
-                                    showModal({
-                                        title: 'Cancellation Reason',
-                                        message: order.cancellationReason || "This order was cancelled because the associated product was flagged or reported by an Administrator.",
-                                        type: 'alert'
-                                    });
-                                }}>
-                                    View Cancellation Reason
                                 </button>
                             </>
                         ) : (
@@ -259,7 +254,10 @@ const Orders = () => {
                                         displayedSearchOrders.map(o => (
                                             <div 
                                                 key={o._id} 
-                                                onClick={() => {
+                                                onMouseDown={() => {
+                                                    const prodId = o.products[0]?.product?._id || o.products[0]?.product;
+                                                    if (prodId) navigate(`/product/${prodId}`);
+                                                    setIsSearchFocused(false);
                                                     setSearchTerm('');
                                                 }}
                                                 className="search-item"
@@ -316,6 +314,7 @@ const Orders = () => {
                                     if (activeTab === 'Active') statusKey = 'active';
                                     else if (activeTab === 'Completed') statusKey = 'completed';
                                     else if (activeTab === 'Cancelled') statusKey = 'cancelled';
+                                    else if (activeTab === 'Returned') statusKey = 'returned';
                                     
                                     const filtered = getFilteredOrders(statusKey);
                                     return filtered.length > 0 ? (

@@ -195,6 +195,7 @@
     display: flex;
     align-items: center;
     gap: 1.5rem;
+    margin-left: auto;
 }
 
 .nav-btn {
@@ -374,6 +375,7 @@
     position: relative;
     display: flex;
     align-items: center;
+    z-index: 10;
 }
 
 .filter-label {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import axios from "axios";
 import { useModal } from "../context/ModalContext";
 import Sidebar from "../Components/Sidebar";
@@ -10,6 +10,8 @@ import maleAvatar from "../assets/male-avatar.png";
 import itemStandard from "../assets/image.webp";
 
 function Profile() {
+    const navigate = useNavigate();
+    const location = useLocation();
     const [userData, setUserData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [isEditing, setIsEditing] = useState(false);
@@ -27,19 +29,21 @@ function Profile() {
     const [pendingPhotoPreview, setPendingPhotoPreview] = useState(null);
     const [pendingRemovePhoto, setPendingRemovePhoto] = useState(false);
 
-    const navigate = useNavigate();
     const token = sessionStorage.getItem("token");
-
-
-
 
     useEffect(() => {
         if (!token) {
             navigate("/login");
             return;
         }
+
+        const params = new URLSearchParams(location.search);
+        if (params.get('edit') === 'true') {
+            setIsEditing(true);
+        }
+
         fetchProfile();
-    }, [token, navigate]);
+    }, [token, navigate, location.search]);
 
     const fetchProfile = async () => {
         try {
@@ -177,63 +181,7 @@ function Profile() {
                 <Sidebar />
 
                 <main className="dashboard-main">
-                    <header className="dashboard-header">
-                        <div className="search-pill" style={{ position: 'relative' }}>
-                            <span className="search-icon">🔍</span>
-                            <input 
-                                type="text" 
-                                placeholder="Search my listings..." 
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                onFocus={() => setIsSearchFocused(true)}
-                                onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
-                            />
-                            {isSearchFocused && (
-                                <div className="search-dropdown" style={{
-                                    position: 'absolute',
-                                    top: '100%',
-                                    left: 0,
-                                    right: 0,
-                                    backgroundColor: 'white',
-                                    border: '1px solid #e5e7eb',
-                                    borderRadius: '12px',
-                                    marginTop: '0.5rem',
-                                    maxHeight: '300px',
-                                    overflowY: 'auto',
-                                    zIndex: 100,
-                                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
-                                }}>
-                                    {displayedSearchProducts.length > 0 ? (
-                                        displayedSearchProducts.map(p => (
-                                            <div 
-                                                key={p._id} 
-                                                onClick={() => navigate(`/product/${p._id}`)}
-                                                style={{
-                                                    padding: '0.75rem 1rem',
-                                                    cursor: 'pointer',
-                                                    borderBottom: '1px solid #f3f4f6',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    gap: '0.75rem'
-                                                }}
-                                                onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#f9fafb'}
-                                                onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'white'}
-                                            >
-                                                <img src={(p.images && p.images.length > 0) ? p.images[0] : (p.image || itemStandard)} alt={p.title} style={{ width: '40px', height: '40px', borderRadius: '8px', objectFit: 'cover' }} />
-                                                <div>
-                                                    <p style={{ margin: 0, fontWeight: '700', fontSize: '0.9rem', color: '#111827' }}>{p.title}</p>
-                                                    <p style={{ margin: 0, fontSize: '0.8rem', color: '#6b7280' }}>₹{p.price} • {p.status === 'sold' ? 'Sold' : (p.status === 'draft' ? 'Draft' : 'Active')}</p>
-                                                </div>
-                                            </div>
-                                        ))
-                                    ) : (
-                                        <div style={{ padding: '1rem', textAlign: 'center', color: '#6b7280', fontSize: '0.9rem' }}>
-                                            No product found
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-                        </div>
+                    <header className="dashboard-header" style={{ justifyContent: 'flex-end' }}>
                         <div className="header-actions" style={{ display: 'flex', gap: '8px' }}>
                             <Link to="/cart" className="pill-icon-btn cart-icon-btn" title="Cart">
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
@@ -409,9 +357,6 @@ function Profile() {
                                             <label>Campus Address / Hostel</label>
                                             <p className="val-text" style={{ fontSize: '1.1rem', fontWeight: '800' }}>{userData.address}</p>
                                         </div>
-                                    </div>
-                                    <div className="action-row" style={{ marginTop: '2rem', display: 'flex', gap: '1rem' }}>
-                                        <button className="continue-btn" onClick={() => setIsEditing(true)} style={{ maxWidth: '200px' }}>Edit Profile</button>
                                     </div>
                                 </div>
                             )}

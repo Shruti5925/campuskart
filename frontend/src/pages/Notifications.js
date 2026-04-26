@@ -197,7 +197,11 @@ const Notifications = () => {
                                         displayedSearchNotifications.map(notification => (
                                             <div 
                                                 key={notification._id} 
-                                                onClick={() => handleNotificationClick(notification)}
+                                                onMouseDown={() => {
+                                                    handleNotificationClick(notification);
+                                                    setIsSearchFocused(false);
+                                                    setSearchTerm('');
+                                                }}
                                                 style={{
                                                     padding: '0.75rem 1rem',
                                                     cursor: 'pointer',

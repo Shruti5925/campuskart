@@ -32,7 +32,7 @@
     display: grid;
     grid-template-columns: 1fr 450px;
     gap: 3rem;
-    padding: 0 8% 5rem;
+    padding: 0 8% 1rem;
     max-width: 1400px;
     margin: 0 auto;
 }
@@ -620,8 +620,14 @@
 }
 
 /* Reviews Section */
+.product-reviews-full {
+    padding: 0 8%;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
 .reviews-section {
-    margin-top: 3rem;
+    margin-top: 0;
     background: white;
     padding: 2.5rem;
     border-radius: 28px;
@@ -657,22 +663,38 @@
 
 .star-rating {
     display: flex;
-    gap: 0.25rem;
-    color: #e5e7eb;
+    gap: 4px;
+    color: #fbbf24; /* Default yellow for static stars */
     font-size: 1.25rem;
 }
 
-.star.filled {
-    color: #f59e0b;
+.star {
+    cursor: default;
+    transition: transform 0.2s, color 0.2s, text-shadow 0.2s;
+}
+
+/* Interactive mode styles */
+.star-rating.is-interactive {
+    color: #d1d5db; /* Default gray for interactive unrated state */
+}
+
+.star-rating.is-interactive .star.filled {
+    color: #f59e0b; /* Amber-500 for selected stars */
+    text-shadow: 0 0 10px rgba(245, 158, 11, 0.4);
+}
+
+.star-rating.is-interactive .star.hovered {
+    color: #fbbf24; /* Yellow-400 on hover */
+    transform: scale(1.25);
+    text-shadow: 0 0 5px rgba(251, 191, 36, 0.5);
 }
 
 .star.interactive {
     cursor: pointer;
-    transition: transform 0.1s;
 }
 
-.star.interactive:hover {
-    transform: scale(1.2);
+.star:not(.filled):not(.hovered) {
+    color: #e5e7eb;
 }
 
 .add-review-form {
