@@ -209,6 +209,35 @@ exports.getSecurityQuestion = async (req, res) => {
   }
 };
 
+exports.verifySecurityAnswer = async (req, res) => {
+  try {
+    const { securityAnswer: rawSecurityAnswer } = req.body;
+    const securityAnswer = rawSecurityAnswer?.trim();
+    
+    if (!securityAnswer) {
+      return res.status(400).json({ message: "Security answer is required" });
+    }
+
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    console.log(`[DEBUG] Verifying security answer for user: ${user.email}`);
+    console.log(`[DEBUG] Provided: "${securityAnswer}"`);
+    console.log(`[DEBUG] Stored: "${user.securityAnswer}"`);
+
+    if (!user.securityAnswer || user.securityAnswer.trim().toLowerCase() !== securityAnswer.toLowerCase()) {
+      return res.status(400).json({ message: "Incorrect security answer" });
+    }
+
+    res.json({ message: "Security answer verified successfully" });
+  } catch (err) {
+    console.error("Verify Security Answer Error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
 exports.resetPassword = async (req, res) => {
   try {
     const { email: rawEmail, securityAnswer: rawSecurityAnswer, newPassword: rawNewPassword } = req.body;
@@ -280,28 +309,40 @@ exports.updateAccountSettings = async (req, res) => {
   try {
     const { currentPassword, newEmail, newPassword, securityAnswer } = req.body;
     
-    if (!currentPassword) {
-      return res.status(400).json({ message: "Current password is required for security verification" });
-    }
-
     const user = await User.findById(req.user.id);
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // 1. Verify Current Password
-    const isMatch = await bcrypt.compare(currentPassword, user.password);
-    if (!isMatch) {
-      return res.status(400).json({ message: "Incorrect current password" });
-    }
-
-    // 2. Verify Security Answer (Specifically for high-security changes like password)
+    // 1. Verification Logic
+    // If updating password, we accept EITHER currentPassword OR securityAnswer
     if (newPassword) {
-      if (!securityAnswer) {
-        return res.status(400).json({ message: "Security answer is required for password change" });
+      const providedSecurityAnswer = securityAnswer?.trim();
+      const isSecurityAnswerCorrect = providedSecurityAnswer && 
+        user.securityAnswer && 
+        providedSecurityAnswer.toLowerCase() === user.securityAnswer.trim().toLowerCase();
+      
+      let isPasswordMatch = false;
+      if (currentPassword) {
+        isPasswordMatch = await bcrypt.compare(currentPassword, user.password);
       }
-      if (securityAnswer.trim() !== user.securityAnswer) {
-        return res.status(400).json({ message: "Incorrect security answer" });
+
+      if (!isSecurityAnswerCorrect && !isPasswordMatch) {
+        console.log(`[DEBUG] Update Failed for ${user.email}. Correct Answer: ${user.securityAnswer}, Provided: ${providedSecurityAnswer}`);
+        return res.status(400).json({ 
+          message: currentPassword 
+            ? "Incorrect current password" 
+            : "Security answer is required for verification" 
+        });
+      }
+    } else {
+      // If NOT updating password (e.g. just email), we still require currentPassword for now
+      if (!currentPassword) {
+        return res.status(400).json({ message: "Current password is required for security verification" });
+      }
+      const isMatch = await bcrypt.compare(currentPassword, user.password);
+      if (!isMatch) {
+        return res.status(400).json({ message: "Incorrect current password" });
       }
     }
 

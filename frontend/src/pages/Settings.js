@@ -15,12 +15,14 @@ const Settings = () => {
 
     // Password change state
     const [passData, setPassData] = useState({
-        currentPassword: '',
         securityAnswer: '',
         newPassword: '',
         confirmPassword: ''
     });
+    const [passStep, setPassStep] = useState(0); // 0: Initial, 1: Security Q, 2: New Pass
+    const [verifyingAnswer, setVerifyingAnswer] = useState(false);
     const [updatingPass, setUpdatingPass] = useState(false);
+    const [isSecurityExpanded, setIsSecurityExpanded] = useState(false);
 
     useEffect(() => {
         if (!token) {
@@ -43,6 +45,27 @@ const Settings = () => {
         }
     };
 
+    const handleVerifyAnswer = async (e) => {
+        e.preventDefault();
+        setVerifyingAnswer(true);
+        try {
+            await axios.post('http://localhost:5001/api/auth/verify-security-answer', {
+                securityAnswer: passData.securityAnswer
+            }, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            setPassStep(2);
+        } catch (err) {
+            showModal({
+                title: 'Verification Failed',
+                message: err.response?.data?.message || "Incorrect security answer",
+                type: 'alert'
+            });
+        } finally {
+            setVerifyingAnswer(false);
+        }
+    };
+
     const handlePassChange = async (e) => {
         e.preventDefault();
         if (passData.newPassword !== passData.confirmPassword) {
@@ -57,7 +80,6 @@ const Settings = () => {
         setUpdatingPass(true);
         try {
             const res = await axios.put('http://localhost:5001/api/auth/account-settings', {
-                currentPassword: passData.currentPassword,
                 securityAnswer: passData.securityAnswer,
                 newPassword: passData.newPassword
             }, {
@@ -75,7 +97,8 @@ const Settings = () => {
                     }
                 }
             });
-            setPassData({ currentPassword: '', securityAnswer: '', newPassword: '', confirmPassword: '' });
+            setPassData({ securityAnswer: '', newPassword: '', confirmPassword: '' });
+            setPassStep(0);
         } catch (err) {
             showModal({
                 title: 'Update Failed',
@@ -138,125 +161,196 @@ const Settings = () => {
                             </p>
                         </div>
 
-                        {/* Layout Grid */}
+                        {/* Layout Stack (Row Wise) */}
                         <div style={{ 
-                            display: 'grid', 
-                            gridTemplateColumns: '1fr 1fr', 
-                            gap: '2.5rem',
-                            alignItems: 'start'
+                            display: 'flex', 
+                            flexDirection: 'column',
+                            gap: '2rem'
                         }}>
                             
-                            {/* TOP LEFT: Profile Editing Card */}
+                            {/* Profile Editing Card */}
                             <div className="section-card" style={{ 
                                 padding: '2.5rem', borderRadius: '32px', background: 'white', border: '1px solid #f1f5f9',
-                                boxShadow: '0 20px 40px rgba(0,0,0,0.03)', height: '100%', display: 'flex', flexDirection: 'column'
+                                boxShadow: '0 20px 40px rgba(0,0,0,0.03)'
                             }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', marginBottom: '2.5rem' }}>
-                                    <div style={{ width: '44px', height: '44px', background: '#eff6ff', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '3rem' }}>
+                                    <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+                                        <div style={{ width: '48px', height: '48px', background: '#eff6ff', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                                        </div>
+                                        <div>
+                                            <h3 style={{ fontSize: '1.5rem', fontWeight: '950', color: '#111827', margin: 0, letterSpacing: '-0.02em' }}>Profile Editing</h3>
+                                            <p style={{ color: '#64748b', fontWeight: '600', fontSize: '1rem', marginTop: '6px', lineHeight: '1.6' }}>
+                                                Manage your personal identity, campus affiliations, and contact information. Keep your profile accurate to build trust within the community.
+                                            </p>
+                                        </div>
                                     </div>
                                     <div>
-                                        <h3 style={{ fontSize: '1.4rem', fontWeight: '900', color: '#111827', margin: 0, letterSpacing: '-0.02em' }}>Profile Editing</h3>
-                                        <p style={{ color: '#64748b', fontWeight: '600', fontSize: '0.9rem', marginTop: '2px' }}>Personalize your campus identity.</p>
-                                    </div>
-                                </div>
-
-                                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#f8fafc', borderRadius: '24px', padding: '2rem', marginBottom: '2rem' }}>
-                                    <img src={avatarUrl} alt="Avatar" style={{ width: '100px', height: '100px', borderRadius: '50%', marginBottom: '1.5rem', border: '4px solid white', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }} />
-                                    <h4 style={{ fontSize: '1.25rem', fontWeight: '900', color: '#111827', marginBottom: '0.25rem' }}>{userData?.firstName} {userData?.lastName}</h4>
-                                    <p style={{ color: '#64748b', fontWeight: '700', fontSize: '0.9rem', marginBottom: '1rem' }}>{userData?.email}</p>
-                                    <div style={{ background: '#eff6ff', color: '#3B82F6', padding: '4px 12px', borderRadius: '8px', fontSize: '0.8rem', fontWeight: '900', textTransform: 'uppercase' }}>
-                                        {userData?.role} • {userData?.department}
-                                    </div>
-                                </div>
-
-                                <button 
-                                    className="continue-btn" 
-                                    onClick={() => navigate('/profile?edit=true')}
-                                    style={{ width: 'auto', padding: '0.8rem 2.5rem', borderRadius: '14px', background: '#3B82F6', margin: '0 auto', display: 'block' }}
-                                >
-                                    Edit Full Profile
-                                </button>
-                            </div>
-
-                            {/* TOP RIGHT: Password Change Card */}
-                            <div className="section-card" style={{ 
-                                padding: '2.5rem 2.5rem 0.75rem 2.5rem', borderRadius: '32px', background: 'white', border: '1px solid #f1f5f9',
-                                boxShadow: '0 20px 40px rgba(0,0,0,0.03)', height: '100%'
-                            }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', marginBottom: '2rem' }}>
-                                    <div style={{ width: '44px', height: '44px', background: '#eff6ff', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
-                                    </div>
-                                    <div>
-                                        <h3 style={{ fontSize: '1.4rem', fontWeight: '900', color: '#111827', margin: 0, letterSpacing: '-0.02em' }}>Security & Password</h3>
-                                        <p style={{ color: '#64748b', fontWeight: '600', fontSize: '0.9rem', marginTop: '2px' }}>Manage your account access.</p>
-                                    </div>
-                                </div>
-
-                                <form onSubmit={handlePassChange}>
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                                        <div className="input-group">
-                                            <label style={{ fontSize: '0.75rem', fontWeight: '900', color: '#111827', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.1rem', display: 'block' }}>Q: {userData?.securityQuestion}</label>
-                                            <input 
-                                                type="text" 
-                                                placeholder="Your answer"
-                                                required
-                                                value={passData.securityAnswer}
-                                                onChange={(e) => setPassData({...passData, securityAnswer: e.target.value})}
-                                                style={{ width: '100%', padding: '0.6rem 1rem', background: '#f8fafc', border: '1px solid #f1f5f9', borderRadius: '12px', fontWeight: '700' }}
-                                            />
-                                        </div>
-                                        <div className="input-group">
-                                            <label style={{ fontSize: '0.75rem', fontWeight: '900', color: '#111827', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.1rem', display: 'block' }}>Current Password</label>
-                                            <input 
-                                                type="password" 
-                                                required
-                                                value={passData.currentPassword}
-                                                onChange={(e) => setPassData({...passData, currentPassword: e.target.value})}
-                                                style={{ width: '100%', padding: '0.6rem 1rem', background: '#f8fafc', border: '1px solid #f1f5f9', borderRadius: '12px', fontWeight: '700' }}
-                                            />
-                                        </div>
-                                        <div className="input-group">
-                                            <label style={{ fontSize: '0.75rem', fontWeight: '900', color: '#111827', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.1rem', display: 'block' }}>New Password</label>
-                                            <input 
-                                                type="password" 
-                                                required
-                                                value={passData.newPassword}
-                                                onChange={(e) => setPassData({...passData, newPassword: e.target.value})}
-                                                style={{ width: '100%', padding: '0.6rem 1rem', background: '#f8fafc', border: '1px solid #f1f5f9', borderRadius: '12px', fontWeight: '700' }}
-                                            />
-                                        </div>
-                                        <div className="input-group">
-                                            <label style={{ fontSize: '0.75rem', fontWeight: '900', color: '#111827', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.1rem', display: 'block' }}>Confirm New Password</label>
-                                            <input 
-                                                type="password" 
-                                                required
-                                                value={passData.confirmPassword}
-                                                onChange={(e) => setPassData({...passData, confirmPassword: e.target.value})}
-                                                style={{ width: '100%', padding: '0.6rem 1rem', background: '#f8fafc', border: '1px solid #f1f5f9', borderRadius: '12px', fontWeight: '700' }}
-                                            />
-                                        </div>
                                         <button 
-                                            type="submit" 
-                                            disabled={updatingPass}
+                                            className="continue-btn" 
+                                            onClick={() => navigate('/profile?edit=true')}
                                             style={{ 
-                                                background: 'white', border: '2px solid #3B82F6', color: '#3B82F6',
-                                                padding: '0.8rem', borderRadius: '12px', fontWeight: '900', cursor: 'pointer',
-                                                fontSize: '0.9rem', marginTop: '0.2rem'
+                                                background: '#3B82F6', 
+                                                color: 'white', 
+                                                border: 'none', 
+                                                borderRadius: '16px', 
+                                                fontWeight: '900', 
+                                                cursor: 'pointer',
+                                                boxShadow: '0 6px 15px rgba(59, 130, 246, 0.25)', 
+                                                fontSize: '1rem',
+                                                whiteSpace: 'nowrap',
+                                                width: '240px',
+                                                padding: '1.1rem 0',
+                                                textAlign: 'center'
                                             }}
-                                            onMouseOver={(e) => { e.currentTarget.style.background = '#eff6ff'; }}
-                                            onMouseOut={(e) => { e.currentTarget.style.background = 'white'; }}
                                         >
-                                            {updatingPass ? 'Updating...' : 'Change Password'}
+                                            Edit Profile
                                         </button>
                                     </div>
-                                </form>
+                                </div>
+
+                            </div>
+                            {/* Security & Password Card */}
+                            <div className="section-card" style={{ 
+                                padding: '2.5rem', borderRadius: '32px', background: 'white', border: '1px solid #f1f5f9',
+                                boxShadow: '0 20px 40px rgba(0,0,0,0.03)'
+                            }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '3rem' }}>
+                                    <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+                                        <div style={{ width: '48px', height: '48px', background: '#eff6ff', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                                        </div>
+                                        <div>
+                                            <h3 style={{ fontSize: '1.5rem', fontWeight: '950', color: '#111827', margin: 0, letterSpacing: '-0.02em' }}>Security & Password</h3>
+                                            <p style={{ color: '#64748b', fontWeight: '600', fontSize: '1rem', marginTop: '6px', lineHeight: '1.6' }}>
+                                                Ensure your account remains protected by updating your credentials. A strong, regularly rotated password is your first line of defense.
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <button 
+                                            className="continue-btn" 
+                                            onClick={() => setIsSecurityExpanded(!isSecurityExpanded)}
+                                            style={{ 
+                                                background: '#3B82F6', 
+                                                color: 'white', 
+                                                border: 'none', 
+                                                padding: '1.1rem 2.5rem', 
+                                                borderRadius: '16px', 
+                                                fontWeight: '900', 
+                                                cursor: 'pointer',
+                                                boxShadow: '0 6px 15px rgba(59, 130, 246, 0.25)', 
+                                                fontSize: '1rem',
+                                                whiteSpace: 'nowrap',
+                                                width: '240px',
+                                                padding: '1.1rem 0',
+                                                textAlign: 'center'
+                                            }}
+                                        >
+                                            {isSecurityExpanded ? 'Collapse' : 'Change Password'}
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {isSecurityExpanded && (
+                                    <div style={{ marginTop: '2.5rem', paddingTop: '2.5rem', borderTop: '1px solid #f1f5f9', animation: 'slideDown 0.3s ease-out' }}>
+                                        <div style={{ maxWidth: '600px' }}>
+                                            {passStep === 1 && (
+                                                <form onSubmit={handleVerifyAnswer}>
+                                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                                                        <div className="input-group">
+                                                            <label style={{ fontSize: '0.85rem', fontWeight: '900', color: '#111827', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.75rem', display: 'block' }}>Q: {userData?.securityQuestion}</label>
+                                                            <input 
+                                                                type="text" 
+                                                                placeholder="Enter your security answer"
+                                                                required
+                                                                autoFocus
+                                                                value={passData.securityAnswer}
+                                                                onChange={(e) => setPassData({...passData, securityAnswer: e.target.value})}
+                                                                style={{ width: '100%', padding: '1rem 1.5rem', background: '#f8fafc', border: '1px solid #f1f5f9', borderRadius: '16px', fontWeight: '700', fontSize: '1.1rem' }}
+                                                            />
+                                                        </div>
+                                                        <div style={{ display: 'flex', gap: '1rem' }}>
+                                                            <button 
+                                                                type="submit" 
+                                                                disabled={verifyingAnswer}
+                                                                style={{ flex: 1, padding: '1rem', borderRadius: '16px', fontWeight: '900', background: '#3B82F6', border: 'none', color: 'white', cursor: 'pointer', fontSize: '1.1rem' }}
+                                                            >
+                                                                {verifyingAnswer ? 'Verifying...' : 'Verify & Continue'}
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </form>
+                                            )}
+
+                                            {passStep === 2 && (
+                                                <form onSubmit={handlePassChange}>
+                                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+                                                            <div className="input-group">
+                                                                <label style={{ fontSize: '0.85rem', fontWeight: '900', color: '#111827', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.75rem', display: 'block' }}>New Password</label>
+                                                                <input 
+                                                                    type="password" 
+                                                                    required
+                                                                    autoFocus
+                                                                    placeholder="Min. 6 chars"
+                                                                    value={passData.newPassword}
+                                                                    onChange={(e) => setPassData({...passData, newPassword: e.target.value})}
+                                                                    style={{ width: '100%', padding: '1rem 1.5rem', background: '#f8fafc', border: '1px solid #f1f5f9', borderRadius: '16px', fontWeight: '700', fontSize: '1.1rem' }}
+                                                                />
+                                                            </div>
+                                                            <div className="input-group">
+                                                                <label style={{ fontSize: '0.85rem', fontWeight: '900', color: '#111827', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.75rem', display: 'block' }}>Confirm New Password</label>
+                                                                <input 
+                                                                    type="password" 
+                                                                    required
+                                                                    placeholder="Repeat password"
+                                                                    value={passData.confirmPassword}
+                                                                    onChange={(e) => setPassData({...passData, confirmPassword: e.target.value})}
+                                                                    style={{ width: '100%', padding: '1rem 1.5rem', background: '#f8fafc', border: '1px solid #f1f5f9', borderRadius: '16px', fontWeight: '700', fontSize: '1.1rem' }}
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                        <button 
+                                                            type="submit" 
+                                                            disabled={updatingPass}
+                                                            style={{ 
+                                                                padding: '1.1rem', borderRadius: '18px', fontWeight: '950', background: '#111827', 
+                                                                border: 'none', color: 'white', cursor: 'pointer', fontSize: '1.1rem', 
+                                                                boxShadow: '0 8px 25px rgba(17, 24, 39, 0.2)' 
+                                                            }}
+                                                        >
+                                                            {updatingPass ? 'Updating...' : 'Update Password'}
+                                                        </button>
+                                                    </div>
+                                                </form>
+                                            )}
+
+                                            {passStep === 0 && (
+                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                                                    <div style={{ background: '#fefce8', border: '1px solid #fef08a', padding: '1.5rem', borderRadius: '20px', display: 'flex', gap: '1.25rem', alignItems: 'center' }}>
+                                                        <div style={{ width: '40px', height: '40px', background: '#fef9c3', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ca8a04" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                                                        </div>
+                                                        <p style={{ color: '#854d0e', fontWeight: '700', fontSize: '0.95rem', lineHeight: '1.5', margin: 0 }}>
+                                                            For your protection, you must verify your identity using your security question before changing your password.
+                                                        </p>
+                                                    </div>
+                                                    <button 
+                                                        onClick={() => setPassStep(1)}
+                                                        style={{ width: 'max-content', padding: '1rem 2.5rem', borderRadius: '16px', background: '#3B82F6', color: 'white', border: 'none', fontWeight: '900', cursor: 'pointer' }}
+                                                    >
+                                                        Proceed to Verification
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
 
                             {/* BOTTOM: Danger Zone Card (Full Space) */}
                             <div className="section-card" style={{ 
-                                gridColumn: 'span 2',
                                 padding: '2.5rem', borderRadius: '32px', background: 'white', border: '1px solid #fee2e2',
                                 boxShadow: '0 20px 40px rgba(239, 68, 68, 0.02)'
                             }}>
@@ -266,7 +360,9 @@ const Settings = () => {
                                     </div>
                                     <div>
                                         <h3 style={{ fontSize: '1.4rem', fontWeight: '900', color: '#dc2626', margin: 0, letterSpacing: '-0.02em' }}>Danger Zone</h3>
-                                        <p style={{ color: '#64748b', fontWeight: '600', fontSize: '0.9rem', marginTop: '2px' }}>Permanent actions for your account.</p>
+                                        <p style={{ color: '#64748b', fontWeight: '600', fontSize: '0.95rem', marginTop: '4px', lineHeight: '1.6', maxWidth: '650px' }}>
+                                            Critical account operations that are irreversible. Use these settings to permanently remove your presence and data from the platform.
+                                        </p>
                                     </div>
                                 </div>
                                 
