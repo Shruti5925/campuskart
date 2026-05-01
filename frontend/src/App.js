@@ -30,7 +30,6 @@ import Navbar from "./Components/Navbar";
 import { ModalProvider } from "./context/ModalContext";
 import CustomModal from "./Components/CustomModal";
 
-
 const ProtectedRoute = ({ children }) => {
   const token = sessionStorage.getItem("token");
   const location = useLocation();

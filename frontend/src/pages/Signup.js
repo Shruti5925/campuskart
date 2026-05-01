@@ -22,6 +22,11 @@ function Signup() {
   });
 
   const [message, setMessage] = useState("");
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [isVerified, setIsVerified] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [verificationStatus, setVerificationStatus] = useState({ type: "", text: "" });
   const [captchaData, setCaptchaData] = useState({ question: "", token: "" });
   const [captchaAnswer, setCaptchaAnswer] = useState("");
   const navigate = useNavigate();
@@ -58,14 +63,64 @@ function Signup() {
     // Clear hostel name if switching to staff
     if (name === 'role' && value === 'staff') {
       setFormData({ ...formData, role: value, address: '' });
+      setIsVerified(false); // Reset verification if role changes
     } else {
+      if (name === 'email' || name === 'collegeId') {
+        setVerificationStatus({ type: "", text: "" });
+      }
       setFormData({ ...formData, [name]: value });
+    }
+  };
+
+  const handleVerify = async () => {
+    if (!formData.email || !formData.collegeId) {
+      setVerificationStatus({ type: "error", text: "Please enter both Email and College ID to verify ❌" });
+      return;
+    }
+
+    if (!formData.email.endsWith("@banasthali.in")) {
+      setVerificationStatus({ type: "error", text: "Please use your @banasthali.in email ID ❌" });
+      return;
+    }
+
+    setIsVerifying(true);
+    setVerificationStatus({ type: "", text: "" });
+    setMessage(""); // Clear bottom message when verifying
+
+    try {
+      const res = await axios.post("http://localhost:5001/api/auth/verify-student", {
+        email: formData.email,
+        collegeId: formData.collegeId,
+        role: formData.role
+      });
+
+      if (res.data.success) {
+        const { student } = res.data;
+        setFormData(prev => ({
+          ...prev,
+          firstName: student.firstName,
+          lastName: student.lastName,
+          gender: student.gender
+        }));
+        setIsVerified(true);
+        setVerificationStatus({ type: "success", text: "Verification successful! Details auto-filled. ✅" });
+      }
+    } catch (err) {
+      setIsVerified(false);
+      setVerificationStatus({ type: "error", text: err.response?.data?.message || "Verification failed ❌" });
+    } finally {
+      setIsVerifying(false);
     }
   };
 
 
   const handleSignup = async (e) => {
     e.preventDefault();
+
+    if ((formData.role === "student" || formData.role === "staff") && !isVerified) {
+      setVerificationStatus({ type: "error", text: "Please verify your details first ❌" });
+      return;
+    }
 
     if (formData.password !== formData.confirmPassword) {
       setMessage("Passwords do not match ❌");
@@ -129,6 +184,76 @@ function Signup() {
               </select>
             </div>
 
+            {/* Email and College ID at the top for verification */}
+            <div className="full-width" style={{ position: 'relative' }}>
+              <div className="verification-group" style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '10px', alignItems: 'end' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <input
+                    type="email"
+                    name="email"
+                    placeholder="College Email ID *"
+                    value={formData.email}
+                    onChange={handleChange}
+                    required
+                    disabled={isVerified}
+                  />
+                  <input
+                    type="text"
+                    name="collegeId"
+                    placeholder="College ID / Employee ID *"
+                    value={formData.collegeId}
+                    onChange={handleChange}
+                    required
+                    disabled={isVerified}
+                  />
+                </div>
+                {/* Show Verify button for both student and staff */}
+                {!isVerified && (
+                  <button 
+                    type="button" 
+                    onClick={handleVerify} 
+                    disabled={isVerifying}
+                    style={{ 
+                      height: 'fit-content', 
+                      padding: '12px 20px', 
+                      marginTop: '0'
+                    }}
+                  >
+                    {isVerifying ? "Verifying..." : "Verify Details"}
+                  </button>
+                )}
+                {isVerified && (
+                   <div style={{ color: '#00D14E', fontWeight: '700', padding: '10px' }}>✓ Verified</div>
+                )}
+              </div>
+              
+              {/* Verification Message below the College ID field */}
+              {verificationStatus.text && (
+                <div style={{ 
+                  fontSize: '0.85rem', 
+                  marginTop: '8px', 
+                  color: verificationStatus.type === 'success' ? '#00D14E' : '#ff4d4d',
+                  fontWeight: '500'
+                }}>
+                  {verificationStatus.text}
+                </div>
+              )}
+            </div>
+
+            {/* Separation between verification and first name */}
+            <div className="full-width" style={{ 
+              margin: '15px 0 5px 0', 
+              paddingBottom: '5px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px'
+            }}>
+              <span style={{ fontSize: '0.8rem', color: '#3b82f6', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                Personal Details
+              </span>
+              <div style={{ flex: 1, height: '1.5px', backgroundColor: '#3b82f6', opacity: '0.5' }}></div>
+            </div>
+
             <input
               type="text"
               name="firstName"
@@ -136,6 +261,7 @@ function Signup() {
               value={formData.firstName}
               onChange={handleChange}
               required
+              disabled={isVerified}
             />
             <input
               type="text"
@@ -143,6 +269,7 @@ function Signup() {
               placeholder="Middle Name"
               value={formData.middleName}
               onChange={handleChange}
+              disabled={isVerified}
             />
             <input
               type="text"
@@ -151,6 +278,7 @@ function Signup() {
               value={formData.lastName}
               onChange={handleChange}
               required
+              disabled={isVerified}
             />
 
             <div className="full-width">
@@ -165,6 +293,7 @@ function Signup() {
                       checked={formData.gender === g}
                       onChange={handleChange}
                       required
+                      disabled={isVerified}
                     />
                     {g}
                   </label>
@@ -185,44 +314,77 @@ function Signup() {
               </div>
             )}
 
-
-            <div className="full-width">
+            <div style={{ position: 'relative', width: '100%' }}>
               <input
-                type="email"
-                name="email"
-                placeholder="College Email ID *"
-                value={formData.email}
+                type={showPassword ? "text" : "password"}
+                name="password"
+                placeholder="Password *"
+                value={formData.password}
                 onChange={handleChange}
-                style={{ width: "100%" }}
                 required
+                style={{ width: '100%', paddingRight: '40px' }}
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                style={{
+                  position: 'absolute',
+                  right: '10px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: '5px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  color: '#64748b',
+                  marginTop: '0'
+                }}
+              >
+                {showPassword ? (
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                ) : (
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                )}
+              </button>
+            </div>
+            <div style={{ position: 'relative', width: '100%' }}>
+              <input
+                type={showConfirmPassword ? "text" : "password"}
+                name="confirmPassword"
+                placeholder="Confirm Password *"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                required
+                style={{ width: '100%', paddingRight: '40px' }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                style={{
+                  position: 'absolute',
+                  right: '10px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: '5px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  color: '#64748b',
+                  marginTop: '0'
+                }}
+              >
+                {showConfirmPassword ? (
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                ) : (
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                )}
+              </button>
             </div>
 
-            <input
-              type="password"
-              name="password"
-              placeholder="Password *"
-              value={formData.password}
-              onChange={handleChange}
-              required
-            />
-            <input
-              type="password"
-              name="confirmPassword"
-              placeholder="Confirm Password *"
-              value={formData.confirmPassword}
-              onChange={handleChange}
-              required
-            />
-
-            <input
-              type="text"
-              name="collegeId"
-              placeholder="College ID / Employee ID *"
-              value={formData.collegeId}
-              onChange={handleChange}
-              required
-            />
             <input
               type="text"
               name="department"

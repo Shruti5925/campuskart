@@ -2,6 +2,7 @@ const User = require("../models/User");
 const Product = require("../models/Product");
 const Notification = require("../models/Notification");
 const AdminActivity = require("../models/AdminActivity");
+const StudentDirectory = require("../models/StudentDirectory");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { generateCaptcha, verifyCaptcha } = require("../utils/captcha");
@@ -763,3 +764,34 @@ exports.getUserById = async (req, res) => {
     res.status(500).json({ message: "Error fetching user" });
   }
 };
+
+exports.verifyStudent = async (req, res) => {
+  try {
+    const { email: rawEmail, collegeId, role } = req.body;
+    const email = rawEmail?.trim().toLowerCase();
+
+    if (!email || !collegeId) {
+      return res.status(400).json({ message: "Email and College ID are required" });
+    }
+
+    const student = await StudentDirectory.findOne({ email, collegeId });
+
+    if (!student) {
+      const entityName = role === 'staff' ? 'staff member' : 'student';
+      return res.status(404).json({ message: `No matching ${entityName} found in the directory. Please check your details.` });
+    }
+
+    res.json({
+      success: true,
+      student: {
+        firstName: student.firstName,
+        lastName: student.lastName,
+        gender: student.gender
+      }
+    });
+  } catch (err) {
+    console.error("Verification Error:", err);
+    res.status(500).json({ message: "Server error during verification" });
+  }
+};
+

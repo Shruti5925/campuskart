@@ -24,6 +24,7 @@ const AddProduct = () => {
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -64,6 +65,31 @@ const AddProduct = () => {
     const newPreviews = previews.filter((_, i) => i !== index);
     setImages(newImages);
     setPreviews(newPreviews);
+  };
+
+  const generateDescriptionWithAI = async () => {
+    if (!form.title) {
+      setError("Please enter a product title first to generate a description.");
+      return;
+    }
+    setIsGenerating(true);
+    setError("");
+    try {
+      const res = await axios.post("http://localhost:5001/api/ai/generate-description", { title: form.title });
+      let generatedText = res.data.description || "";
+      
+      const promptText = `Product: ${form.title}\nDescription:`;
+      if (generatedText.startsWith(promptText)) {
+        generatedText = generatedText.substring(promptText.length).trim();
+      }
+      
+      setForm(prev => ({ ...prev, description: generatedText }));
+    } catch (err) {
+      console.error("error generating description", err);
+      setError("Failed to generate description. Please try again.");
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   const nextStep = () => {
@@ -292,7 +318,31 @@ const AddProduct = () => {
                     />
                   </div>
                   <div className="input-group">
-                    <label>Description</label>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                      <label style={{ margin: 0 }}>Description</label>
+                      <button 
+                        type="button" 
+                        onClick={generateDescriptionWithAI}
+                        disabled={isGenerating || !form.title}
+                        style={{ 
+                          padding: '6px 14px', 
+                          fontSize: '0.85rem', 
+                          background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', 
+                          color: 'white', 
+                          border: 'none', 
+                          borderRadius: '8px', 
+                          cursor: (isGenerating || !form.title) ? 'not-allowed' : 'pointer',
+                          opacity: (isGenerating || !form.title) ? 0.7 : 1,
+                          fontWeight: '600',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          boxShadow: '0 2px 4px rgba(99, 102, 241, 0.2)'
+                        }}
+                      >
+                        {isGenerating ? '✨ Generating...' : '✨ Generate with AI'}
+                      </button>
+                    </div>
                     <textarea
                       name="description"
                       placeholder="Mention details like age, defects, and why you are selling..."
@@ -375,11 +425,15 @@ const AddProduct = () => {
                 </div>
                 <div className="health-item">
                   <span>Description</span>
-                  <span className="status excellent">Excellent</span>
+                  <span className={`status ${form.description.length === 0 ? 'missing' : form.description.length < 50 ? 'fair' : 'excellent'}`}>
+                    {form.description.length === 0 ? 'Missing' : form.description.length < 50 ? 'Too Short' : 'Excellent'}
+                  </span>
                 </div>
                 <div className="health-item">
                   <span>Price Logic</span>
-                  <span className="status fair">Fair</span>
+                  <span className={`status ${!form.price ? 'missing' : 'fair'}`}>
+                    {!form.price ? 'Missing' : 'Fair'}
+                  </span>
                 </div>
               </div>
               <p className="health-hint">Items with clear photos and specific campus locations sell 4x faster.</p>

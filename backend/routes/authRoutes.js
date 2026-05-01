@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 
-const { login, signup, getSecurityQuestion, verifySecurityAnswer, resetPassword, getCurrentUser, updateProfile, getCaptcha, uploadProfilePhoto, removeProfilePhoto, avatarUploadMiddleware, getSupportAdmin, getUserById, updateAccountSettings, deleteCurrentUser } = require("../controllers/authController");
+const { login, signup, verifyStudent, getSecurityQuestion, verifySecurityAnswer, resetPassword, getCurrentUser, updateProfile, getCaptcha, uploadProfilePhoto, removeProfilePhoto, avatarUploadMiddleware, getSupportAdmin, getUserById, updateAccountSettings, deleteCurrentUser } = require("../controllers/authController");
 const protect = require("../middleware/authMiddleware");
 const { adminOnly, checkSuspended, checkVerified } = protect;
 
@@ -25,6 +25,7 @@ router.post("/signup", (req, res, next) => {
     console.log("Hit /signup route");
     signup(req, res, next);
 });
+router.post("/verify-student", verifyStudent);
 router.post("/login", login);
 
 // Wishlist Routes

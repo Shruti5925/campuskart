@@ -1,9 +1,14 @@
+// ✅ Load environment variables
+require("dotenv").config();
+
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
-require("dotenv").config();
-const PORT = process.env.PORT || 5001;
+const path = require("path");
+const http = require("http");
+const { Server } = require("socket.io");
 
+// ✅ Import routes
 const authRoutes = require("./routes/authRoutes");
 const productRoutes = require("./routes/productRoutes");
 const chatRoutes = require("./routes/chatRoutes");
@@ -12,12 +17,13 @@ const notificationRoutes = require("./routes/notificationRoutes");
 const adminActivityRoutes = require("./routes/adminActivityRoutes");
 const reportRoutes = require("./routes/reportRoutes");
 
-const app = express();
-const http = require("http");
-const { Server } = require("socket.io");
-const path = require("path");
+// ✅ NEW AI ROUTE
+const aiRoutes = require("./routes/aiRoutes");
 
+const app = express();
 const server = http.createServer(app);
+
+// ✅ Socket.io setup
 const io = new Server(server, {
   cors: {
     origin: "http://localhost:3000",
@@ -40,26 +46,26 @@ io.on("connection", (socket) => {
     for (let [userId, socketId] of users.entries()) {
       if (socketId === socket.id) {
         users.delete(userId);
-        console.log("User disconnected and removed from registry:", userId);
+        console.log("User disconnected:", userId);
         break;
       }
     }
   });
 });
 
+// ✅ Middleware
 app.use(cors());
 app.use(express.json());
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-// Expose io and users map to API routes
+// ✅ Make socket available in routes
 app.use((req, res, next) => {
   req.io = io;
   req.users = users;
   next();
 });
 
-// Routes
-console.log("Mounting /api/auth...");
+// ✅ Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/chat", chatRoutes);
@@ -68,32 +74,44 @@ app.use("/api/notifications", notificationRoutes);
 app.use("/api/admin-activities", adminActivityRoutes);
 app.use("/api/reports", reportRoutes);
 
-const Subscription = require("./models/Subscription");
+// ✅ ADD THIS (AI ROUTE)
+app.use("/api/ai", aiRoutes);
 
-// Connect to MongoDB
+// ✅ MongoDB Connection
 mongoose
   .connect(process.env.MONGO_URI)
   .then(() => console.log("MongoDB connected"))
-  .catch(err => console.log("MongoDB connection error:", err));
+  .catch((err) => console.log("MongoDB connection error:", err));
 
-// Subscription API
+// ✅ Subscription Model
+const Subscription = require("./models/Subscription");
+
+// ✅ Subscription API
 app.post("/api/subscribe", async (req, res) => {
   try {
     const { email } = req.body;
+
     if (!email) {
       return res.status(400).json({ message: "Email is required" });
     }
+
     const newSubscription = new Subscription({ email });
     await newSubscription.save();
+
     res.status(201).json({ message: "Successfully subscribed!" });
+
   } catch (error) {
     if (error.code === 11000) {
       return res.status(400).json({ message: "Email already subscribed" });
     }
+
     res.status(500).json({ message: "Server error. Please try again later." });
   }
 });
 
+// ✅ Start server
+const PORT = process.env.PORT || 5001;
 
-// Start Server
-server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+server.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
