@@ -77,6 +77,12 @@ const Settings = () => {
             return;
         }
 
+        const passwordRegex = /^(?=.*[a-zA-Z])(?=.*\d).+$/;
+        if (!passwordRegex.test(passData.newPassword)) {
+            showModal({ title: 'Error', message: 'Password must contain at least one letter and one number.', type: 'alert' });
+            return;
+        }
+
         setUpdatingPass(true);
         try {
             const res = await axios.put('http://localhost:5001/api/auth/account-settings', {

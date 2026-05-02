@@ -132,6 +132,12 @@ function Signup() {
       return;
     }
 
+    const passwordRegex = /^(?=.*[a-zA-Z])(?=.*\d).+$/;
+    if (!passwordRegex.test(formData.password)) {
+      setMessage("Password must contain at least one letter and one number ❌");
+      return;
+    }
+
     const mobileRegex = /^\d{10}$/;
     if (!mobileRegex.test(formData.mobileNumber)) {
       setMessage("Mobile number must be exactly 10 digits ❌");

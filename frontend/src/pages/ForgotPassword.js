@@ -32,6 +32,13 @@ function ForgotPassword() {
             setMessage("Passwords do not match ❌");
             return;
         }
+
+        const passwordRegex = /^(?=.*[a-zA-Z])(?=.*\d).+$/;
+        if (!passwordRegex.test(newPassword)) {
+            setMessage("Password must contain at least one letter and one number ❌");
+            return;
+        }
+
         try {
             await axios.post("http://localhost:5001/api/auth/reset-password", {
                 email: email.trim().toLowerCase(),

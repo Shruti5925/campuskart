@@ -109,6 +109,12 @@ exports.signup = async (req, res) => {
     return res.status(400).json({ message: "Only @banasthali.in email addresses are accepted" });
   }
 
+  // Validation: Password (must contain alphabets and at least a number)
+  const passwordRegex = /^(?=.*[a-zA-Z])(?=.*\d).+$/;
+  if (!passwordRegex.test(password)) {
+    return res.status(400).json({ message: "Password must contain at least one letter and one number" });
+  }
+
   // Validation: Mobile Number (10 digits)
   const mobileRegex = /^\d{10}$/;
   if (!mobileRegex.test(mobileNumber)) {
@@ -254,6 +260,12 @@ exports.resetPassword = async (req, res) => {
       return res.status(400).json({ message: "Incorrect security answer" });
     }
 
+    // Validation: Password (must contain alphabets and at least a number)
+    const passwordRegex = /^(?=.*[a-zA-Z])(?=.*\d).+$/;
+    if (!passwordRegex.test(newPassword)) {
+      return res.status(400).json({ message: "Password must contain at least one letter and one number" });
+    }
+
     const salt = await bcrypt.genSalt(10);
     user.password = await bcrypt.hash(newPassword, salt);
     await user.save();
@@ -370,6 +382,12 @@ exports.updateAccountSettings = async (req, res) => {
 
     // 3. Handle Password Update
     if (newPassword) {
+      // Validation: Password (must contain alphabets and at least a number)
+      const passwordRegex = /^(?=.*[a-zA-Z])(?=.*\d).+$/;
+      if (!passwordRegex.test(newPassword)) {
+        return res.status(400).json({ message: "Password must contain at least one letter and one number" });
+      }
+
       const salt = await bcrypt.genSalt(10);
       user.password = await bcrypt.hash(newPassword.trim(), salt);
       changed = true;
