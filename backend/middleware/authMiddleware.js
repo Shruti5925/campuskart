@@ -59,12 +59,7 @@ module.exports.checkVerified = async (req, res, next) => {
     // Always allow admins to perform actions
     if (user.role === 'admin') return next();
 
-    if (!user.isVerified) {
-      return res.status(403).json({ 
-        message: "Your account is pending approval by an administrator. You will be able to perform this action once approved.",
-        isUnverified: true 
-      });
-    }
+    // Removed manual verification block since users are verified upon signup
     next();
   } catch (err) {
     res.status(500).json({ message: "Server error checking verification status" });

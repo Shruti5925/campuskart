@@ -72,8 +72,8 @@ const ProductView = () => {
         }
     }
     const isSuspended = sessionStorage.getItem('isSuspended') === 'true';
-    const isVerified = sessionStorage.getItem('isVerified') !== 'false'; // Default to true if not set (to avoid blocking on load), but Navbar will set it precisely
-    const isUnverified = sessionStorage.getItem('isVerified') === 'false';
+    const isVerified = true;
+    const isUnverified = false;
 
     const fetchProductData = async () => {
         try {

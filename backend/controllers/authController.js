@@ -2,7 +2,7 @@ const User = require("../models/User");
 const Product = require("../models/Product");
 const Notification = require("../models/Notification");
 const AdminActivity = require("../models/AdminActivity");
-const StudentDirectory = require("../models/StudentDirectory");
+const UserDirectory = require("../models/UserDirectory");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { generateCaptcha, verifyCaptcha } = require("../utils/captcha");
@@ -613,38 +613,73 @@ exports.updateCartQuantity = async (req, res) => {
 
 exports.getAllUsers = async (req, res) => {
   try {
-    const users = await User.find().select("-password -securityAnswer").sort("-createdAt");
-    res.json(users);
+    const registeredUsers = await User.find().select("-password -securityAnswer").sort("-createdAt").lean();
+    const directoryUsers = await UserDirectory.find().lean();
+    
+    const registeredUserMap = {};
+    registeredUsers.forEach(u => {
+        registeredUserMap[u.email] = u;
+    });
+    
+    const combinedUsers = [];
+    
+    directoryUsers.forEach(dirUser => {
+        if (registeredUserMap[dirUser.email]) {
+            const rUser = registeredUserMap[dirUser.email];
+            combinedUsers.push({
+                ...rUser,
+                isRegistered: true,
+                collegeId: rUser.collegeId || dirUser.collegeId
+            });
+            delete registeredUserMap[dirUser.email];
+        } else {
+            combinedUsers.push({
+                _id: dirUser._id,
+                firstName: dirUser.firstName,
+                lastName: dirUser.lastName,
+                email: dirUser.email,
+                gender: dirUser.gender,
+                collegeId: dirUser.collegeId,
+                role: dirUser.role,
+                isRegistered: false,
+                isSuspended: false,
+                createdAt: dirUser.createdAt
+            });
+        }
+    });
+    
+    Object.values(registeredUserMap).forEach(rUser => {
+        combinedUsers.push({
+            ...rUser,
+            isRegistered: true
+        });
+    });
+    
+    // Sort combined by creation date descending
+    combinedUsers.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    
+    res.json(combinedUsers);
   } catch (err) {
+    console.error("Error fetching all users:", err);
     res.status(500).json({ message: "Error fetching users" });
   }
 };
 
 exports.updateUserStatus = async (req, res) => {
   try {
-    const { isVerified, isSuspended } = req.body;
+    const { isSuspended } = req.body;
     const user = await User.findByIdAndUpdate(
       req.params.id,
-      { $set: { isVerified, isSuspended } },
+      { $set: { isSuspended } },
       { new: true }
     ).select("-password -securityAnswer");
     if (!user) return res.status(404).json({ message: "User not found" });
 
     // Create notification for status change
-    let notifTitle = "Account Update";
-    let notifMessage = "Your account status has been updated.";
-    
-    if (isSuspended !== undefined) {
-        notifTitle = isSuspended ? "Account Suspended" : "Account Reactivated";
-        notifMessage = isSuspended 
-            ? "Your account has been suspended for violating community guidelines." 
-            : "Your account has been reactivated. You can now resume using the marketplace.";
-    } else if (isVerified !== undefined) {
-        notifTitle = isVerified ? "Identity Verified" : "Verification Status Updated";
-        notifMessage = isVerified
-            ? "Your identity has been successfully verified! You've earned the verified badge."
-            : "Your verification status has been updated.";
-    }
+    let notifTitle = isSuspended ? "Account Suspended" : "Account Reactivated";
+    let notifMessage = isSuspended
+      ? "Your account has been suspended for violating community guidelines."
+      : "Your account has been reactivated. You can now resume using the marketplace.";
 
     const notification = new Notification({
         user: req.params.id,
@@ -657,10 +692,8 @@ exports.updateUserStatus = async (req, res) => {
     console.log(`Notification created for user ${req.params.id}: ${notifTitle}`);
 
     // Emit via socket if user is online
-    // Emit via socket if user is online
     const userSocketId = req.users?.get(req.params.id.toString());
     console.log(`Socket lookup for user ${req.params.id}: ${userSocketId || 'Not Online'}`);
-    
     if (userSocketId && req.io) {
         req.io.to(userSocketId).emit('new_notification', notification);
         console.log(`Socket emission sent to ${userSocketId}`);
@@ -668,28 +701,17 @@ exports.updateUserStatus = async (req, res) => {
 
     // Log Activity
     console.log("Attempting to log activity for user status update...");
-    let actionType = "UPDATED";
-    let activityStatus = "SUCCESSFUL";
-
-    if (isSuspended !== undefined) {
-        actionType = isSuspended ? "SUSPENDED" : "REACTIVATED";
-        activityStatus = "ENFORCEMENT";
-    } else if (isVerified !== undefined) {
-        actionType = "VERIFIED";
-        activityStatus = "SUCCESSFUL";
-    }
-
     const activity = new AdminActivity({
         admin: req.user.id,
-        action: actionType,
+        action: isSuspended ? "SUSPENDED" : "REACTIVATED",
         targetType: "User",
         targetId: user._id,
         targetName: `${user.firstName} ${user.lastName}`,
-        status: activityStatus
+        status: "SUCCESSFUL"
     });
     try {
         await activity.save();
-        console.log(`Activity logged successfully: ${actionType}`);
+        console.log(`Activity logged successfully: ${isSuspended ? 'SUSPENDED' : 'REACTIVATED'}`);
     } catch (actErr) {
         console.error("FAILED to save Activity Log (Auth):", actErr);
     }
@@ -700,6 +722,7 @@ exports.updateUserStatus = async (req, res) => {
     res.status(500).json({ message: "Server error updating status" });
   }
 };
+
 exports.adminUpdateUser = async (req, res) => {
   try {
     const { firstName, middleName, lastName, role, department, collegeId, mobileNumber, address } = req.body;
@@ -783,28 +806,28 @@ exports.getUserById = async (req, res) => {
   }
 };
 
-exports.verifyStudent = async (req, res) => {
+exports.verifyUser = async (req, res) => {
   try {
-    const { email: rawEmail, collegeId, role } = req.body;
+    const { email: rawEmail, collegeId } = req.body;
     const email = rawEmail?.trim().toLowerCase();
 
     if (!email || !collegeId) {
       return res.status(400).json({ message: "Email and College ID are required" });
     }
 
-    const student = await StudentDirectory.findOne({ email, collegeId });
+    const user = await UserDirectory.findOne({ email, collegeId });
 
-    if (!student) {
-      const entityName = role === 'staff' ? 'staff member' : 'student';
-      return res.status(404).json({ message: `No matching ${entityName} found in the directory. Please check your details.` });
+    if (!user) {
+      return res.status(404).json({ message: "No matching record found in the directory. Please check your details." });
     }
 
     res.json({
       success: true,
-      student: {
-        firstName: student.firstName,
-        lastName: student.lastName,
-        gender: student.gender
+      user: {
+        firstName: user.firstName,
+        lastName: user.lastName,
+        gender: user.gender,
+        role: user.role || 'student'
       }
     });
   } catch (err) {

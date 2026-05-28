@@ -1,54 +1,58 @@
 const mongoose = require("mongoose");
-const StudentDirectory = require("../models/StudentDirectory");
+const UserDirectory = require("../models/UserDirectory");
 const path = require("path");
 require("dotenv").config({ path: path.join(__dirname, "../.env") });
 
-const seedStudents = async () => {
+const seedUsers = async () => {
   try {
     await mongoose.connect(process.env.MONGO_URI);
     console.log("Connected to MongoDB for seeding...");
 
-
-    const students = [
+    const users = [
       {
         email: "test1@banasthali.in",
         collegeId: "BT2021001",
         firstName: "Anjali",
         lastName: "Sharma",
-        gender: "Female"
+        gender: "Female",
+        role: "student"
       },
       {
         email: "test2@banasthali.in",
         collegeId: "BT2021002",
         firstName: "Riya",
         lastName: "Verma",
-        gender: "Female"
+        gender: "Female",
+        role: "student"
       },
       {
         email: "test3@banasthali.in",
         collegeId: "BT2021003",
         firstName: "Sneha",
         lastName: "Gupta",
-        gender: "Female"
+        gender: "Female",
+        role: "student"
       },
       {
         email: "staff1@banasthali.in",
         collegeId: "EMP2021001",
         firstName: "Dr. Anita",
         lastName: "Mehta",
-        gender: "Female"
+        gender: "Female",
+        role: "staff"
       },
       {
         email: "staff2@banasthali.in",
         collegeId: "EMP2021002",
         firstName: "Prof. Rajesh",
         lastName: "Kumar",
-        gender: "Male"
+        gender: "Male",
+        role: "staff"
       }
     ];
 
-    await StudentDirectory.insertMany(students);
-    console.log("Student directory seeded successfully! ✅");
+    await UserDirectory.insertMany(users);
+    console.log("User directory seeded successfully! ✅");
     process.exit();
   } catch (err) {
     console.error("Seeding error:", err);
@@ -56,4 +60,4 @@ const seedStudents = async () => {
   }
 };
 
-seedStudents();
+seedUsers();

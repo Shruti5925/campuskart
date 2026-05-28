@@ -23,7 +23,7 @@ const ProductCard = ({ product, isSeller, onDelete, isWishlistPage, onRemove, sh
         }
     }
     const isSuspended = sessionStorage.getItem('isSuspended') === 'true';
-    const isUnverified = sessionStorage.getItem('isVerified') === 'false';
+    const isUnverified = false;
     const currentUserId = currentUser?.id || currentUser?._id;
     const isOwnProduct = currentUserId && (product.seller?._id || product.seller) === currentUserId;
 

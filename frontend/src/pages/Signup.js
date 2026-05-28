@@ -88,19 +88,20 @@ function Signup() {
     setMessage(""); // Clear bottom message when verifying
 
     try {
-      const res = await axios.post("http://localhost:5001/api/auth/verify-student", {
+      const res = await axios.post("http://localhost:5001/api/auth/verify-user", {
         email: formData.email,
-        collegeId: formData.collegeId,
-        role: formData.role
+        collegeId: formData.collegeId
       });
 
       if (res.data.success) {
-        const { student } = res.data;
+        const { user } = res.data;
         setFormData(prev => ({
           ...prev,
-          firstName: student.firstName,
-          lastName: student.lastName,
-          gender: student.gender
+          firstName: user.firstName,
+          lastName: user.lastName,
+          gender: user.gender,
+          role: user.role,
+          address: user.role === 'staff' ? '' : prev.address
         }));
         setIsVerified(true);
         setVerificationStatus({ type: "success", text: "Verification successful! Details auto-filled. ✅" });
@@ -162,7 +163,7 @@ function Signup() {
 
       const res = await axios.post("http://localhost:5001/api/auth/signup", sanitizedData);
       sessionStorage.setItem("token", res.data.token);
-      setMessage("Registration successful! 🎉 Your account is now in the approval queue. An administrator will review your details shortly.");
+      setMessage("Registration successful! 🎉 Logging you in...");
       setTimeout(() => navigate(from, { replace: true }), 3000);
     } catch (err) {
       const errorMsg = err.response?.data?.detail
@@ -183,8 +184,8 @@ function Signup() {
         <form className="auth-form" onSubmit={handleSignup}>
           <div className="auth-form-grid">
             <div className="full-width">
-              <label>I am a:</label>
-              <select name="role" value={formData.role} onChange={handleChange} required>
+              <label>Role (Auto-filled upon verification):</label>
+              <select name="role" value={formData.role} onChange={handleChange} required disabled>
                 <option value="student">Student</option>
                 <option value="staff">Staff</option>
               </select>

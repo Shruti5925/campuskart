@@ -156,15 +156,7 @@ const Navbar = () => {
           </span>
         </div>
       )}
-      {userData && userData.role !== 'admin' && !userData.isVerified && (
-        <div className="approval-banner">
-          <span className="info-icon">⏳</span>
-          <span className="approval-text">
-            <strong>Your account is currently under approval.</strong> 
-            You can browse the marketplace, but you will be able to buy, sell, and message once an administrator approves your account.
-          </span>
-        </div>
-      )}
+
       <nav className="navbar-container">
       <div className="nav-pill-wrapper">
         <div className="nav-links">
@@ -245,19 +237,9 @@ const Navbar = () => {
 
             {token && (
               <Link 
-                to={userData?.isVerified ? "/want-to-sell" : "#"} 
-                className={`pill-icon-btn sell-icon-btn with-text ${!userData?.isVerified && userData?.role !== 'admin' ? 'disabled-btn' : ''}`} 
-                title={userData?.isVerified ? "Sell" : "Account Pending Approval"}
-                onClick={(e) => {
-                  if (userData?.role !== 'admin' && !userData?.isVerified) {
-                    e.preventDefault();
-                    showModal({
-                      title: 'Account Pending Approval',
-                      message: 'Your account is currently under review. You will be able to sell items once an administrator approves your account.',
-                      type: 'alert'
-                    });
-                  }
-                }}
+                to="/want-to-sell" 
+                className="pill-icon-btn sell-icon-btn with-text" 
+                title="Sell"
               >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <line x1="12" y1="5" x2="12" y2="19"></line>

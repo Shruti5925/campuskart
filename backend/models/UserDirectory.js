@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-const studentDirectorySchema = new mongoose.Schema({
+const userDirectorySchema = new mongoose.Schema({
   email: {
     type: String,
     required: true,
@@ -25,7 +25,13 @@ const studentDirectorySchema = new mongoose.Schema({
     type: String,
     required: true,
     enum: ["Male", "Female", "Other"]
+  },
+  role: {
+    type: String,
+    enum: ["student", "staff"],
+    required: true,
+    default: "student"
   }
 }, { timestamps: true });
 
-module.exports = mongoose.model("StudentDirectory", studentDirectorySchema);
+module.exports = mongoose.model("UserDirectory", userDirectorySchema);

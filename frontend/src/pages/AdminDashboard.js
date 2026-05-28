@@ -45,7 +45,7 @@ const AdminDashboard = () => {
     const [growthTimeframe, setGrowthTimeframe] = useState('7days');
     const [showGrowthMenu, setShowGrowthMenu] = useState(false);
     const [modalImageIndex, setModalImageIndex] = useState(0);
-    const [filterStatus, setFilterStatus] = useState('all'); // all, verified, pending, suspended
+    const [filterStatus, setFilterStatus] = useState('all'); // all, registered, unregistered
     const [filterRole, setFilterRole] = useState('all'); // all, student, staff, admin
     const [showFilterMenu, setShowFilterMenu] = useState(false);
     const [selectedUserDir, setSelectedUserDir] = useState(null);
@@ -354,7 +354,7 @@ const AdminDashboard = () => {
 
     const toggleUserStatus = async (userId, currentStatus, type) => {
         try {
-            const update = type === 'verify' ? { isVerified: !currentStatus } : { isSuspended: !currentStatus };
+            const update = { isSuspended: !currentStatus };
             await axios.patch(`http://localhost:5001/api/auth/users/${userId}/status`, update, {
                 headers: { Authorization: `Bearer ${token}` }
             });
@@ -503,18 +503,7 @@ const AdminDashboard = () => {
                         )}
                     </div>
                 </div>
-                <div className="admin-stat-card">
-                    <div className="card-icon pending">👤</div>
-                    <div className="card-info">
-                        <span className="label">User's Pending Approvals</span>
-                        <h2 className="value">{allUsers.filter(u => !u.isVerified).length}</h2>
-                        {allUsers.filter(u => !u.isVerified).length > 0 ? (
-                            <span className="tag high">Action Needed</span>
-                        ) : (
-                            <span className="tag" style={{ color: '#10b981', backgroundColor: '#d1fae5' }}>All Clear</span>
-                        )}
-                    </div>
-                </div>
+
                 <div className="admin-stat-card">
                     <div className="card-icon flagged">🚩</div>
                     <div className="card-info">
@@ -871,8 +860,8 @@ const AdminDashboard = () => {
             const matchesSearch = name.includes(search) || email.includes(search);
             
             const matchesStatus = filterStatus === 'all' || 
-                (filterStatus === 'verified' && user.isVerified && !user.isSuspended) ||
-                (filterStatus === 'pending' && !user.isVerified && !user.isSuspended) ||
+                (filterStatus === 'registered' && user.isRegistered && !user.isSuspended) ||
+                (filterStatus === 'unregistered' && !user.isRegistered) ||
                 (filterStatus === 'suspended' && user.isSuspended);
                 
             const matchesRole = filterRole === 'all' || user.role?.toLowerCase() === filterRole.toLowerCase();
@@ -882,8 +871,8 @@ const AdminDashboard = () => {
 
         const stats = [
             { label: 'Total Users', value: allUsers.length, icon: '👥', type: 'total' },
-            { label: 'Verified', value: allUsers.filter(u => u.isVerified).length, icon: '🛡️', type: 'verified' },
-            { label: 'Pending', value: allUsers.filter(u => !u.isVerified).length, icon: '📋', type: 'pending' },
+            { label: 'Registered', value: allUsers.filter(u => u.isRegistered && !u.isSuspended).length, icon: '🛡️', type: 'verified' },
+            { label: 'Unregistered', value: allUsers.filter(u => !u.isRegistered).length, icon: '⏳', type: 'pending' },
             { label: 'Suspended', value: allUsers.filter(u => u.isSuspended).length, icon: '🚫', type: 'suspended' }
         ];
 
@@ -907,11 +896,11 @@ const AdminDashboard = () => {
                                             <button className={filterStatus === 'all' ? 'active' : ''} onClick={() => setFilterStatus('all')}>
                                                 <span className="opt-icon">🌎</span> All
                                             </button>
-                                            <button className={filterStatus === 'verified' ? 'active' : ''} onClick={() => setFilterStatus('verified')}>
-                                                <span className="opt-icon">🛡️</span> Verified
+                                            <button className={filterStatus === 'registered' ? 'active' : ''} onClick={() => setFilterStatus('registered')}>
+                                                <span className="opt-icon">🛡️</span> Registered
                                             </button>
-                                            <button className={filterStatus === 'pending' ? 'active' : ''} onClick={() => setFilterStatus('pending')}>
-                                                <span className="opt-icon">⏳</span> Pending
+                                            <button className={filterStatus === 'unregistered' ? 'active' : ''} onClick={() => setFilterStatus('unregistered')}>
+                                                <span className="opt-icon">⏳</span> Unregistered
                                             </button>
                                             <button className={filterStatus === 'suspended' ? 'active' : ''} onClick={() => setFilterStatus('suspended')}>
                                                 <span className="opt-icon">🚫</span> Suspended
@@ -952,12 +941,12 @@ const AdminDashboard = () => {
                                 return stringified;
                             };
 
-                            const headers = ['Name', 'Email', 'Gender', 'Verified', 'Suspended', 'Joining Date'];
+                            const headers = ['Name', 'Email', 'Gender', 'Registered', 'Suspended', 'Joining Date'];
                             const rows = filteredUsers.map(u => [
                                 escapeCSV(`${u.firstName} ${u.lastName}`),
                                 escapeCSV(u.email),
                                 escapeCSV(u.gender || 'N/A'),
-                                u.isVerified ? 'Yes' : 'No',
+                                u.isRegistered ? 'Yes' : 'No',
                                 u.isSuspended ? 'Yes' : 'No',
                                 escapeCSV(formatNumericDate(u.createdAt || new Date()))
                             ]);
@@ -1018,7 +1007,7 @@ const AdminDashboard = () => {
                                             <div className="user-profile-cell">
                                                 <div className="user-avatar-rect">
                                                     <img src={getProfileIcon(user)} alt="" className="dir-user-avatar" />
-                                                    {user.isVerified && <span className="verified-dot">✓</span>}
+                                                    {user.isRegistered && <span className="verified-dot">✓</span>}
                                                 </div>
                                                 <div className="user-meta">
                                                     <h4>
@@ -1034,9 +1023,9 @@ const AdminDashboard = () => {
                                             </div>
                                         </td>
                                         <td>
-                                            <div className={`status-indicator ${user.isSuspended ? 'suspended' : (user.isVerified ? 'verified' : 'pending')}`}>
+                                            <div className={`status-indicator ${user.isSuspended ? 'suspended' : (user.isRegistered ? 'verified' : 'pending')}`}>
                                                 <span className="dot"></span>
-                                                {user.isSuspended ? 'Suspended' : (user.isVerified ? 'Verified' : 'Pending')}
+                                                                                                 {user.isSuspended ? 'Suspended' : (user.isRegistered ? 'Registered' : 'Unregistered')}
                                             </div>
                                         </td>
                                         <td className="join-date-cell">
@@ -1044,7 +1033,9 @@ const AdminDashboard = () => {
                                         </td>
                                         <td>
                                             <div className="dir-action-group">
-                                                {user.isSuspended ? (
+                                                {!user.isRegistered ? (
+                                                    <span style={{color: '#94A3B8', fontSize: '0.85rem'}}>No actions available</span>
+                                                ) : user.isSuspended ? (
                                                     <button className="dir-reactivate-btn" onClick={() => toggleUserStatus(user._id, true, 'suspend')}>
                                                         Reactivate
                                                     </button>
@@ -1052,13 +1043,7 @@ const AdminDashboard = () => {
                                                     <>
                                                         <button className="icon-action" title="View details" onClick={() => setSelectedUserDir(user)}>👁</button>
                                                         <button className="icon-action" title="Suspend user" onClick={() => toggleUserStatus(user._id, false, 'suspend')}>⊘</button>
-                                                        {user.isVerified ? (
-                                                            <button className="dir-edit-btn" onClick={() => setSelectedUserDir(user)}>Edit</button>
-                                                        ) : (
-                                                            <button className="dir-verify-btn" onClick={() => toggleUserStatus(user._id, false, 'verify')}>
-                                                                Verify Identity
-                                                            </button>
-                                                        )}
+                                                        <button className="dir-edit-btn" onClick={() => { setSelectedUserDir(user); setIsEditingUser(true); setEditUserData({ ...user }); }}>Edit</button>
                                                          <button className="icon-action chat" title="Chat with user" onClick={() => handleStartChat(user)}>💬</button>
                                                     </>
                                                 )}
@@ -1110,11 +1095,7 @@ const AdminDashboard = () => {
                                                 <button className="action-btn chat" onClick={() => { handleStartChat(selectedUserDir); setSelectedUserDir(null); setActiveTab('messages'); }}>
                                                     💬 Message User
                                                 </button>
-                                                {!selectedUserDir.isVerified && !selectedUserDir.isSuspended && (
-                                                    <button className="action-btn verify" onClick={() => { toggleUserStatus(selectedUserDir._id, false, 'verify'); setSelectedUserDir(null); }}>
-                                                        🛡️ Verify Now
-                                                    </button>
-                                                )}
+
                                                 {!selectedUserDir.isSuspended ? (
                                                     <button className="action-btn suspend" onClick={() => { toggleUserStatus(selectedUserDir._id, false, 'suspend'); setSelectedUserDir(null); }}>
                                                         ⊘ Suspend Account
@@ -1176,10 +1157,10 @@ const AdminDashboard = () => {
                                             {!isEditingUser && (
                                                 selectedUserDir.isSuspended ? (
                                                     <span className="status-pill suspended">Suspended</span>
-                                                ) : selectedUserDir.isVerified ? (
-                                                    <span className="verified-text-label">🛡️ Verified Member</span>
+                                                ) : selectedUserDir.isRegistered ? (
+                                                    <span className="registered-text-label">Registered</span>
                                                 ) : (
-                                                    <span className="status-pill pending">Pending Verification</span>
+                                                    <span className="status-pill pending">Unregistered</span>
                                                 )
                                             )}
                                         </div>

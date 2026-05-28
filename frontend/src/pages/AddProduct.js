@@ -199,25 +199,6 @@ const AddProduct = () => {
                    </p>
                 </div>
               </div>
-            ) : (userData && userData.role !== 'admin' && !userData.isVerified) ? (
-              <div className="section-card approval-notice-box" style={{ 
-                background: '#f0fdf4', 
-                border: '1px solid #dcfce7', 
-                padding: '3rem', 
-                textAlign: 'center',
-                borderRadius: '24px'
-              }}>
-                <div style={{ fontSize: '4rem', marginBottom: '1.5rem' }}>⏳</div>
-                <h2 style={{ color: '#166534', fontWeight: '900', marginBottom: '1rem' }}>Account Pending Approval</h2>
-                <p style={{ color: '#15803d', fontSize: '1.1rem', lineHeight: '1.6', maxWidth: '500px', margin: '0 auto 2rem' }}>
-                  Your account is currently in the approval queue. You will be able to list new products and save drafts once an administrator has verified your account details.
-                </p>
-                <div style={{ padding: '1rem', background: 'white', borderRadius: '12px', border: '1px solid #dcfce7', display: 'inline-block' }}>
-                   <p style={{ margin: 0, fontSize: '0.9rem', color: '#14532d' }}>
-                     Most accounts are approved within 24 hours. Thank you for your patience!
-                   </p>
-                </div>
-              </div>
             ) : (
               <>
                 <div className="step-card">
