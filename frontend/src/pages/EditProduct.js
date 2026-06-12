@@ -3,13 +3,15 @@ import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
 import Sidebar from "../Components/Sidebar";
 import Footer from "../Components/Footer";
-import "../styles/AddProduct.css"; // Reuse the beautiful add product styles
+import { useModal } from "../context/ModalContext";
+import "../styles/AddProduct.css"; // Reuse the add product styles
 import "../styles/Dashboard.css";
 
 const EditProduct = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const token = sessionStorage.getItem("token");
+  const { showModal } = useModal();
 
   const [form, setForm] = useState({
     title: "",
@@ -28,6 +30,7 @@ const EditProduct = () => {
 
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
+  const [isVerifyingImages, setIsVerifyingImages] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -97,9 +100,56 @@ const EditProduct = () => {
 
   const handleUpdate = async (e, newStatus = null) => {
     e.preventDefault();
-    if (updating) return;
-    setUpdating(true);
+    if (updating || isVerifyingImages) return;
     setError("");
+
+    if (existingImages.length === 0 && newImages.length === 0) {
+      showModal({
+        title: "No Photos Uploaded",
+        message: "Please upload at least one photo of your item.",
+        type: "alert"
+      });
+      return;
+    }
+
+    setIsVerifyingImages(true);
+
+    const verifyFormData = new FormData();
+    verifyFormData.append("title", form.title);
+    verifyFormData.append("category", form.category);
+    existingImages.forEach(url => verifyFormData.append("existingImages", url));
+    newImages.forEach(file => verifyFormData.append("images", file));
+
+    try {
+      const verifyRes = await axios.post("http://localhost:5001/api/ai/verify-images", verifyFormData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data"
+        }
+      });
+
+      if (!verifyRes.data.match) {
+        showModal({
+          title: "Image Match Verification Failed",
+          message: verifyRes.data.message || "One or more images do not match the item mentioned.",
+          type: "alert"
+        });
+        setIsVerifyingImages(false);
+        return;
+      }
+    } catch (err) {
+      console.error("Error verifying images with AI:", err);
+      showModal({
+        title: "Verification System Error",
+        message: "Failed to verify images. Please try again.",
+        type: "alert"
+      });
+      setIsVerifyingImages(false);
+      return;
+    }
+
+    setIsVerifyingImages(false);
+    setUpdating(true);
 
     const formData = new FormData();
     Object.keys(form).forEach(key => {
@@ -284,19 +334,19 @@ const EditProduct = () => {
             <div className="form-actions">
               {form.status === 'draft' ? (
                 <>
-                  <button className="continue-btn" onClick={(e) => handleUpdate(e, 'pending')} disabled={updating}>
-                    {updating ? "Listing..." : "List Product"}
+                  <button className="continue-btn" onClick={(e) => handleUpdate(e, 'pending')} disabled={updating || isVerifyingImages}>
+                    {isVerifyingImages ? "✨ Verifying..." : updating ? "Listing..." : "List Product"}
                   </button>
-                  <button className="draft-btn" onClick={(e) => handleUpdate(e, 'draft')} disabled={updating}>
-                    {updating ? "Saving..." : "Update Draft"}
+                  <button className="draft-btn" onClick={(e) => handleUpdate(e, 'draft')} disabled={updating || isVerifyingImages}>
+                    {isVerifyingImages ? "✨ Verifying..." : updating ? "Saving..." : "Update Draft"}
                   </button>
                 </>
               ) : (
-                <button className="continue-btn" onClick={(e) => handleUpdate(e, 'active')} disabled={updating}>
-                  {updating ? "Updating..." : "Update Listing"}
+                <button className="continue-btn" onClick={(e) => handleUpdate(e, 'pending')} disabled={updating || isVerifyingImages}>
+                  {isVerifyingImages ? "✨ Verifying..." : updating ? "Updating..." : "Update Listing"}
                 </button>
               )}
-              <button className="draft-btn" type="button" onClick={() => navigate("/dashboard")}>
+              <button className="draft-btn" type="button" onClick={() => navigate("/dashboard")} disabled={updating || isVerifyingImages}>
                 Cancel
               </button>
             </div>

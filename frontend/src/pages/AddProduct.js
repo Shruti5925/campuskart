@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { useModal } from "../context/ModalContext";
 import Sidebar from "../Components/Sidebar";
 import Footer from "../Components/Footer";
 import "../styles/AddProduct.css";
@@ -9,6 +10,7 @@ import "../styles/Dashboard.css";
 const AddProduct = () => {
   const navigate = useNavigate();
   const token = sessionStorage.getItem("token");
+  const { showModal } = useModal();
   const [step, setStep] = useState(1);
   const [form, setForm] = useState({
     title: "",
@@ -25,6 +27,7 @@ const AddProduct = () => {
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isVerifyingImages, setIsVerifyingImages] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -96,6 +99,54 @@ const AddProduct = () => {
     setStep(step + 1);
     window.scrollTo(0, 0);
   };
+
+  const handleContinueToStep2 = async () => {
+    if (images.length === 0) {
+      showModal({
+        title: "No Photos Uploaded",
+        message: "Please upload at least one photo of your item.",
+        type: "alert"
+      });
+      return;
+    }
+    
+    setIsVerifyingImages(true);
+    setError("");
+    
+    const formData = new FormData();
+    formData.append("title", form.title);
+    formData.append("category", form.category);
+    images.forEach(img => formData.append("images", img));
+    
+    try {
+      const res = await axios.post("http://localhost:5001/api/ai/verify-images", formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data"
+        }
+      });
+      
+      if (res.data.match) {
+        nextStep();
+      } else {
+        showModal({
+          title: "Image Match Verification Failed",
+          message: res.data.message || "One or more images do not match the item mentioned.",
+          type: "alert"
+        });
+      }
+    } catch (err) {
+      console.error("Error verifying images with AI:", err);
+      showModal({
+        title: "Verification System Error",
+        message: "Failed to verify images. Please try again.",
+        type: "alert"
+      });
+    } finally {
+      setIsVerifyingImages(false);
+    }
+  };
+
   const prevStep = () => {
     setStep(step - 1);
     window.scrollTo(0, 0);
@@ -375,7 +426,13 @@ const AddProduct = () => {
             {error && <div className="error-message" style={{ color: '#ef4444', marginBottom: '1rem', fontWeight: 'bold' }}>{error}</div>}
             <div className="form-actions">
               {step === 1 ? (
-                <button className="continue-btn" onClick={nextStep} disabled={!isStep1Complete}>Continue to Preview</button>
+                <button 
+                  className="continue-btn" 
+                  onClick={handleContinueToStep2} 
+                  disabled={!isStep1Complete || isVerifyingImages}
+                >
+                  {isVerifyingImages ? '✨ Verifying images...' : 'Continue to Preview'}
+                </button>
               ) : (
                 <>
                   <div className="step-actions">

@@ -61,6 +61,7 @@ const AdminDashboard = () => {
       role: ''
     });
     const [isAddingUser, setIsAddingUser] = useState(false);
+    const [userCurrentPage, setUserCurrentPage] = useState(1);
 
 
     const profileDropdownRef = useRef(null);
@@ -148,6 +149,10 @@ const AdminDashboard = () => {
     useEffect(() => {
         fetchInitialData();
     }, []);
+
+    useEffect(() => {
+        setUserCurrentPage(1);
+    }, [searchTerm, filterStatus, filterRole, activeTab]);
 
     // Fetch admin notifications
     useEffect(() => {
@@ -903,12 +908,91 @@ const AdminDashboard = () => {
             return matchesSearch && matchesStatus && matchesRole;
         });
 
+        // Pagination calculations
+        const USERS_PER_PAGE = 10;
+        const totalPages = Math.ceil(filteredUsers.length / USERS_PER_PAGE);
+        const activeUserPage = Math.min(userCurrentPage, Math.max(totalPages, 1));
+        const startIndex = (activeUserPage - 1) * USERS_PER_PAGE;
+        const endIndex = startIndex + USERS_PER_PAGE;
+        const paginatedUsers = filteredUsers.slice(startIndex, endIndex);
+
         const stats = [
             { label: 'Total Users', value: allUsers.length, icon: '👥', type: 'total' },
             { label: 'Registered', value: allUsers.filter(u => u.isRegistered && !u.isSuspended).length, icon: '🛡️', type: 'verified' },
             { label: 'Unregistered', value: allUsers.filter(u => !u.isRegistered).length, icon: '⏳', type: 'pending' },
             { label: 'Suspended', value: allUsers.filter(u => u.isSuspended).length, icon: '🚫', type: 'suspended' }
         ];
+
+        // Pagination buttons renderer helper
+        const renderPaginationButtons = () => {
+            const buttons = [];
+            const maxVisiblePages = 5;
+
+            if (totalPages <= maxVisiblePages) {
+                for (let i = 1; i <= totalPages; i++) {
+                    buttons.push(i);
+                }
+            } else {
+                buttons.push(1);
+                
+                let start = Math.max(2, activeUserPage - 1);
+                let end = Math.min(totalPages - 1, activeUserPage + 1);
+
+                if (activeUserPage <= 3) {
+                    end = 4;
+                }
+                if (activeUserPage >= totalPages - 2) {
+                    start = totalPages - 3;
+                }
+
+                if (start > 2) {
+                    buttons.push('...');
+                }
+
+                for (let i = start; i <= end; i++) {
+                    buttons.push(i);
+                }
+
+                if (end < totalPages - 1) {
+                    buttons.push('...');
+                }
+
+                buttons.push(totalPages);
+            }
+
+            return (
+                <div className="pagination-group">
+                    <button 
+                        className="pag-btn arrow" 
+                        onClick={() => setUserCurrentPage(prev => Math.max(prev - 1, 1))}
+                        disabled={activeUserPage === 1}
+                    >
+                        ‹
+                    </button>
+                    {buttons.map((btn, index) => {
+                        if (btn === '...') {
+                            return <span key={`dots-${index}`} style={{ color: '#94A3B8', padding: '0 0.5rem', userSelect: 'none' }}>...</span>;
+                        }
+                        return (
+                          <button 
+                            key={btn}
+                            className={`pag-btn ${activeUserPage === btn ? 'active' : ''}`}
+                            onClick={() => setUserCurrentPage(btn)}
+                          >
+                            {btn}
+                          </button>
+                        );
+                    })}
+                    <button 
+                        className="pag-btn arrow" 
+                        onClick={() => setUserCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                        disabled={activeUserPage === totalPages || totalPages === 0}
+                    >
+                        ›
+                    </button>
+                </div>
+            );
+        };
 
         return (
             <div className="tab-content user-directory-view">
@@ -1031,14 +1115,14 @@ const AdminDashboard = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {filteredUsers.length === 0 ? (
+                            {paginatedUsers.length === 0 ? (
                                 <tr>
                                     <td colSpan="4" style={{ textAlign: 'center', padding: '3rem' }}>
                                         No users found matching "{searchTerm}"
                                     </td>
                                 </tr>
                             ) : (
-                                filteredUsers.map(user => (
+                                paginatedUsers.map(user => (
                                     <tr key={user._id}>
                                         <td>
                                             <div className="user-profile-cell">
@@ -1094,16 +1178,9 @@ const AdminDashboard = () => {
 
                     <div className="table-footer">
                         <span className="showing-text">
-                            Showing {filteredUsers.length} of {allUsers.length} users
+                            Showing {paginatedUsers.length === 0 ? 0 : `${startIndex + 1}-${Math.min(endIndex, filteredUsers.length)}`} of {filteredUsers.length} users
                         </span>
-                        <div className="pagination-group">
-                            <button className="pag-btn arrow">‹</button>
-                            <button className="pag-btn active">1</button>
-                            <button className="pag-btn">2</button>
-                            <button className="pag-btn">3</button>
-                            <span style={{ color: '#94A3B8', padding: '0 0.5rem' }}>...</span>
-                            <button className="pag-btn arrow">›</button>
-                        </div>
+                        {renderPaginationButtons()}
                     </div>
                 </div>
 

@@ -286,6 +286,11 @@ exports.updateProduct = async (req, res) => {
     // Remove existingImages from productData so it doesn't get saved as a separate field in DB if the model doesn't have it
     delete productData.existingImages;
 
+    // Reset status to pending to put it under admin review, unless it is a draft
+    if (productData.status !== "draft") {
+      productData.status = "pending";
+    }
+
     const updated = await Product.findByIdAndUpdate(
       req.params.id,
       productData,
