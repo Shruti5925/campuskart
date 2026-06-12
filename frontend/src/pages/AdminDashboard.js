@@ -911,7 +911,6 @@ const AdminDashboard = () => {
         ];
 
         return (
-            <>
             <div className="tab-content user-directory-view">
                 <header className="directory-header">
                     <div className="directory-title">
@@ -1296,7 +1295,6 @@ const AdminDashboard = () => {
                                             <input 
                                                 className="add-user-input" 
                                                 name="firstName" 
-                                                placeholder="e.g. Marcus" 
                                                 value={newUserData.firstName} 
                                                 onChange={e => setNewUserData({ ...newUserData, firstName: e.target.value })} 
                                                 required 
@@ -1307,7 +1305,6 @@ const AdminDashboard = () => {
                                             <input 
                                                 className="add-user-input" 
                                                 name="lastName" 
-                                                placeholder="e.g. Thorne" 
                                                 value={newUserData.lastName} 
                                                 onChange={e => setNewUserData({ ...newUserData, lastName: e.target.value })} 
                                                 required 
@@ -1348,7 +1345,6 @@ const AdminDashboard = () => {
                                                     className="add-user-input" 
                                                     name="email" 
                                                     type="email"
-                                                    placeholder="m.thorne@campuskart.edu" 
                                                     value={newUserData.email} 
                                                     onChange={e => setNewUserData({ ...newUserData, email: e.target.value })} 
                                                     required 
@@ -1371,7 +1367,6 @@ const AdminDashboard = () => {
                                                 <input 
                                                     className="add-user-input" 
                                                     name="collegeId" 
-                                                    placeholder="CK-2024-XXXX" 
                                                     value={newUserData.collegeId} 
                                                     onChange={e => setNewUserData({ ...newUserData, collegeId: e.target.value })} 
                                                     required 
@@ -1392,8 +1387,7 @@ const AdminDashboard = () => {
                     </div>
                 )}
             </div>
-            </>
-        );
+        ); 
     };
 
     const renderMarketplaceView = () => {
