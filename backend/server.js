@@ -85,31 +85,7 @@ mongoose
   .then(() => console.log("MongoDB connected"))
   .catch((err) => console.log("MongoDB connection error:", err));
 
-// ✅ Subscription Model
-const Subscription = require("./models/Subscription");
 
-// ✅ Subscription API
-app.post("/api/subscribe", async (req, res) => {
-  try {
-    const { email } = req.body;
-
-    if (!email) {
-      return res.status(400).json({ message: "Email is required" });
-    }
-
-    const newSubscription = new Subscription({ email });
-    await newSubscription.save();
-
-    res.status(201).json({ message: "Successfully subscribed!" });
-
-  } catch (error) {
-    if (error.code === 11000) {
-      return res.status(400).json({ message: "Email already subscribed" });
-    }
-
-    res.status(500).json({ message: "Server error. Please try again later." });
-  }
-});
 
 // ✅ Start server
 const PORT = process.env.PORT || 5001;

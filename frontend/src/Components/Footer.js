@@ -1,43 +1,8 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import '../styles/Footer.css';
 
 const Footer = ({ isAdmin }) => {
-    const [email, setEmail] = useState('');
-    const [status, setStatus] = useState({ type: '', message: '' });
-    const [loading, setLoading] = useState(false);
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setLoading(true);
-        setStatus({ type: '', message: '' });
-
-        try {
-            const response = await fetch('http://localhost:5001/api/subscribe', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ email }),
-            });
-
-            const data = await response.json();
-
-            if (response.ok) {
-                setStatus({ type: 'success', message: data.message });
-                setEmail('');
-            } else {
-                setStatus({ type: 'error', message: data.message });
-            }
-        } catch (error) {
-            setStatus({ type: 'error', message: 'Something went wrong. Please try again.' });
-        } finally {
-            setLoading(false);
-            // Clear message after 5 seconds
-            setTimeout(() => setStatus({ type: '', message: '' }), 5000);
-        }
-    };
-
     return (
         <footer className={`footer ${isAdmin ? 'admin-footer' : ''}`}>
             {!isAdmin && (
