@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 
-const { login, signup, verifyUser, getSecurityQuestion, verifySecurityAnswer, resetPassword, getCurrentUser, updateProfile, getCaptcha, uploadProfilePhoto, removeProfilePhoto, avatarUploadMiddleware, getSupportAdmin, getUserById, updateAccountSettings, deleteCurrentUser } = require("../controllers/authController");
+const { login, signup, verifyUser, getSecurityQuestion, verifySecurityAnswer, resetPassword, getCurrentUser, updateProfile, getCaptcha, uploadProfilePhoto, removeProfilePhoto, avatarUploadMiddleware, addUserToDirectory, getSupportAdmin, getUserById, updateAccountSettings, deleteCurrentUser } = require("../controllers/authController");
 const protect = require("../middleware/authMiddleware");
 const { adminOnly, checkSuspended, checkVerified } = protect;
 
@@ -79,6 +79,7 @@ router.put("/users/:id", protect, adminOnly, (req, res) => {
     const { adminUpdateUser } = require("../controllers/authController");
     adminUpdateUser(req, res);
 });
+router.post("/users", protect, adminOnly, addUserToDirectory);
 
 router.get("/users/:id", protect, getUserById);
 router.get("/support-admin", protect, getSupportAdmin);

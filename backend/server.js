@@ -15,6 +15,7 @@ const chatRoutes = require("./routes/chatRoutes");
 const orderRoutes = require("./routes/orderRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
 const adminActivityRoutes = require("./routes/adminActivityRoutes");
+const adminUserRoutes = require("./routes/adminUserRoutes");
 const reportRoutes = require("./routes/reportRoutes");
 
 // ✅ NEW AI ROUTE
@@ -73,6 +74,7 @@ app.use("/api/orders", orderRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/admin-activities", adminActivityRoutes);
 app.use("/api/reports", reportRoutes);
+app.use("/api/admin/users", adminUserRoutes);
 
 // ✅ ADD THIS (AI ROUTE)
 app.use("/api/ai", aiRoutes);

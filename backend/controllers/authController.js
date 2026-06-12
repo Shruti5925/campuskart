@@ -836,3 +836,38 @@ exports.verifyUser = async (req, res) => {
   }
 };
 
+exports.addUserToDirectory = async (req, res) => {
+  try {
+    const { email, firstName, lastName, gender, collegeId, role } = req.body;
+    // Basic validation
+    if (!email || !firstName || !lastName || !collegeId) {
+      return res.status(400).json({ message: 'Missing required fields (email, firstName, lastName, collegeId)' });
+    }
+    // Normalize email
+    const normalizedEmail = email.trim().toLowerCase();
+    // Check for duplicate entry (either email or collegeId)
+    const existingEmail = await UserDirectory.findOne({ email: normalizedEmail });
+    if (existingEmail) {
+      return res.status(400).json({ message: 'A user with this Email already exists in the directory.' });
+    }
+    const existingCollegeId = await UserDirectory.findOne({ collegeId: collegeId.trim() });
+    if (existingCollegeId) {
+      return res.status(400).json({ message: 'A user with this College ID already exists in the directory.' });
+    }
+    // Create new directory entry
+    const newUser = new UserDirectory({
+      email: normalizedEmail,
+      firstName,
+      lastName,
+      gender,
+      collegeId: collegeId.trim(),
+      role: role || 'student'
+    });
+    await newUser.save();
+    res.status(201).json({ message: 'User added to directory', user: newUser });
+  } catch (err) {
+    console.error('Add User to Directory Error:', err);
+    res.status(500).json({ message: 'Server error adding user' });
+  }
+};
+

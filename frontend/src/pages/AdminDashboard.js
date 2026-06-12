@@ -51,6 +51,16 @@ const AdminDashboard = () => {
     const [selectedUserDir, setSelectedUserDir] = useState(null);
     const [isEditingUser, setIsEditingUser] = useState(false);
     const [editUserData, setEditUserData] = useState({});
+    const [showAddUserModal, setShowAddUserModal] = useState(false);
+    const [newUserData, setNewUserData] = useState({
+      email: '',
+      firstName: '',
+      lastName: '',
+      gender: '',
+      collegeId: '',
+      role: ''
+    });
+    const [isAddingUser, setIsAddingUser] = useState(false);
 
 
     const profileDropdownRef = useRef(null);
@@ -60,6 +70,30 @@ const AdminDashboard = () => {
     const [showFlaggedOnly, setShowFlaggedOnly] = useState(false);
     const token = sessionStorage.getItem('token');
     const { showModal } = useModal();
+
+    const resetAddUserForm = () => {
+        setNewUserData({ email: '', firstName: '', lastName: '', gender: '', collegeId: '', role: '' });
+    };
+
+    const handleAddUserSubmit = async (e) => {
+        e.preventDefault();
+        if (isAddingUser) return;
+
+        setIsAddingUser(true);
+        try {
+            const res = await axios.post('http://localhost:5001/api/auth/users', newUserData, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            showModal({ title: 'Success', message: res.data.message, type: 'confirm' });
+            setShowAddUserModal(false);
+            resetAddUserForm();
+            await fetchInitialData();
+        } catch (err) {
+            showModal({ title: 'Error', message: err.response?.data?.message || 'Failed to add user', type: 'alert' });
+        } finally {
+            setIsAddingUser(false);
+        }
+    };
 
     // Admin Account Settings state
     const [adminEmailData, setAdminEmailData] = useState({ newEmail: '', currentPassword: '' });
@@ -877,6 +911,7 @@ const AdminDashboard = () => {
         ];
 
         return (
+            <>
             <div className="tab-content user-directory-view">
                 <header className="directory-header">
                     <div className="directory-title">
@@ -967,6 +1002,9 @@ const AdminDashboard = () => {
                             document.body.removeChild(link);
                         }}>
                             <span>📥</span> Export Data
+                        </button>
+                        <button className="filter-btn add-user-btn" onClick={() => setShowAddUserModal(true)}>
+                            <span>➕ Add User</span>
                         </button>
                     </div>
                 </header>
@@ -1239,11 +1277,122 @@ const AdminDashboard = () => {
                                         </div>
                                     </div>
                                 </div>
+                        </div>
+                    </div>
+                    </div>
+                )}
+
+                {showAddUserModal && (
+                    <div className="modal-overlay" onClick={() => setShowAddUserModal(false)}>
+                        <div className="add-user-modal-card" onClick={e => e.stopPropagation()}>
+                            <button className="modal-close-btn" onClick={() => setShowAddUserModal(false)}>✕</button>
+                            <div className="add-user-modal-content">
+                                <h2 className="add-user-modal-title">Add New User</h2>
+                                <p className="add-user-modal-subtitle">Enter the user's campus details to grant them access to the marketplace.</p>
+                                <form className="add-user-form" onSubmit={handleAddUserSubmit}>
+                                    <div className="add-user-form-row">
+                                        <div className="add-user-form-group">
+                                            <label className="add-user-label">FIRST NAME</label>
+                                            <input 
+                                                className="add-user-input" 
+                                                name="firstName" 
+                                                placeholder="e.g. Marcus" 
+                                                value={newUserData.firstName} 
+                                                onChange={e => setNewUserData({ ...newUserData, firstName: e.target.value })} 
+                                                required 
+                                            />
+                                        </div>
+                                        <div className="add-user-form-group">
+                                            <label className="add-user-label">LAST NAME</label>
+                                            <input 
+                                                className="add-user-input" 
+                                                name="lastName" 
+                                                placeholder="e.g. Thorne" 
+                                                value={newUserData.lastName} 
+                                                onChange={e => setNewUserData({ ...newUserData, lastName: e.target.value })} 
+                                                required 
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="add-user-form-row">
+                                        <div className="add-user-form-group">
+                                            <label className="add-user-label">GENDER</label>
+                                            <select className="add-user-select" value={newUserData.gender} onChange={e => setNewUserData({ ...newUserData, gender: e.target.value })} required>
+                                                <option value="">Select Gender</option>
+                                                <option value="Male">Male</option>
+                                                <option value="Female">Female</option>
+                                                <option value="Other">Other</option>
+                                            </select>
+                                        </div>
+                                        <div className="add-user-form-group">
+                                            <label className="add-user-label">ROLE</label>
+                                            <select className="add-user-select" name="role" value={newUserData.role} onChange={e => setNewUserData({ ...newUserData, role: e.target.value })} required>
+                                                <option value="">Select Role</option>
+                                                <option value="student">Student</option>
+                                                <option value="staff">Staff</option>
+                                                <option value="admin">Admin</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div className="add-user-form-row">
+                                        <div className="add-user-form-group full-width">
+                                            <label className="add-user-label">EMAIL ADDRESS</label>
+                                            <div className="add-user-icon-field">
+                                                <svg className="add-user-field-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                                                    <polyline points="22,6 12,13 2,6"></polyline>
+                                                </svg>
+                                                <input 
+                                                    className="add-user-input" 
+                                                    name="email" 
+                                                    type="email"
+                                                    placeholder="m.thorne@campuskart.edu" 
+                                                    value={newUserData.email} 
+                                                    onChange={e => setNewUserData({ ...newUserData, email: e.target.value })} 
+                                                    required 
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="add-user-form-row">
+                                        <div className="add-user-form-group full-width">
+                                            <label className="add-user-label">COLLEGE ID</label>
+                                            <div className="add-user-icon-field">
+                                                <svg className="add-user-field-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                                    <rect x="5" y="6" width="14" height="15" rx="2" ry="2"></rect>
+                                                    <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path>
+                                                    <line x1="9" y1="10" x2="15" y2="10"></line>
+                                                    <circle cx="12" cy="14" r="1.5"></circle>
+                                                    <path d="M10 18c0-1 1-1.5 2-1.5s2 .5 2 1.5"></path>
+                                                </svg>
+                                                <input 
+                                                    className="add-user-input" 
+                                                    name="collegeId" 
+                                                    placeholder="CK-2024-XXXX" 
+                                                    value={newUserData.collegeId} 
+                                                    onChange={e => setNewUserData({ ...newUserData, collegeId: e.target.value })} 
+                                                    required 
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="add-user-modal-footer">
+                                        <button type="button" className="add-user-btn cancel" onClick={() => setShowAddUserModal(false)}>Cancel</button>
+                                        <button type="submit" className="add-user-btn primary" disabled={isAddingUser}>
+                                            {isAddingUser ? 'Creating User...' : 'Create User'}
+                                        </button>
+                                    </div>
+                                </form>
                             </div>
                         </div>
                     </div>
                 )}
             </div>
+            </>
         );
     };
 

@@ -23,12 +23,11 @@ const userDirectorySchema = new mongoose.Schema({
   },
   gender: {
     type: String,
-    required: true,
-    enum: ["Male", "Female", "Other"]
+    // optional field; any string allowed
   },
   role: {
     type: String,
-    enum: ["student", "staff"],
+    enum: ["student", "staff", "admin"],
     required: true,
     default: "student"
   }
