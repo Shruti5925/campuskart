@@ -1,0 +1,32 @@
+/* frontend/src/components/QualityScoreBar.css */
+.quality-score-container {
+  margin: 1.5rem 0;
+  padding: 1rem;
+  background: linear-gradient(135deg, #f0f9ff, #e0f2fe); /* subtle gradient */
+  border: 2px solid #38bdf8; /* bright border */
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+.score-label {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+  color: #0f172a; /* deep navy */
+}
+.progress-bar {
+  width: 100%;
+  height: 14px;
+  background: #cbd5e1; /* lighter gray */
+  border-radius: 7px;
+  overflow: hidden;
+  margin-bottom: 0.75rem;
+}
+.progress-fill {
+  height: 100%;
+  transition: width 0.3s ease;
+}
+.rating-label {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #0e7490; /* teal */
+}

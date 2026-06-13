@@ -6,6 +6,45 @@ import Sidebar from "../Components/Sidebar";
 import Footer from "../Components/Footer";
 import "../styles/AddProduct.css";
 import "../styles/Dashboard.css";
+import '../styles/QualityScoreBar.css';
+import '../styles/QualitySuggestions.css';
+import '../styles/HealthWarning.css';
+import { computeScore } from "../utils/computeScore";
+// Inline QualityScoreBar component
+function QualityScoreBar({ score, rating }) {
+  let barColor = "#ef4444";
+  if (score >= 90) barColor = "#22c55e";
+  else if (score >= 70) barColor = "#f59e0b";
+  else if (score >= 40) barColor = "#eab308";
+  return (
+    <div className="quality-score-container">
+      <div className="score-label">Listing Quality Score: {score}/100</div>
+      <div className="progress-bar">
+        <div
+          className="progress-fill"
+          style={{ width: `${score}%`, background: barColor }}
+        />
+      </div>
+      <div className="rating-label">{rating}</div>
+    </div>
+  );
+}
+
+// Inline QualitySuggestions component
+function QualitySuggestions({ suggestions }) {
+  if (!suggestions || suggestions.length === 0) return null;
+  return (
+    <div className="suggestions-box">
+      <h4>Suggestions</h4>
+      <ul>
+        {suggestions.map((s, i) => (
+          <li key={i} className="suggestion-item">- {s}</li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+// computeScore import moved to top
 
 const AddProduct = () => {
   const navigate = useNavigate();
@@ -28,6 +67,7 @@ const AddProduct = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isVerifyingImages, setIsVerifyingImages] = useState(false);
+  const [scoreInfo, setScoreInfo] = useState({ score: 0, rating: 'Needs Improvement', suggestions: [] });
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -46,6 +86,29 @@ const AddProduct = () => {
     if (token) fetchUser();
     else setLoading(false);
   }, [token]);
+
+  useEffect(() => {
+    const evaluateScore = async () => {
+      let imageMatch = false;
+      if (images.length > 0) {
+        const formData = new FormData();
+        formData.append('title', form.title);
+        formData.append('category', form.category);
+        images.forEach(img => formData.append('images', img));
+        try {
+          const res = await axios.post('http://localhost:5001/api/ai/quality-image-verification', formData, {
+            headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' }
+          });
+          imageMatch = res.data.match;
+        } catch (e) {
+          console.error('Image verification error', e);
+        }
+      }
+      const { score, rating, suggestions } = computeScore(form, imageMatch);
+      setScoreInfo({ score, rating, suggestions });
+    };
+    evaluateScore();
+  }, [form.title, form.category, form.price, form.description, images, token]);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -474,7 +537,15 @@ const AddProduct = () => {
                   </span>
                 </div>
               </div>
+              {/* Quality Score UI placed in health panel */}
+              <QualityScoreBar score={scoreInfo.score} rating={scoreInfo.rating} />
+              <QualitySuggestions suggestions={scoreInfo.suggestions.slice(0,3)} />
               <p className="health-hint">Items with clear photos and specific campus locations sell 4x faster.</p>
+              {scoreInfo.score < 40 && (
+                <p className="quality-warning">
+                  This listing may receive fewer responses because important information is missing.
+                </p>
+              )}
             </div>
           </div>
         </div>

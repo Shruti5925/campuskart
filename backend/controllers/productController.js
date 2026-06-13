@@ -8,45 +8,7 @@ const path = require("path");
 
 
 // CREATE
-exports.createProduct = async (req, res) => {
-  try {
-    const productData = { ...req.body };
 
-    if (req.files && req.files.length > 0) {
-      productData.images = req.files.map(file => `http://localhost:5001/${file.path.replace(/\\/g, "/")}`);
-    }
-
-    // Clean up empty strings for Number fields or optional fields
-    Object.keys(productData).forEach(key => {
-      if (productData[key] === "") {
-        delete productData[key];
-      }
-    });
-
-    const product = new Product({
-      ...productData,
-      status: req.body.status || "pending",
-      seller: req.user.id
-    });
-
-    await product.save();
-    res.status(201).json(product);
-  } catch (err) {
-    console.error("Create Product Error:", err);
-    // Cleanup: Delete uploaded files if DB save fails
-    if (req.files && req.files.length > 0) {
-      req.files.forEach(file => {
-        try {
-          const filePath = path.resolve(file.path);
-          if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-        } catch (unlinkErr) {
-          console.error("Failed to delete orphaned file:", file.path, unlinkErr);
-        }
-      });
-    }
-    res.status(500).json({ message: err.message });
-  }
-};
 
 // READ ALL
 exports.getProducts = async (req, res) => {

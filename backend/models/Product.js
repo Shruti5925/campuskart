@@ -13,7 +13,9 @@ const productSchema = new mongoose.Schema({
   seller: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
   averageRating: { type: Number, default: 0 },
   reviewCount: { type: Number, default: 0 },
-  isFlagged: { type: Boolean, default: false }
+  isFlagged: { type: Boolean, default: false },
+  qualityScore: { type: Number, default: 0 },
+  qualityRating: { type: String, default: "Needs Improvement" }
 }, { timestamps: true });
 
 module.exports = mongoose.model("Product", productSchema);

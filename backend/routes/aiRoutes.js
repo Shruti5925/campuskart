@@ -6,5 +6,6 @@ const { generateDescription, verifyImages } = require("../controllers/aiControll
 
 router.post("/generate-description", generateDescription);
 router.post("/verify-images", upload.array("images", 5), verifyImages);
+router.post("/quality-image-verification", upload.array("images", 5), require("../controllers/qualityImageVerification").verifyQualityImages);
 
 module.exports = router;

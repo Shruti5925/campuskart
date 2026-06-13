@@ -1,0 +1,11 @@
+/* Health warning style for low quality score */
+.quality-warning {
+  margin-top: 0.75rem;
+  padding: 0.5rem;
+  background: #fef2f2; /* light red bg */
+  color: #b91c1c; /* dark red text */
+  border-left: 4px solid #dc2626; /* red accent */
+  border-radius: 4px;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
