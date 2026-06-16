@@ -71,7 +71,7 @@ Follow these steps to get the project running on your local machine.
 ## ✨ Features
 * **Modern Dashboard**: Clean management interface for admins and students.
 * **Real-time Chat**: Connect instantly with sellers.
-* **Review System**: Rate and review products and sellers.
+* **Review System**: Rate and review products.
 * **Session Security**: Fresh start logout (clears on tab close).
 
 ## 🔒 Administrative Access

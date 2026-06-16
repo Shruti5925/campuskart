@@ -5,8 +5,9 @@ import { useModal } from '../context/ModalContext';
 import Sidebar from '../Components/Sidebar';
 import Footer from '../Components/Footer';
 import itemStandard from '../assets/image.webp';
-import { formatNumericDate } from '../utils/dateUtils';
+import { formatNumericDate, formatExpiryDate } from '../utils/dateUtils';
 import '../styles/Dashboard.css';
+import '../styles/AccountStatus.css';
 
 const StarRating = ({ rating }) => {
     return (
@@ -241,6 +242,29 @@ const Dashboard = () => {
                             <p>Manage your campus sales, active bids, and purchased items.</p>
                         </div>
 
+                        {userData && userData.role === 'student' && (
+                            <div className="expiry-panel" style={{ marginBottom: '1.5rem', background: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)', border: '1px solid #bfdbfe' }}>
+                                <div className="expiry-panel-header" style={{ margin: 0 }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                        <span style={{ fontSize: '1.25rem' }}>🎓</span>
+                                        <span className="expiry-panel-title">Marketplace Student Access Status</span>
+                                    </div>
+                                    <span className={`account-status-badge ${userData.accountStatus || 'active'}`} style={{ boxShadow: 'none' }}>
+                                        {userData.accountStatus || 'active'}
+                                    </span>
+                                </div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: '1rem' }}>
+                                    <div className="expiry-date-info">
+                                        <span className="expiry-date-label">Access Valid Until</span>
+                                        <span className="expiry-date-value" style={{ color: '#1e40af' }}>
+                                            {formatExpiryDate(userData.accountExpiryDate)}
+                                        </span>
+                                    </div>
+                                    <span style={{ fontSize: '0.8rem', color: '#60a5fa', fontWeight: '700' }}>Graduation Year: {userData.graduationYear}</span>
+                                </div>
+                            </div>
+                        )}
+
                         <div className="stats-grid">
                             {stats.map(stat => (
                                 <div key={stat.label} className="stat-card">
@@ -304,7 +328,13 @@ const Dashboard = () => {
                                                         onClick={(e) => { e.stopPropagation(); handleDeleteReview(review._id); }}
                                                         title="Delete Review"
                                                     >
-                                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                            <path d="M3 6h18" />
+                                                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                                                             <line x1="9" y1="11" x2="9" y2="17" />
+                                                             <line x1="12" y1="11" x2="12" y2="17" />
+                                                             <line x1="15" y1="11" x2="15" y2="17" />
+                                                        </svg>
                                                     </button>
 
                                                 </div>
@@ -357,7 +387,13 @@ const Dashboard = () => {
                                                         className="action-btn delete-btn"
                                                         onClick={(e) => { e.stopPropagation(); handleDelete(product._id); }}
                                                     >
-                                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                            <path d="M3 6h18" />
+                                                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                                                             <line x1="9" y1="11" x2="9" y2="17" />
+                                                             <line x1="12" y1="11" x2="12" y2="17" />
+                                                             <line x1="15" y1="11" x2="15" y2="17" />
+                                                        </svg>
                                                         Delete
                                                     </button>
                                                 </div>

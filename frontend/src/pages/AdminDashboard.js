@@ -8,9 +8,10 @@ import Footer from '../Components/Footer';
 import femaleAvatar from '../assets/female-avatar.png';
 import maleAvatar from '../assets/male-avatar.png';
 import itemStandard from '../assets/image.webp';
-import { formatNumericDate } from '../utils/dateUtils';
+import { formatNumericDate, formatExpiryDate } from '../utils/dateUtils';
 import ModerationModal from '../Components/ModerationModal';
 import '../styles/AdminDashboard.css';
+import '../styles/AccountStatus.css';
 
 
 const AdminDashboard = () => {
@@ -58,7 +59,8 @@ const AdminDashboard = () => {
       lastName: '',
       gender: '',
       collegeId: '',
-      role: ''
+      role: '',
+      graduationYear: ''
     });
     const [isAddingUser, setIsAddingUser] = useState(false);
     const [userCurrentPage, setUserCurrentPage] = useState(1);
@@ -73,7 +75,7 @@ const AdminDashboard = () => {
     const { showModal } = useModal();
 
     const resetAddUserForm = () => {
-        setNewUserData({ email: '', firstName: '', lastName: '', gender: '', collegeId: '', role: '' });
+        setNewUserData({ email: '', firstName: '', lastName: '', gender: '', collegeId: '', role: '', graduationYear: '' });
     };
 
     const handleAddUserSubmit = async (e) => {
@@ -292,8 +294,8 @@ const AdminDashboard = () => {
             showModal({ title: 'Success', message: 'User profile updated successfully!', type: 'alert' });
             
             // Update local states
-            setAllUsers(prev => prev.map(u => u._id === editUserData._id ? res.data.user : u));
-            setSelectedUserDir(res.data.user);
+            setAllUsers(prev => prev.map(u => u._id === editUserData._id ? { ...u, ...res.data.user } : u));
+            setSelectedUserDir(prev => prev ? { ...prev, ...res.data.user } : res.data.user);
             setIsEditingUser(false);
             setEditUserData(null);
             
@@ -403,6 +405,27 @@ const AdminDashboard = () => {
         } catch (err) {
             showModal({ title: 'Error', message: "Update Failed", type: 'alert' });
         }
+    };
+
+    const handleDeleteUser = async (userId, userName) => {
+        console.log("handleDeleteUser called on frontend with:", userId, userName);
+        showModal({
+            title: 'Delete User',
+            message: `Are you sure you want to permanently delete ${userName}? This action cannot be undone and will delete all their listings.`,
+            type: 'confirm',
+            onConfirm: async () => {
+                try {
+                    const res = await axios.delete(`http://localhost:5001/api/auth/users/${userId}`, {
+                        headers: { Authorization: `Bearer ${token}` }
+                    });
+                    showModal({ title: 'Success', message: res.data.message, type: 'alert' });
+                    fetchInitialData();
+                } catch (err) {
+                    console.error("Error deleting user:", err);
+                    showModal({ title: 'Error', message: err.response?.data?.message || 'Failed to delete user', type: 'alert' });
+                }
+            }
+        });
     };
 
     const handleToggleFlag = async (productId) => {
@@ -899,9 +922,10 @@ const AdminDashboard = () => {
             const matchesSearch = name.includes(search) || email.includes(search);
             
             const matchesStatus = filterStatus === 'all' || 
-                (filterStatus === 'registered' && user.isRegistered && !user.isSuspended) ||
+                (filterStatus === 'registered' && user.isRegistered && !user.isSuspended && user.accountStatus !== 'expired') ||
                 (filterStatus === 'unregistered' && !user.isRegistered) ||
-                (filterStatus === 'suspended' && user.isSuspended);
+                (filterStatus === 'suspended' && user.isSuspended) ||
+                (filterStatus === 'expired' && user.accountStatus === 'expired');
                 
             const matchesRole = filterRole === 'all' || user.role?.toLowerCase() === filterRole.toLowerCase();
             
@@ -1023,6 +1047,9 @@ const AdminDashboard = () => {
                                             <button className={filterStatus === 'suspended' ? 'active' : ''} onClick={() => setFilterStatus('suspended')}>
                                                 <span className="opt-icon">🚫</span> Suspended
                                             </button>
+                                            <button className={filterStatus === 'expired' ? 'active' : ''} onClick={() => setFilterStatus('expired')}>
+                                                <span className="opt-icon">⏰</span> Expired
+                                            </button>
                                         </div>
                                     </div>
                                     <div className="filter-section">
@@ -1059,14 +1086,17 @@ const AdminDashboard = () => {
                                 return stringified;
                             };
 
-                            const headers = ['Name', 'Email', 'Gender', 'Registered', 'Suspended', 'Joining Date'];
+                            const headers = ['Name', 'Email', 'Gender', 'Registered', 'Suspended', 'Joining Date', 'Graduation Year', 'Expiry Date', 'Account Status'];
                             const rows = filteredUsers.map(u => [
                                 escapeCSV(`${u.firstName} ${u.lastName}`),
                                 escapeCSV(u.email),
                                 escapeCSV(u.gender || 'N/A'),
                                 u.isRegistered ? 'Yes' : 'No',
                                 u.isSuspended ? 'Yes' : 'No',
-                                escapeCSV(formatNumericDate(u.createdAt || new Date()))
+                                escapeCSV(formatNumericDate(u.createdAt || new Date())),
+                                escapeCSV(u.graduationYear || 'N/A'),
+                                escapeCSV(u.accountExpiryDate ? formatExpiryDate(u.accountExpiryDate) : (u.graduationYear ? `31 July ${u.graduationYear}` : 'N/A')),
+                                escapeCSV(u.accountStatus || (u.isRegistered ? 'active' : 'N/A'))
                             ]);
 
                             const csvContent = [
@@ -1109,6 +1139,7 @@ const AdminDashboard = () => {
                         <thead>
                             <tr>
                                 <th>USER DETAILS</th>
+                                <th>GRADUATION & EXPIRY</th>
                                 <th>STATUS</th>
                                 <th>JOINING DATE</th>
                                 <th>ACTIONS</th>
@@ -1117,7 +1148,7 @@ const AdminDashboard = () => {
                         <tbody>
                             {paginatedUsers.length === 0 ? (
                                 <tr>
-                                    <td colSpan="4" style={{ textAlign: 'center', padding: '3rem' }}>
+                                    <td colSpan="5" style={{ textAlign: 'center', padding: '3rem' }}>
                                         No users found matching "{searchTerm}"
                                     </td>
                                 </tr>
@@ -1144,9 +1175,21 @@ const AdminDashboard = () => {
                                             </div>
                                         </td>
                                         <td>
-                                            <div className={`status-indicator ${user.isSuspended ? 'suspended' : (user.isRegistered ? 'verified' : 'pending')}`}>
+                                            {user.role === 'student' ? (
+                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                                    <span style={{ fontWeight: '700', fontSize: '0.85rem' }}>Class of {user.graduationYear || 'N/A'}</span>
+                                                    <span style={{ fontSize: '0.75rem', opacity: 0.8 }} title="Account Expiry Date">
+                                                        {user.accountExpiryDate ? formatExpiryDate(user.accountExpiryDate) : (user.graduationYear ? `31 July ${user.graduationYear}` : 'Not Registered')}
+                                                    </span>
+                                                </div>
+                                            ) : (
+                                                <span style={{ color: '#94a3b8', fontSize: '0.85rem' }}>N/A</span>
+                                            )}
+                                        </td>
+                                        <td>
+                                            <div className={`status-indicator ${user.accountStatus === 'expired' ? 'suspended' : (user.isSuspended ? 'suspended' : (user.isRegistered ? 'verified' : 'pending'))}`}>
                                                 <span className="dot"></span>
-                                                                                                 {user.isSuspended ? 'Suspended' : (user.isRegistered ? 'Registered' : 'Unregistered')}
+                                                {user.accountStatus === 'expired' ? 'Expired' : (user.isSuspended ? 'Suspended' : (user.isRegistered ? 'Registered' : 'Unregistered'))}
                                             </div>
                                         </td>
                                         <td className="join-date-cell">
@@ -1155,7 +1198,19 @@ const AdminDashboard = () => {
                                         <td>
                                             <div className="dir-action-group">
                                                 {!user.isRegistered ? (
-                                                    <span style={{color: '#94A3B8', fontSize: '0.85rem'}}>No actions available</span>
+                                                    <>
+                                                        <button className="icon-action" title="View details" onClick={() => setSelectedUserDir(user)}>👁</button>
+                                                        <button className="dir-edit-btn" onClick={() => { setSelectedUserDir(user); setIsEditingUser(true); setEditUserData({ ...user }); }}>Edit</button>
+                                                        <button className="icon-action delete" title="Delete from directory" onClick={() => handleDeleteUser(user._id, `${user.firstName} ${user.lastName}`)}>
+                                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'inline-block', verticalAlign: 'middle' }}>
+                                                                <path d="M3 6h18" />
+                                                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                                                                <line x1="9" y1="11" x2="9" y2="17" />
+                                                                <line x1="12" y1="11" x2="12" y2="17" />
+                                                                <line x1="15" y1="11" x2="15" y2="17" />
+                                                            </svg>
+                                                        </button>
+                                                    </>
                                                 ) : user.isSuspended ? (
                                                     <button className="dir-reactivate-btn" onClick={() => toggleUserStatus(user._id, true, 'suspend')}>
                                                         Reactivate
@@ -1166,6 +1221,15 @@ const AdminDashboard = () => {
                                                         <button className="icon-action" title="Suspend user" onClick={() => toggleUserStatus(user._id, false, 'suspend')}>⊘</button>
                                                         <button className="dir-edit-btn" onClick={() => { setSelectedUserDir(user); setIsEditingUser(true); setEditUserData({ ...user }); }}>Edit</button>
                                                          <button className="icon-action chat" title="Chat with user" onClick={() => handleStartChat(user)}>💬</button>
+                                                         <button className="icon-action delete" title="Delete user" onClick={() => handleDeleteUser(user._id, `${user.firstName} ${user.lastName}`)}>
+                                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'inline-block', verticalAlign: 'middle' }}>
+                                                                <path d="M3 6h18" />
+                                                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                                                                <line x1="9" y1="11" x2="9" y2="17" />
+                                                                <line x1="12" y1="11" x2="12" y2="17" />
+                                                                <line x1="15" y1="11" x2="15" y2="17" />
+                                                            </svg>
+                                                        </button>
                                                     </>
                                                 )}
                                             </div>
@@ -1269,13 +1333,21 @@ const AdminDashboard = () => {
                                                 </span>
                                             )}
                                             {!isEditingUser && (
-                                                selectedUserDir.isSuspended ? (
-                                                    <span className="status-pill suspended">Suspended</span>
-                                                ) : selectedUserDir.isRegistered ? (
-                                                    <span className="registered-text-label">Registered</span>
-                                                ) : (
-                                                    <span className="status-pill pending">Unregistered</span>
-                                                )
+                                                <>
+                                                    {selectedUserDir.isRegistered ? (
+                                                        <span className="status-pill verified">Registered</span>
+                                                    ) : (
+                                                        <span className="status-pill pending">Unregistered</span>
+                                                    )}
+                                                    {selectedUserDir.accountStatus === 'expired' ? (
+                                                        <span className="status-pill expired">Expired</span>
+                                                    ) : (
+                                                        <span className="status-pill active">Active</span>
+                                                    )}
+                                                    {selectedUserDir.isSuspended && (
+                                                        <span className="status-pill suspended">Suspended</span>
+                                                    )}
+                                                </>
                                             )}
                                         </div>
                                     </div>
@@ -1286,19 +1358,21 @@ const AdminDashboard = () => {
                                                 <label>Email Address</label>
                                                 <p>{selectedUserDir.email}</p>
                                             </div>
-                                            <div className="detail-item">
-                                                <label>Mobile Number</label>
-                                                {isEditingUser ? (
-                                                    <input 
-                                                        className="edit-input" 
-                                                        name="mobileNumber" 
-                                                        value={editUserData.mobileNumber || ''} 
-                                                        onChange={handleEditChange} 
-                                                    />
-                                                ) : (
-                                                    <p>{selectedUserDir.mobileNumber || 'N/A'}</p>
-                                                )}
-                                            </div>
+                                            {(!isEditingUser || editUserData.isRegistered) && (
+                                                <div className="detail-item">
+                                                    <label>Mobile Number</label>
+                                                    {isEditingUser ? (
+                                                        <input 
+                                                            className="edit-input" 
+                                                            name="mobileNumber" 
+                                                            value={editUserData.mobileNumber || ''} 
+                                                            onChange={handleEditChange} 
+                                                        />
+                                                    ) : (
+                                                        <p>{selectedUserDir.mobileNumber || 'N/A'}</p>
+                                                    )}
+                                                </div>
+                                            )}
                                             <div className="detail-item">
                                                 <label>College ID</label>
                                                 {isEditingUser ? (
@@ -1312,40 +1386,87 @@ const AdminDashboard = () => {
                                                     <p>{selectedUserDir.collegeId || 'N/A'}</p>
                                                 )}
                                             </div>
-                                            <div className="detail-item">
-                                                <label>Department</label>
-                                                {isEditingUser ? (
-                                                    <input 
-                                                        className="edit-input" 
-                                                        name="department" 
-                                                        value={editUserData.department || ''} 
-                                                        onChange={handleEditChange} 
-                                                    />
-                                                ) : (
-                                                    <p>{selectedUserDir.department || 'N/A'}</p>
-                                                )}
-                                            </div>
+                                            {(!isEditingUser || editUserData.isRegistered) && (
+                                                <div className="detail-item">
+                                                    <label>Department</label>
+                                                    {isEditingUser ? (
+                                                        <input 
+                                                            className="edit-input" 
+                                                            name="department" 
+                                                            value={editUserData.department || ''} 
+                                                            onChange={handleEditChange} 
+                                                        />
+                                                    ) : (
+                                                        <p>{selectedUserDir.department || 'N/A'}</p>
+                                                    )}
+                                                </div>
+                                            )}
                                             <div className="detail-item">
                                                 <label>Gender</label>
-                                                <p>{selectedUserDir.gender || 'Not Specified'}</p>
+                                                {isEditingUser ? (
+                                                    <select 
+                                                        className="edit-select" 
+                                                        name="gender" 
+                                                        value={editUserData.gender || ''} 
+                                                        onChange={handleEditChange}
+                                                    >
+                                                        <option value="">Select Gender</option>
+                                                        <option value="Male">Male</option>
+                                                        <option value="Female">Female</option>
+                                                        <option value="Other">Other</option>
+                                                    </select>
+                                                ) : (
+                                                    <p>{selectedUserDir.gender || 'Not Specified'}</p>
+                                                )}
                                             </div>
                                             <div className="detail-item">
                                                 <label>Joining Date</label>
                                                 <p>{getJoiningDate(selectedUserDir)}</p>
                                             </div>
-                                            <div className="detail-item full-width">
-                                                <label>Hostel / Address</label>
-                                                {isEditingUser ? (
-                                                    <input 
-                                                        className="edit-input" 
-                                                        name="address" 
-                                                        value={editUserData.address || ''} 
-                                                        onChange={handleEditChange} 
-                                                    />
-                                                ) : (
-                                                    <p>{selectedUserDir.address || 'No address provided'}</p>
-                                                )}
-                                            </div>
+                                            {(selectedUserDir.role === 'student' || (isEditingUser && editUserData.role === 'student')) && (
+                                                <>
+                                                    <div className="detail-item">
+                                                        <label>Graduation Year</label>
+                                                        {isEditingUser ? (
+                                                            <input 
+                                                                type="number"
+                                                                className="edit-input" 
+                                                                name="graduationYear" 
+                                                                value={editUserData.graduationYear || ''} 
+                                                                onChange={handleEditChange} 
+                                                                min={new Date().getFullYear() - 5}
+                                                                max={new Date().getFullYear() + 10}
+                                                                onWheel={(e) => e.target.blur()}
+                                                            />
+                                                        ) : (
+                                                            <p>{selectedUserDir.graduationYear || 'N/A'}</p>
+                                                        )}
+                                                    </div>
+                                                    <div className="detail-item">
+                                                        <label>Access Valid Until</label>
+                                                        <p>
+                                                            {selectedUserDir.accountExpiryDate 
+                                                                ? formatExpiryDate(selectedUserDir.accountExpiryDate) 
+                                                                : (selectedUserDir.graduationYear ? `31 July ${selectedUserDir.graduationYear}` : 'Not Registered')}
+                                                        </p>
+                                                    </div>
+                                                </>
+                                            )}
+                                            {(!isEditingUser || editUserData.isRegistered) && (
+                                                <div className="detail-item full-width">
+                                                    <label>Hostel / Address</label>
+                                                    {isEditingUser ? (
+                                                        <input 
+                                                            className="edit-input" 
+                                                            name="address" 
+                                                            value={editUserData.address || ''} 
+                                                            onChange={handleEditChange} 
+                                                        />
+                                                    ) : (
+                                                        <p>{selectedUserDir.address || 'No address provided'}</p>
+                                                    )}
+                                                </div>
+                                            )}
                                             <div className="detail-item full-width">
                                                 <label>Account ID</label>
                                                 <p style={{ fontFamily: 'monospace', letterSpacing: '0.05em' }}>#{selectedUserDir._id.toUpperCase()}</p>
@@ -1431,7 +1552,7 @@ const AdminDashboard = () => {
                                     </div>
 
                                     <div className="add-user-form-row">
-                                        <div className="add-user-form-group full-width">
+                                        <div className={`add-user-form-group ${newUserData.role === 'student' ? '' : 'full-width'}`}>
                                             <label className="add-user-label">COLLEGE ID</label>
                                             <div className="add-user-icon-field">
                                                 <svg className="add-user-field-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -1450,6 +1571,22 @@ const AdminDashboard = () => {
                                                 />
                                             </div>
                                         </div>
+                                        {newUserData.role === 'student' && (
+                                            <div className="add-user-form-group">
+                                                <label className="add-user-label">GRADUATION YEAR</label>
+                                                <input 
+                                                    type="number"
+                                                    className="add-user-input" 
+                                                    placeholder="e.g. 2027"
+                                                    value={newUserData.graduationYear || ''} 
+                                                    onChange={e => setNewUserData({ ...newUserData, graduationYear: e.target.value })} 
+                                                    min={new Date().getFullYear() - 5}
+                                                    max={new Date().getFullYear() + 10}
+                                                    onWheel={(e) => e.target.blur()}
+                                                    required
+                                                />
+                                            </div>
+                                        )}
                                     </div>
 
                                     <div className="add-user-modal-footer">
@@ -1736,7 +1873,15 @@ const AdminDashboard = () => {
                                                             });
                                                         }}
                                                     >
-                                                        <span className="icon">🗑️</span> Confirm Removal
+                                                        <span className="icon">
+                                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '4px' }}>
+                                                                <path d="M3 6h18" />
+                                                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                                                                <line x1="9" y1="11" x2="9" y2="17" />
+                                                                <line x1="12" y1="11" x2="12" y2="17" />
+                                                                <line x1="15" y1="11" x2="15" y2="17" />
+                                                            </svg>
+                                                        </span> Confirm Removal
                                                     </button>
                                                     <button 
                                                         className="btn-dismiss"
@@ -1784,7 +1929,13 @@ const AdminDashboard = () => {
                                                     });
                                                 }}
                                             >
-                                                🗑️
+                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'inline-block', verticalAlign: 'middle' }}>
+                                                    <path d="M3 6h18" />
+                                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                                                    <line x1="9" y1="11" x2="9" y2="17" />
+                                                    <line x1="12" y1="11" x2="12" y2="17" />
+                                                    <line x1="15" y1="11" x2="15" y2="17" />
+                                                </svg>
                                             </button>
                                         </div>
                                     </div>

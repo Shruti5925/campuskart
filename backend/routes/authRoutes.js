@@ -79,6 +79,10 @@ router.put("/users/:id", protect, adminOnly, (req, res) => {
     const { adminUpdateUser } = require("../controllers/authController");
     adminUpdateUser(req, res);
 });
+router.delete("/users/:id", protect, adminOnly, (req, res) => {
+    const { adminDeleteUser } = require("../controllers/authController");
+    adminDeleteUser(req, res);
+});
 router.post("/users", protect, adminOnly, addUserToDirectory);
 
 router.get("/users/:id", protect, getUserById);

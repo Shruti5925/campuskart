@@ -63,6 +63,28 @@ const HomeRoute = () => {
 const AppContent = () => {
   const location = useLocation();
   const token = sessionStorage.getItem("token");
+
+  useEffect(() => {
+    const interceptor = axios.interceptors.response.use(
+      (response) => response,
+      (error) => {
+        if (error.response && error.response.status === 403 && error.response.data.message?.toLowerCase().includes("expired")) {
+          sessionStorage.removeItem("token");
+          if (error.config && error.config.url && !error.config.url.endsWith("/login")) {
+            alert(error.response.data.message);
+          }
+          if (window.location.pathname !== "/login") {
+            window.location.href = "/login";
+          }
+        }
+        return Promise.reject(error);
+      }
+    );
+    return () => {
+      axios.interceptors.response.eject(interceptor);
+    };
+  }, []);
+
   let isAdmin = false;
   if (token) {
     try {

@@ -128,6 +128,22 @@ exports.signup = async (req, res) => {
       return res.status(400).json({ message: "User already exists" });
     }
 
+    // Fetch from UserDirectory to get role and graduationYear securely
+    const directoryUser = await UserDirectory.findOne({ email, collegeId });
+    if (!directoryUser) {
+      return res.status(400).json({ message: "No matching record found in the directory. Please check your details." });
+    }
+    const resolvedRole = directoryUser.role || 'student';
+    let graduationYear = undefined;
+    let accountExpiryDate = undefined;
+    if (resolvedRole === 'student') {
+      graduationYear = directoryUser.graduationYear;
+      if (!graduationYear) {
+        return res.status(400).json({ message: "Graduation year not found in the student directory. Please contact admin." });
+      }
+      accountExpiryDate = new Date(graduationYear, 6, 31, 23, 59, 59);
+    }
+
     console.log("Hashing password...");
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
@@ -141,16 +157,38 @@ exports.signup = async (req, res) => {
       address,
       email,
       password: hashedPassword,
-      role: role === 'admin' ? 'student' : (role || 'student'), // Restrict admin role from signup
+      role: resolvedRole,
       collegeId,
       department,
       mobileNumber,
       securityQuestion,
-      securityAnswer
+      securityAnswer,
+      graduationYear,
+      accountExpiryDate,
+      accountStatus: 'active'
     });
 
     console.log("Saving user to database...");
     await user.save();
+
+    // Create welcome notification
+    try {
+      const welcomeMsg = resolvedRole === 'student'
+        ? `Welcome to CampusKart! Your student account is active. Your marketplace access is valid until 31 July ${graduationYear}.`
+        : "Welcome to CampusKart! Your account is active.";
+      
+      const welcomeNotification = new Notification({
+        user: user._id,
+        type: "info",
+        title: "Welcome to CampusKart! 🎉",
+        message: welcomeMsg,
+        link: "/profile"
+      });
+      await welcomeNotification.save();
+      console.log("Welcome notification saved for user:", user._id);
+    } catch (notifErr) {
+      console.error("Failed to create welcome notification:", notifErr);
+    }
 
     console.log("Generating token...");
     const token = jwt.sign(
@@ -189,13 +227,38 @@ exports.login = async (req, res) => {
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
+    if (user.role === 'student') {
+      const now = new Date();
+      if (user.accountStatus === 'expired' || now > user.accountExpiryDate) {
+        if (user.accountStatus !== 'expired') {
+          user.accountStatus = 'expired';
+          await user.save();
+          
+          // Create expiry notification
+          try {
+            const expiryNotification = new Notification({
+              user: user._id,
+              type: "info",
+              title: "Account Expired ❌",
+              message: "Your CampusKart account has expired as your graduation year has passed.",
+              link: "/profile"
+            });
+            await expiryNotification.save();
+          } catch (notifErr) {
+            console.error("Failed to save login-triggered expiry notification:", notifErr);
+          }
+        }
+        return res.status(403).json({ message: `Your CampusKart account expired on 31 July ${user.graduationYear} 23:59:59.` });
+      }
+    }
+
     const token = jwt.sign(
       { id: user._id, role: user.role },
       process.env.JWT_SECRET,
       { expiresIn: "1d" }
     );
 
-    res.json({ message: "Login successful", token, role: user.role, user: { id: user._id, firstName: user.firstName, lastName: user.lastName, email: user.email, role: user.role } });
+    res.json({ message: "Login successful", token, role: user.role, user: { id: user._id, firstName: user.firstName, lastName: user.lastName, email: user.email, role: user.role, accountStatus: user.accountStatus } });
   } catch (err) {
     console.error("Login Error:", err);
     res.status(500).json({ message: "Server error" });
@@ -629,7 +692,8 @@ exports.getAllUsers = async (req, res) => {
             combinedUsers.push({
                 ...rUser,
                 isRegistered: true,
-                collegeId: rUser.collegeId || dirUser.collegeId
+                collegeId: rUser.collegeId || dirUser.collegeId,
+                graduationYear: rUser.graduationYear || dirUser.graduationYear
             });
             delete registeredUserMap[dirUser.email];
         } else {
@@ -641,6 +705,7 @@ exports.getAllUsers = async (req, res) => {
                 gender: dirUser.gender,
                 collegeId: dirUser.collegeId,
                 role: dirUser.role,
+                graduationYear: dirUser.graduationYear,
                 isRegistered: false,
                 isSuspended: false,
                 createdAt: dirUser.createdAt
@@ -655,6 +720,26 @@ exports.getAllUsers = async (req, res) => {
         });
     });
     
+    // Dynamic expiry status calculation for student users
+    const now = new Date();
+    combinedUsers.forEach(user => {
+        if (user.role === 'student') {
+            let expiryDate = null;
+            if (user.accountExpiryDate) {
+                expiryDate = new Date(user.accountExpiryDate);
+            } else if (user.graduationYear) {
+                expiryDate = new Date(Number(user.graduationYear), 6, 31, 23, 59, 59);
+            }
+            if (expiryDate && now > expiryDate) {
+                user.accountStatus = 'expired';
+            } else if (!user.accountStatus) {
+                user.accountStatus = 'active';
+            }
+        } else {
+            user.accountStatus = 'active';
+        }
+    });
+
     // Sort combined by creation date descending
     combinedUsers.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     
@@ -725,22 +810,109 @@ exports.updateUserStatus = async (req, res) => {
 
 exports.adminUpdateUser = async (req, res) => {
   try {
-    const { firstName, middleName, lastName, role, department, collegeId, mobileNumber, address } = req.body;
+    const { firstName, middleName, lastName, role, gender, department, collegeId, mobileNumber, address, graduationYear } = req.body;
     
-    const user = await User.findById(req.params.id);
-    if (!user) return res.status(404).json({ message: "User not found" });
+    let user = await User.findById(req.params.id);
+    if (!user) {
+      // Check if it exists in UserDirectory (unregistered user)
+      const directoryUser = await UserDirectory.findById(req.params.id);
+      if (!directoryUser) {
+        return res.status(404).json({ message: "User not found in database or directory" });
+      }
 
-    // Update fields if provided
+      // Update directory user
+      if (firstName) directoryUser.firstName = firstName;
+      if (lastName) directoryUser.lastName = lastName;
+      if (role) directoryUser.role = role;
+      if (collegeId) directoryUser.collegeId = collegeId;
+      if (gender) directoryUser.gender = gender;
+      
+      const userRole = role || directoryUser.role;
+      if (userRole === 'student') {
+        if (graduationYear) {
+          directoryUser.graduationYear = Number(graduationYear);
+        }
+      } else {
+        directoryUser.graduationYear = undefined;
+      }
+
+      await directoryUser.save();
+
+      // Log Activity
+      try {
+          const activity = new AdminActivity({
+              admin: req.user.id,
+              action: "UPDATED_DIRECTORY_PROFILE",
+              targetType: "UserDirectory",
+              targetId: directoryUser._id,
+              targetName: `${directoryUser.firstName} ${directoryUser.lastName}`,
+              status: "SUCCESSFUL"
+          });
+          await activity.save();
+      } catch (logErr) {
+          console.error("Activity log error (adminUpdateUser directory):", logErr);
+      }
+
+      return res.json({
+        message: "Directory entry updated successfully",
+        user: {
+          _id: directoryUser._id,
+          firstName: directoryUser.firstName,
+          lastName: directoryUser.lastName,
+          email: directoryUser.email,
+          gender: directoryUser.gender,
+          role: directoryUser.role,
+          collegeId: directoryUser.collegeId,
+          graduationYear: directoryUser.graduationYear,
+          isRegistered: false
+        }
+      });
+    }
+
+    // Update fields if provided for registered user
     if (firstName) user.firstName = firstName;
     if (middleName !== undefined) user.middleName = middleName;
     if (lastName) user.lastName = lastName;
     if (role) user.role = role;
+    if (gender) user.gender = gender;
     if (department) user.department = department;
     if (collegeId) user.collegeId = collegeId;
     if (mobileNumber) user.mobileNumber = mobileNumber;
     if (address) user.address = address;
 
+    const userRole = role || user.role;
+    if (userRole === 'student') {
+      const gYear = graduationYear || user.graduationYear || 2027;
+      user.graduationYear = Number(gYear);
+      user.accountExpiryDate = new Date(Number(gYear), 6, 31, 23, 59, 59);
+      // Reactivate account if it was expired but now has a future graduation year
+      if (user.accountStatus === 'expired' && new Date() <= user.accountExpiryDate) {
+        user.accountStatus = 'active';
+      }
+    } else {
+      user.graduationYear = undefined;
+      user.accountExpiryDate = undefined;
+      user.accountStatus = 'active';
+    }
+
     await user.save();
+
+    // Also update the UserDirectory if it exists to keep them in sync
+    try {
+        const directoryUser = await UserDirectory.findOne({ email: user.email });
+        if (directoryUser) {
+          directoryUser.firstName = user.firstName;
+          directoryUser.lastName = user.lastName;
+          directoryUser.role = user.role;
+          directoryUser.collegeId = user.collegeId;
+          directoryUser.gender = user.gender;
+          directoryUser.graduationYear = user.graduationYear;
+          await directoryUser.save();
+          console.log(`Successfully synced UserDirectory for email: ${user.email}`);
+        }
+    } catch (dirErr) {
+        console.error("Failed to sync UserDirectory in adminUpdateUser:", dirErr);
+    }
 
     // Log Activity
     try {
@@ -762,13 +934,19 @@ exports.adminUpdateUser = async (req, res) => {
       firstName: user.firstName,
       middleName: user.middleName,
       lastName: user.lastName,
+      email: user.email,
+      gender: user.gender,
       role: user.role,
       department: user.department,
       collegeId: user.collegeId,
       mobileNumber: user.mobileNumber,
       address: user.address,
+      profilePhoto: user.profilePhoto,
       isVerified: user.isVerified,
-      isSuspended: user.isSuspended
+      isSuspended: user.isSuspended,
+      graduationYear: user.graduationYear,
+      accountExpiryDate: user.accountExpiryDate,
+      accountStatus: user.accountStatus
     }});
   } catch (err) {
     console.error("Admin Update User Error:", err);
@@ -827,7 +1005,8 @@ exports.verifyUser = async (req, res) => {
         firstName: user.firstName,
         lastName: user.lastName,
         gender: user.gender,
-        role: user.role || 'student'
+        role: user.role || 'student',
+        graduationYear: user.graduationYear
       }
     });
   } catch (err) {
@@ -838,10 +1017,14 @@ exports.verifyUser = async (req, res) => {
 
 exports.addUserToDirectory = async (req, res) => {
   try {
-    const { email, firstName, lastName, gender, collegeId, role } = req.body;
+    const { email, firstName, lastName, gender, collegeId, role, graduationYear } = req.body;
     // Basic validation
     if (!email || !firstName || !lastName || !collegeId) {
       return res.status(400).json({ message: 'Missing required fields (email, firstName, lastName, collegeId)' });
+    }
+    const userRole = role || 'student';
+    if (userRole === 'student' && !graduationYear) {
+      return res.status(400).json({ message: 'Graduation year is required for students.' });
     }
     // Normalize email
     const normalizedEmail = email.trim().toLowerCase();
@@ -861,7 +1044,8 @@ exports.addUserToDirectory = async (req, res) => {
       lastName,
       gender,
       collegeId: collegeId.trim(),
-      role: role || 'student'
+      role: userRole,
+      graduationYear: userRole === 'student' ? Number(graduationYear) : undefined
     });
     await newUser.save();
     res.status(201).json({ message: 'User added to directory', user: newUser });
@@ -870,4 +1054,71 @@ exports.addUserToDirectory = async (req, res) => {
     res.status(500).json({ message: 'Server error adding user' });
   }
 };
+
+exports.adminDeleteUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+    console.log("[BACKEND] adminDeleteUser called with ID:", id);
+    
+    // Check if the user exists in User (registered)
+    const user = await User.findById(id);
+    if (user) {
+      // Delete their directory entry first to prevent sync issues
+      await UserDirectory.deleteMany({ email: user.email });
+      
+      // Delete their products
+      const Product = require("../models/Product");
+      await Product.deleteMany({ seller: id });
+      
+      // Delete the registered user
+      await User.findByIdAndDelete(id);
+      
+      // Log Activity
+      try {
+          const activity = new AdminActivity({
+              admin: req.user.id,
+              action: "DELETED_USER",
+              targetType: "User",
+              targetId: id,
+              targetName: `${user.firstName} ${user.lastName}`,
+              status: "SUCCESSFUL"
+          });
+          await activity.save();
+      } catch (logErr) {
+          console.error("Activity log error (adminDeleteUser):", logErr);
+      }
+      
+      return res.json({ message: "Registered user and their listings deleted successfully." });
+    }
+    
+    // If not found in User, check in UserDirectory (unregistered)
+    const directoryUser = await UserDirectory.findById(id);
+    if (directoryUser) {
+      await UserDirectory.findByIdAndDelete(id);
+      
+      // Log Activity
+      try {
+          const activity = new AdminActivity({
+              admin: req.user.id,
+              action: "DELETED_DIRECTORY_USER",
+              targetType: "UserDirectory",
+              targetId: id,
+              targetName: `${directoryUser.firstName} ${directoryUser.lastName}`,
+              status: "SUCCESSFUL"
+          });
+          await activity.save();
+      } catch (logErr) {
+          console.error("Activity log error (adminDeleteUser directory):", logErr);
+      }
+      
+      return res.json({ message: "Directory entry deleted successfully." });
+    }
+    
+    res.status(404).json({ message: "User not found in database or directory" });
+  } catch (err) {
+    console.error("Admin Delete User Error:", err);
+    res.status(500).json({ message: "Server error deleting user" });
+  }
+};
+
 

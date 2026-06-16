@@ -80,9 +80,14 @@ app.use("/api/admin/users", adminUserRoutes);
 app.use("/api/ai", aiRoutes);
 
 // ✅ MongoDB Connection
+const { startExpiryCron } = require("./utils/expiryScheduler");
+
 mongoose
   .connect(process.env.MONGO_URI)
-  .then(() => console.log("MongoDB connected"))
+  .then(() => {
+    console.log("MongoDB connected");
+    startExpiryCron();
+  })
   .catch((err) => console.log("MongoDB connection error:", err));
 
 

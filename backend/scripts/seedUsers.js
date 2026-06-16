@@ -15,7 +15,8 @@ const seedUsers = async () => {
         firstName: "Anjali",
         lastName: "Sharma",
         gender: "Female",
-        role: "student"
+        role: "student",
+        graduationYear: 2025
       },
       {
         email: "test2@banasthali.in",
@@ -23,7 +24,8 @@ const seedUsers = async () => {
         firstName: "Riya",
         lastName: "Verma",
         gender: "Female",
-        role: "student"
+        role: "student",
+        graduationYear: 2025
       },
       {
         email: "test3@banasthali.in",
@@ -31,7 +33,8 @@ const seedUsers = async () => {
         firstName: "Sneha",
         lastName: "Gupta",
         gender: "Female",
-        role: "student"
+        role: "student",
+        graduationYear: 2025
       },
       {
         email: "staff1@banasthali.in",

@@ -4,10 +4,14 @@ const { adminOnly, default: protect } = require('../middleware/authMiddleware');
 // Add a new user to the directory (admin only)
 exports.addUserToDirectory = async (req, res) => {
   try {
-    const { email, collegeId, firstName, lastName, gender, role } = req.body;
+    const { email, collegeId, firstName, lastName, gender, role, graduationYear } = req.body;
     // Basic validation
     if (!email || !collegeId || !firstName || !lastName || !gender) {
       return res.status(400).json({ message: 'Missing required fields.' });
+    }
+    const userRole = role || 'student';
+    if (userRole === 'student' && !graduationYear) {
+      return res.status(400).json({ message: 'Graduation year is required for students.' });
     }
     // Normalize email
     const normalizedEmail = email.trim().toLowerCase();
@@ -26,7 +30,8 @@ exports.addUserToDirectory = async (req, res) => {
       firstName,
       lastName,
       gender,
-      role: role || 'student'
+      role: userRole,
+      graduationYear: userRole === 'student' ? Number(graduationYear) : undefined
     });
     await newUser.save();
     res.status(201).json({ message: 'User added to directory successfully.', user: newUser });

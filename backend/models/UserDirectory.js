@@ -30,6 +30,10 @@ const userDirectorySchema = new mongoose.Schema({
     enum: ["student", "staff", "admin"],
     required: true,
     default: "student"
+  },
+  graduationYear: {
+    type: Number,
+    required: function() { return this.role === 'student'; }
   }
 }, { timestamps: true });
 

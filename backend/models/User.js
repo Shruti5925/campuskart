@@ -85,6 +85,19 @@ const userSchema = new mongoose.Schema({
   isSuspended: {
     type: Boolean,
     default: false
+  },
+  graduationYear: {
+    type: Number,
+    required: function() { return this.role === 'student'; }
+  },
+  accountExpiryDate: {
+    type: Date,
+    required: function() { return this.role === 'student'; }
+  },
+  accountStatus: {
+    type: String,
+    enum: ["active", "expired"],
+    default: "active"
   }
 }, { timestamps: true });
 

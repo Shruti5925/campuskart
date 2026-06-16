@@ -581,6 +581,10 @@
     font-size: 0.7rem;
     font-weight: 850;
     text-transform: uppercase;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
 }
 
 .status-pill.success { background: #dcfce7; color: #16a34a; }
@@ -1131,10 +1135,15 @@
     font-weight: 900;
     padding: 0.3rem 0.8rem;
     border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
 }
 
-.status-pill.verified { background: #DCFCE7; color: #16A34A; }
+.status-pill.verified, .status-pill.active { background: #DCFCE7; color: #16A34A; }
 .status-pill.pending { background: #FEF3C7; color: #D97706; }
+.status-pill.suspended, .status-pill.expired { background: #FEF2F2; color: #DC2626; }
 
 .role-tag.student {
     background: #E0E7FF;
@@ -1574,7 +1583,7 @@
 .dir-table th {
     background: #FAFBFC;
     text-align: left;
-    padding: 1.25rem 2rem;
+    padding: 1.25rem 1rem;
     font-size: 0.7rem;
     font-weight: 900;
     color: #94A3B8;
@@ -1584,9 +1593,21 @@
 }
 
 .dir-table td {
-    padding: 1.5rem 2rem;
+    padding: 1.5rem 1rem;
     border-bottom: 1px solid #F8FAFC;
     vertical-align: middle;
+}
+
+.dir-table th:first-child,
+.dir-table td:first-child {
+    padding-left: 2rem;
+    width: 38%;
+    min-width: 340px;
+}
+
+.dir-table th:last-child,
+.dir-table td:last-child {
+    padding-right: 2rem;
 }
 
 .user-profile-cell {
@@ -1640,6 +1661,8 @@
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    white-space: nowrap;
+    flex-wrap: nowrap;
 }
 
 .user-meta p {

@@ -8,6 +8,8 @@ import "../styles/Dashboard.css"; // Reuse for consistent layout
 import femaleAvatar from "../assets/female-avatar.png";
 import maleAvatar from "../assets/male-avatar.png";
 import itemStandard from "../assets/image.webp";
+import { formatExpiryDate } from "../utils/dateUtils";
+import "../styles/AccountStatus.css";
 
 function Profile() {
     const navigate = useNavigate();
@@ -357,6 +359,28 @@ function Profile() {
                                             <label>Campus Address / Hostel</label>
                                             <p className="val-text" style={{ fontSize: '1.1rem', fontWeight: '800' }}>{userData.address}</p>
                                         </div>
+                                        {userData.role === 'student' && (
+                                            <>
+                                                <div className="input-group">
+                                                    <label>Account Status</label>
+                                                    <div style={{ marginTop: '0.25rem' }}>
+                                                        <span className={`account-status-badge ${userData.accountStatus || 'active'}`}>
+                                                            {userData.accountStatus || 'active'}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                <div className="input-group">
+                                                    <label>Graduation Year</label>
+                                                    <p className="val-text" style={{ fontSize: '1.1rem', fontWeight: '800' }}>{userData.graduationYear}</p>
+                                                </div>
+                                                <div className="input-group" style={{ gridColumn: 'span 2' }}>
+                                                    <label>Marketplace Access Valid Until</label>
+                                                    <p className="val-text" style={{ fontSize: '1.1rem', fontWeight: '800', color: '#3b82f6' }}>
+                                                        {formatExpiryDate(userData.accountExpiryDate)}
+                                                    </p>
+                                                </div>
+                                            </>
+                                        )}
                                     </div>
                                 </div>
                             )}

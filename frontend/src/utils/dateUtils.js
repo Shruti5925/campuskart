@@ -15,3 +15,19 @@ export const formatNumericDate = (dateString) => {
         year: 'numeric'
     });
 };
+
+/**
+ * Formats a date string into "31 July 2027" format.
+ * @param {string|Date} dateString - The date to format.
+ * @returns {string} - Formatted date string in "D MMMM YYYY".
+ */
+export const formatExpiryDate = (dateString) => {
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return String(dateString);
+    return date.toLocaleDateString('en-GB', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+    });
+};
