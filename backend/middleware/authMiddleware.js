@@ -26,9 +26,13 @@ module.exports = async (req, res, next) => {
       return res.status(401).json({ message: "User not found, access denied" });
     }
 
+    if (user.accountStatus === 'expired') {
+      return res.status(403).json({ message: "Your CampusKart account has expired.", isExpired: true });
+    }
+
     if (user.role === 'student') {
       const now = new Date();
-      if (user.accountStatus === 'expired' || now > user.accountExpiryDate) {
+      if (now > user.accountExpiryDate) {
         if (user.accountStatus !== 'expired') {
           user.accountStatus = 'expired';
           await user.save();

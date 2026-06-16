@@ -227,9 +227,13 @@ exports.login = async (req, res) => {
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
+    if (user.accountStatus === 'expired') {
+      return res.status(403).json({ message: "Your CampusKart account has expired. Please contact the administrator." });
+    }
+
     if (user.role === 'student') {
       const now = new Date();
-      if (user.accountStatus === 'expired' || now > user.accountExpiryDate) {
+      if (now > user.accountExpiryDate) {
         if (user.accountStatus !== 'expired') {
           user.accountStatus = 'expired';
           await user.save();
@@ -736,7 +740,9 @@ exports.getAllUsers = async (req, res) => {
                 user.accountStatus = 'active';
             }
         } else {
-            user.accountStatus = 'active';
+            if (!user.accountStatus) {
+                user.accountStatus = 'active';
+            }
         }
     });
 
@@ -752,53 +758,80 @@ exports.getAllUsers = async (req, res) => {
 
 exports.updateUserStatus = async (req, res) => {
   try {
-    const { isSuspended } = req.body;
+    const { isSuspended, accountStatus } = req.body;
+    const updateFields = {};
+    if (isSuspended !== undefined) updateFields.isSuspended = isSuspended;
+    if (accountStatus !== undefined) updateFields.accountStatus = accountStatus;
+    
     const user = await User.findByIdAndUpdate(
       req.params.id,
-      { $set: { isSuspended } },
+      { $set: updateFields },
       { new: true }
     ).select("-password -securityAnswer");
     if (!user) return res.status(404).json({ message: "User not found" });
 
     // Create notification for status change
-    let notifTitle = isSuspended ? "Account Suspended" : "Account Reactivated";
-    let notifMessage = isSuspended
-      ? "Your account has been suspended for violating community guidelines."
-      : "Your account has been reactivated. You can now resume using the marketplace.";
+    let notifTitle = "";
+    let notifMessage = "";
+    let notifType = "info";
 
-    const notification = new Notification({
-        user: req.params.id,
-        type: isSuspended ? "suspension" : "info",
-        title: notifTitle,
-        message: notifMessage,
-        link: "/profile"
-    });
-    await notification.save();
-    console.log(`Notification created for user ${req.params.id}: ${notifTitle}`);
+    if (isSuspended !== undefined) {
+      notifTitle = isSuspended ? "Account Suspended" : "Account Reactivated";
+      notifMessage = isSuspended
+        ? "Your account has been suspended for violating community guidelines."
+        : "Your account has been reactivated. You can now resume using the marketplace.";
+      notifType = isSuspended ? "suspension" : "info";
+    } else if (accountStatus !== undefined) {
+      notifTitle = accountStatus === "expired" ? "Account Expired ❌" : "Account Reactivated ⚡";
+      notifMessage = accountStatus === "expired"
+        ? "Your CampusKart account has been marked as expired by the administrator."
+        : "Your CampusKart account has been reactivated by the administrator.";
+    }
 
-    // Emit via socket if user is online
-    const userSocketId = req.users?.get(req.params.id.toString());
-    console.log(`Socket lookup for user ${req.params.id}: ${userSocketId || 'Not Online'}`);
-    if (userSocketId && req.io) {
-        req.io.to(userSocketId).emit('new_notification', notification);
-        console.log(`Socket emission sent to ${userSocketId}`);
+    if (notifTitle) {
+      const notification = new Notification({
+          user: req.params.id,
+          type: notifType,
+          title: notifTitle,
+          message: notifMessage,
+          link: "/profile"
+      });
+      await notification.save();
+      console.log(`Notification created for user ${req.params.id}: ${notifTitle}`);
+
+      // Emit via socket if user is online
+      const userSocketId = req.users?.get(req.params.id.toString());
+      console.log(`Socket lookup for user ${req.params.id}: ${userSocketId || 'Not Online'}`);
+      if (userSocketId && req.io) {
+          req.io.to(userSocketId).emit('new_notification', notification);
+          console.log(`Socket emission sent to ${userSocketId}`);
+      }
     }
 
     // Log Activity
     console.log("Attempting to log activity for user status update...");
-    const activity = new AdminActivity({
-        admin: req.user.id,
-        action: isSuspended ? "SUSPENDED" : "REACTIVATED",
-        targetType: "User",
-        targetId: user._id,
-        targetName: `${user.firstName} ${user.lastName}`,
-        status: "SUCCESSFUL"
-    });
-    try {
-        await activity.save();
-        console.log(`Activity logged successfully: ${isSuspended ? 'SUSPENDED' : 'REACTIVATED'}`);
-    } catch (actErr) {
-        console.error("FAILED to save Activity Log (Auth):", actErr);
+    let action = "";
+    if (isSuspended !== undefined) {
+      action = isSuspended ? "SUSPENDED" : "REACTIVATED";
+    } else if (accountStatus !== undefined) {
+      action = accountStatus === "expired" ? "EXPIRED_USER" : "REACTIVATED_USER";
+    }
+
+    if (action) {
+      const activity = new AdminActivity({
+          admin: req.user.id,
+          action: action,
+          targetType: "User",
+          targetId: user._id,
+          targetName: `${user.firstName} ${user.lastName}`,
+          status: "SUCCESSFUL"
+      });
+      try {
+          await activity.save();
+          console.log(`Activity logged successfully: ${action}`);
+      } catch (actErr) {
+          console.error("FAILED to save Activity Log (Auth):", actErr);
+      }
     }
 
     res.json({ message: "User status updated", user });
@@ -892,7 +925,9 @@ exports.adminUpdateUser = async (req, res) => {
     } else {
       user.graduationYear = undefined;
       user.accountExpiryDate = undefined;
-      user.accountStatus = 'active';
+      if (!user.accountStatus) {
+        user.accountStatus = 'active';
+      }
     }
 
     await user.save();

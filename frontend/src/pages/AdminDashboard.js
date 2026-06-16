@@ -395,7 +395,12 @@ const AdminDashboard = () => {
 
     const toggleUserStatus = async (userId, currentStatus, type) => {
         try {
-            const update = { isSuspended: !currentStatus };
+            let update = {};
+            if (type === 'suspend') {
+                update = { isSuspended: !currentStatus };
+            } else if (type === 'expiry') {
+                update = { accountStatus: currentStatus ? 'expired' : 'active' };
+            }
             await axios.patch(`http://localhost:5001/api/auth/users/${userId}/status`, update, {
                 headers: { Authorization: `Bearer ${token}` }
             });
@@ -1270,18 +1275,32 @@ const AdminDashboard = () => {
                                             </>
                                         ) : (
                                             <>
-                                                <button className="action-btn chat" onClick={() => { handleStartChat(selectedUserDir); setSelectedUserDir(null); setActiveTab('messages'); }}>
-                                                    💬 Message User
-                                                </button>
+                                                {selectedUserDir.isRegistered && (
+                                                    <>
+                                                        <button className="action-btn chat" onClick={() => { handleStartChat(selectedUserDir); setSelectedUserDir(null); setActiveTab('messages'); }}>
+                                                            💬 Message User
+                                                        </button>
 
-                                                {!selectedUserDir.isSuspended ? (
-                                                    <button className="action-btn suspend" onClick={() => { toggleUserStatus(selectedUserDir._id, false, 'suspend'); setSelectedUserDir(null); }}>
-                                                        ⊘ Suspend Account
-                                                    </button>
-                                                ) : (
-                                                    <button className="action-btn reactivate" onClick={() => { toggleUserStatus(selectedUserDir._id, true, 'suspend'); setSelectedUserDir(null); }}>
-                                                        ⚡ Reactivate
-                                                    </button>
+                                                        {!selectedUserDir.isSuspended ? (
+                                                            <button className="action-btn suspend" onClick={() => { toggleUserStatus(selectedUserDir._id, false, 'suspend'); setSelectedUserDir(null); }}>
+                                                                ⊘ Suspend Account
+                                                            </button>
+                                                        ) : (
+                                                            <button className="action-btn reactivate" onClick={() => { toggleUserStatus(selectedUserDir._id, true, 'suspend'); setSelectedUserDir(null); }}>
+                                                                ⚡ Reactivate
+                                                            </button>
+                                                        )}
+
+                                                        {selectedUserDir.accountStatus === 'expired' ? (
+                                                            <button className="action-btn verify" onClick={() => { toggleUserStatus(selectedUserDir._id, false, 'expiry'); setSelectedUserDir(null); }}>
+                                                                ⚡ Reactivate Account
+                                                            </button>
+                                                        ) : (
+                                                            <button className="action-btn suspend" onClick={() => { toggleUserStatus(selectedUserDir._id, true, 'expiry'); setSelectedUserDir(null); }}>
+                                                                ⏰ Expire Account
+                                                            </button>
+                                                        )}
+                                                    </>
                                                 )}
                                                 <button className="action-btn edit-trigger" onClick={() => { setEditUserData({ ...selectedUserDir }); setIsEditingUser(true); }}>
                                                     ✏️ Edit Profile
