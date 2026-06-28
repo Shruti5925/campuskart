@@ -17,7 +17,7 @@ async function verifyQualityImages(req, res) {
   // The original verifyImages returns { match: true/false, message? }
   const result = mockRes.jsonPayload || {};
   // Send simplified response
-  return { imageMatch: result.match === true };
+  res.json({ match: result.match === true });
 }
 
 module.exports = { verifyQualityImages };

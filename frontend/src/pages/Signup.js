@@ -16,10 +16,12 @@ function Signup() {
     confirmPassword: "",
     collegeId: "",
     department: "",
-    mobileNumber: "",
-    securityQuestion: "What is your pet's name?",
-    securityAnswer: ""
+    mobileNumber: ""
   });
+
+  const [otp, setOtp] = useState("");
+  const [isOtpSent, setIsOtpSent] = useState(false);
+  const [isOtpVerified, setIsOtpVerified] = useState(false);
 
   const [message, setMessage] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
@@ -104,7 +106,15 @@ function Signup() {
           address: user.role === 'staff' ? '' : prev.address
         }));
         setIsVerified(true);
-        setVerificationStatus({ type: "success", text: "Verification successful! Details auto-filled. ✅" });
+        setVerificationStatus({ type: "success", text: "Details matched! Sending verification email..." });
+
+        try {
+          await axios.post("http://localhost:5001/api/auth/send-otp", { email: formData.email.trim().toLowerCase() });
+          setIsOtpSent(true);
+          setVerificationStatus({ type: "success", text: "Details matched! OTP verification code sent to your email. ✅" });
+        } catch (otpErr) {
+          setVerificationStatus({ type: "error", text: "Details matched but failed to send verification OTP ❌" });
+        }
       }
     } catch (err) {
       setIsVerified(false);
@@ -114,12 +124,31 @@ function Signup() {
     }
   };
 
+  const handleVerifyOtp = async () => {
+    if (!otp) {
+      setVerificationStatus({ type: "error", text: "Please enter the OTP code ❌" });
+      return;
+    }
+    try {
+      const res = await axios.post("http://localhost:5001/api/auth/verify-otp", {
+        email: formData.email.trim().toLowerCase(),
+        otp: otp.trim()
+      });
+      if (res.data.success) {
+        setIsOtpVerified(true);
+        setVerificationStatus({ type: "success", text: "OTP verified successfully! Form unlocked. ✅" });
+      }
+    } catch (err) {
+      setVerificationStatus({ type: "error", text: err.response?.data?.message || "Invalid OTP ❌" });
+    }
+  };
+
 
   const handleSignup = async (e) => {
     e.preventDefault();
 
-    if ((formData.role === "student" || formData.role === "staff") && !isVerified) {
-      setVerificationStatus({ type: "error", text: "Please verify your details first ❌" });
+    if ((formData.role === "student" || formData.role === "staff") && (!isVerified || !isOtpVerified)) {
+      setVerificationStatus({ type: "error", text: "Please verify your details and email OTP first ❌" });
       return;
     }
 
@@ -156,9 +185,9 @@ function Signup() {
         email: formData.email.trim().toLowerCase(),
         password: formData.password.trim(),
         confirmPassword: formData.confirmPassword.trim(),
-        securityAnswer: formData.securityAnswer.trim(),
         captchaToken: captchaData.token,
-        captchaAnswer: captchaAnswer
+        captchaAnswer: captchaAnswer,
+        otp: otp.trim()
       };
 
       const res = await axios.post("http://localhost:5001/api/auth/signup", sanitizedData);
@@ -243,6 +272,29 @@ function Signup() {
                   fontWeight: '500'
                 }}>
                   {verificationStatus.text}
+                </div>
+              )}
+
+              {isOtpSent && !isOtpVerified && (
+                <div className="otp-verification-container" style={{ marginTop: '12px', padding: '12px', border: '1px solid #3b82f6', borderRadius: '8px', backgroundColor: '#eff6ff' }}>
+                  <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '700', color: '#1e3a8a', marginBottom: '6px' }}>Enter 6-Digit Email OTP *:</label>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '10px' }}>
+                    <input
+                      type="text"
+                      placeholder="6-Digit OTP"
+                      value={otp}
+                      onChange={(e) => setOtp(e.target.value)}
+                      maxLength="6"
+                      style={{ marginTop: '0' }}
+                    />
+                    <button 
+                      type="button" 
+                      onClick={handleVerifyOtp}
+                      style={{ marginTop: '0', padding: '10px 18px', backgroundColor: '#3b82f6', color: '#fff' }}
+                    >
+                      Verify OTP
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
@@ -413,26 +465,7 @@ function Signup() {
               />
             </div>
 
-            <div className="full-width">
-              <label>Security Question for Recovery:</label>
-              <select name="securityQuestion" value={formData.securityQuestion} onChange={handleChange} required>
-                {securityQuestions.map(q => (
-                  <option key={q} value={q}>{q}</option>
-                ))}
-              </select>
-            </div>
 
-            <div className="full-width">
-              <input
-                type="text"
-                name="securityAnswer"
-                placeholder="Your Answer *"
-                value={formData.securityAnswer}
-                onChange={handleChange}
-                style={{ width: "100%" }}
-                required
-              />
-            </div>
 
             <div className="full-width captcha-section" style={{
               marginTop: '20px',

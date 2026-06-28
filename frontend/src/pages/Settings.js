@@ -15,12 +15,13 @@ const Settings = () => {
 
     // Password change state
     const [passData, setPassData] = useState({
-        securityAnswer: '',
+        otp: '',
         newPassword: '',
         confirmPassword: ''
     });
-    const [passStep, setPassStep] = useState(0); // 0: Initial, 1: Security Q, 2: New Pass
-    const [verifyingAnswer, setVerifyingAnswer] = useState(false);
+    const [passStep, setPassStep] = useState(0); // 0: Initial, 1: OTP verification, 2: New Pass
+    const [sendingOtp, setSendingOtp] = useState(false);
+    const [verifyingOtp, setVerifyingOtp] = useState(false);
     const [updatingPass, setUpdatingPass] = useState(false);
     const [isSecurityExpanded, setIsSecurityExpanded] = useState(false);
 
@@ -45,24 +46,47 @@ const Settings = () => {
         }
     };
 
-    const handleVerifyAnswer = async (e) => {
-        e.preventDefault();
-        setVerifyingAnswer(true);
+    const handleSendOtp = async () => {
+        if (!userData?.email) return;
+        setSendingOtp(true);
         try {
-            await axios.post('http://localhost:5001/api/auth/verify-security-answer', {
-                securityAnswer: passData.securityAnswer
-            }, {
-                headers: { Authorization: `Bearer ${token}` }
+            await axios.post('http://localhost:5001/api/auth/send-otp', {
+                email: userData.email
+            });
+            setPassStep(1);
+            showModal({
+                title: 'Code Sent',
+                message: `A 6-digit verification code was sent to ${userData.email}.`,
+                type: 'alert'
+            });
+        } catch (err) {
+            showModal({
+                title: 'Error',
+                message: err.response?.data?.message || "Failed to send verification code",
+                type: 'alert'
+            });
+        } finally {
+            setSendingOtp(false);
+        }
+    };
+
+    const handleVerifyOtp = async (e) => {
+        e.preventDefault();
+        setVerifyingOtp(true);
+        try {
+            await axios.post('http://localhost:5001/api/auth/verify-otp', {
+                email: userData.email,
+                otp: passData.otp
             });
             setPassStep(2);
         } catch (err) {
             showModal({
                 title: 'Verification Failed',
-                message: err.response?.data?.message || "Incorrect security answer",
+                message: err.response?.data?.message || "Incorrect or expired OTP code ❌",
                 type: 'alert'
             });
         } finally {
-            setVerifyingAnswer(false);
+            setVerifyingOtp(false);
         }
     };
 
@@ -86,7 +110,7 @@ const Settings = () => {
         setUpdatingPass(true);
         try {
             const res = await axios.put('http://localhost:5001/api/auth/account-settings', {
-                securityAnswer: passData.securityAnswer,
+                otp: passData.otp,
                 newPassword: passData.newPassword
             }, {
                 headers: { Authorization: `Bearer ${token}` }
@@ -103,7 +127,7 @@ const Settings = () => {
                     }
                 }
             });
-            setPassData({ securityAnswer: '', newPassword: '', confirmPassword: '' });
+            setPassData({ otp: '', newPassword: '', confirmPassword: '' });
             setPassStep(0);
         } catch (err) {
             showModal({
@@ -139,8 +163,6 @@ const Settings = () => {
     };
 
     if (loading) return <div className="loading" style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f9fafb', fontSize: '1.2rem', fontWeight: '800', color: '#3B82F6' }}>Syncing Settings...</div>;
-
-    const avatarUrl = userData?.profilePhoto ? `http://localhost:5001${userData.profilePhoto}` : `https://ui-avatars.com/api/?name=${userData?.firstName}+${userData?.lastName}&background=EFF6FF&color=3B82F6&bold=true`;
 
     return (
         <div className="dashboard-page-container" style={{ background: '#f9fafb', minHeight: '100vh' }}>
@@ -229,19 +251,21 @@ const Settings = () => {
                                         <div>
                                             <h3 style={{ fontSize: '1.5rem', fontWeight: '950', color: '#111827', margin: 0, letterSpacing: '-0.02em' }}>Security & Password</h3>
                                             <p style={{ color: '#64748b', fontWeight: '600', fontSize: '1rem', marginTop: '6px', lineHeight: '1.6' }}>
-                                                Ensure your account remains protected by updating your credentials. A strong, regularly rotated password is your first line of defense.
+                                                Ensure your account remains protected by updating your credentials. Email verification prevents unauthorized access during password updates.
                                             </p>
                                         </div>
                                     </div>
                                     <div>
                                         <button 
                                             className="continue-btn" 
-                                            onClick={() => setIsSecurityExpanded(!isSecurityExpanded)}
+                                            onClick={() => {
+                                                setIsSecurityExpanded(!isSecurityExpanded);
+                                                setPassStep(0);
+                                            }}
                                             style={{ 
                                                 background: '#3B82F6', 
                                                 color: 'white', 
                                                 border: 'none', 
-                                                padding: '1.1rem 2.5rem', 
                                                 borderRadius: '16px', 
                                                 fontWeight: '900', 
                                                 cursor: 'pointer',
@@ -262,27 +286,28 @@ const Settings = () => {
                                     <div style={{ marginTop: '2.5rem', paddingTop: '2.5rem', borderTop: '1px solid #f1f5f9', animation: 'slideDown 0.3s ease-out' }}>
                                         <div style={{ maxWidth: '600px' }}>
                                             {passStep === 1 && (
-                                                <form onSubmit={handleVerifyAnswer}>
+                                                <form onSubmit={handleVerifyOtp}>
                                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
                                                         <div className="input-group">
-                                                            <label style={{ fontSize: '0.85rem', fontWeight: '900', color: '#111827', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.75rem', display: 'block' }}>Q: {userData?.securityQuestion}</label>
+                                                            <label style={{ fontSize: '0.85rem', fontWeight: '900', color: '#111827', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.75rem', display: 'block' }}>Enter 6-Digit Email OTP</label>
                                                             <input 
                                                                 type="text" 
-                                                                placeholder="Enter your security answer"
+                                                                placeholder="Enter verification code"
                                                                 required
                                                                 autoFocus
-                                                                value={passData.securityAnswer}
-                                                                onChange={(e) => setPassData({...passData, securityAnswer: e.target.value})}
+                                                                maxLength="6"
+                                                                value={passData.otp}
+                                                                onChange={(e) => setPassData({...passData, otp: e.target.value})}
                                                                 style={{ width: '100%', padding: '1rem 1.5rem', background: '#f8fafc', border: '1px solid #f1f5f9', borderRadius: '16px', fontWeight: '700', fontSize: '1.1rem' }}
                                                             />
                                                         </div>
                                                         <div style={{ display: 'flex', gap: '1rem' }}>
                                                             <button 
                                                                 type="submit" 
-                                                                disabled={verifyingAnswer}
+                                                                disabled={verifyingOtp}
                                                                 style={{ flex: 1, padding: '1rem', borderRadius: '16px', fontWeight: '900', background: '#3B82F6', border: 'none', color: 'white', cursor: 'pointer', fontSize: '1.1rem' }}
                                                             >
-                                                                {verifyingAnswer ? 'Verifying...' : 'Verify & Continue'}
+                                                                {verifyingOtp ? 'Verifying...' : 'Verify & Continue'}
                                                             </button>
                                                         </div>
                                                     </div>
@@ -339,71 +364,72 @@ const Settings = () => {
                                                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ca8a04" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
                                                         </div>
                                                         <p style={{ color: '#854d0e', fontWeight: '700', fontSize: '0.95rem', lineHeight: '1.5', margin: 0 }}>
-                                                            For your protection, you must verify your identity using your security question before changing your password.
+                                                            For your protection, you must verify your identity using a verification code sent to your registered email address before changing your password.
                                                         </p>
                                                     </div>
                                                     <button 
-                                                        onClick={() => setPassStep(1)}
+                                                        onClick={handleSendOtp}
+                                                        disabled={sendingOtp}
                                                         style={{ width: 'max-content', padding: '1rem 2.5rem', borderRadius: '16px', background: '#3B82F6', color: 'white', border: 'none', fontWeight: '900', cursor: 'pointer' }}
                                                     >
-                                                        Proceed to Verification
+                                                        {sendingOtp ? 'Sending OTP...' : 'Send Verification OTP'}
                                                     </button>
                                                 </div>
                                             )}
                                         </div>
                                     </div>
                                 )}
-                            </div>
+                             </div>
 
-                            {/* BOTTOM: Danger Zone Card (Full Space) */}
-                            <div className="section-card" style={{ 
-                                padding: '2.5rem', borderRadius: '32px', background: 'white', border: '1px solid #fee2e2',
-                                boxShadow: '0 20px 40px rgba(239, 68, 68, 0.02)'
-                            }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', marginBottom: '2.5rem' }}>
-                                    <div style={{ width: '44px', height: '44px', background: '#fff1f2', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
-                                    </div>
-                                    <div>
-                                        <h3 style={{ fontSize: '1.4rem', fontWeight: '900', color: '#dc2626', margin: 0, letterSpacing: '-0.02em' }}>Danger Zone</h3>
-                                        <p style={{ color: '#64748b', fontWeight: '600', fontSize: '0.95rem', marginTop: '4px', lineHeight: '1.6', maxWidth: '650px' }}>
-                                            Critical account operations that are irreversible. Use these settings to permanently remove your presence and data from the platform.
-                                        </p>
-                                    </div>
-                                </div>
-                                
-                                <div style={{ 
-                                    padding: '2.5rem', background: '#fcfcfc', borderRadius: '24px', border: '1px solid #f1f5f9',
-                                    display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '3rem'
-                                }}>
-                                    <div style={{ flex: 1 }}>
-                                        <h4 style={{ fontSize: '1.25rem', fontWeight: '900', color: '#111827', marginBottom: '0.5rem' }}>Deactivate Account</h4>
-                                        <p style={{ color: '#64748b', fontSize: '0.95rem', fontWeight: '600', lineHeight: '1.7', maxWidth: '600px' }}>
-                                            By deactivating your account, all your active listings, saved preferences, and profile data will be permanently removed from CampusKart. This action cannot be undone.
-                                        </p>
-                                    </div>
-                                    <button 
-                                        onClick={handleDeactivate}
-                                        style={{ 
-                                            background: '#dc2626', color: 'white', border: 'none', 
-                                            padding: '1.1rem 2.5rem', borderRadius: '16px', fontWeight: '900', cursor: 'pointer',
-                                            boxShadow: '0 6px 15px rgba(220, 38, 38, 0.25)', fontSize: '1rem'
-                                        }}
-                                        onMouseOver={(e) => { e.currentTarget.style.background = '#ef4444'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
-                                        onMouseOut={(e) => { e.currentTarget.style.background = '#dc2626'; e.currentTarget.style.transform = 'translateY(0)'; }}
-                                    >
-                                        Deactivate Account
-                                    </button>
-                                </div>
-                            </div>
+                             {/* BOTTOM: Danger Zone Card (Full Space) */}
+                             <div className="section-card" style={{ 
+                                 padding: '2.5rem', borderRadius: '32px', background: 'white', border: '1px solid #fee2e2',
+                                 boxShadow: '0 20px 40px rgba(239, 68, 68, 0.02)'
+                             }}>
+                                 <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', marginBottom: '2.5rem' }}>
+                                     <div style={{ width: '44px', height: '44px', background: '#fff1f2', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+                                     </div>
+                                     <div>
+                                         <h3 style={{ fontSize: '1.4rem', fontWeight: '900', color: '#dc2626', margin: 0, letterSpacing: '-0.02em' }}>Danger Zone</h3>
+                                         <p style={{ color: '#64748b', fontWeight: '600', fontSize: '0.95rem', marginTop: '4px', lineHeight: '1.6', maxWidth: '650px' }}>
+                                             Critical account operations that are irreversible. Use these settings to permanently remove your presence and data from the platform.
+                                         </p>
+                                     </div>
+                                 </div>
+                                 
+                                 <div style={{ 
+                                     padding: '2.5rem', background: '#fcfcfc', borderRadius: '24px', border: '1px solid #f1f5f9',
+                                     display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '3rem'
+                                 }}>
+                                     <div style={{ flex: 1 }}>
+                                         <h4 style={{ fontSize: '1.25rem', fontWeight: '900', color: '#111827', marginBottom: '0.5rem' }}>Deactivate Account</h4>
+                                         <p style={{ color: '#64748b', fontSize: '0.95rem', fontWeight: '600', lineHeight: '1.7', maxWidth: '600px' }}>
+                                             By deactivating your account, all your active listings, saved preferences, and profile data will be permanently removed from CampusKart. This action cannot be undone.
+                                         </p>
+                                     </div>
+                                     <button 
+                                         onClick={handleDeactivate}
+                                         style={{ 
+                                             background: '#dc2626', color: 'white', border: 'none', 
+                                             padding: '1.1rem 2.5rem', borderRadius: '16px', fontWeight: '900', cursor: 'pointer',
+                                             boxShadow: '0 6px 15px rgba(220, 38, 38, 0.25)', fontSize: '1rem'
+                                         }}
+                                         onMouseOver={(e) => { e.currentTarget.style.background = '#ef4444'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
+                                         onMouseOut={(e) => { e.currentTarget.style.background = '#dc2626'; e.currentTarget.style.transform = 'translateY(0)'; }}
+                                     >
+                                         Deactivate Account
+                                     </button>
+                                 </div>
+                             </div>
 
-                        </div>
-                    </div>
-                </main>
-            </div>
-            <Footer />
-        </div>
-    );
-};
+                         </div>
+                     </div>
+                 </main>
+             </div>
+             <Footer />
+         </div>
+     );
+ };
 
-export default Settings;
+ export default Settings;

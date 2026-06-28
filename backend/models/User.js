@@ -52,11 +52,11 @@ const userSchema = new mongoose.Schema({
   },
   securityQuestion: {
     type: String,
-    required: true
+    required: false
   },
   securityAnswer: {
     type: String,
-    required: true,
+    required: false,
     trim: true
   },
   wishlist: [{

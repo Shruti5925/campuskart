@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 
-const { login, signup, verifyUser, getSecurityQuestion, verifySecurityAnswer, resetPassword, getCurrentUser, updateProfile, getCaptcha, uploadProfilePhoto, removeProfilePhoto, avatarUploadMiddleware, addUserToDirectory, getSupportAdmin, getUserById, updateAccountSettings, deleteCurrentUser } = require("../controllers/authController");
+const { login, signup, verifyUser, getSecurityQuestion, verifySecurityAnswer, resetPassword, getCurrentUser, updateProfile, getCaptcha, uploadProfilePhoto, removeProfilePhoto, avatarUploadMiddleware, addUserToDirectory, getSupportAdmin, getUserById, updateAccountSettings, deleteCurrentUser, sendOTP, verifyOTP } = require("../controllers/authController");
 const protect = require("../middleware/authMiddleware");
 const { adminOnly, checkSuspended, checkVerified } = protect;
 
@@ -21,6 +21,8 @@ router.delete("/avatar", protect, removeProfilePhoto);
 router.get("/captcha", getCaptcha);
 router.post("/get-security-question", getSecurityQuestion);
 router.post("/reset-password", resetPassword);
+router.post("/send-otp", sendOTP);
+router.post("/verify-otp", verifyOTP);
 router.post("/signup", (req, res, next) => {
     console.log("Hit /signup route");
     signup(req, res, next);

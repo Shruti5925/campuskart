@@ -3,6 +3,8 @@ const Product = require("../models/Product");
 const Notification = require("../models/Notification");
 const AdminActivity = require("../models/AdminActivity");
 const UserDirectory = require("../models/UserDirectory");
+const OTP = require("../models/OTP");
+const { sendOTPEmail } = require("../utils/emailService");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { generateCaptcha, verifyCaptcha } = require("../utils/captcha");
@@ -89,15 +91,23 @@ exports.signup = async (req, res) => {
     collegeId,
     department,
     mobileNumber,
-    securityQuestion,
-    securityAnswer: rawSecurityAnswer,
     captchaToken,
     captchaAnswer,
+    otp,
   } = req.body;
 
   const email = rawEmail?.trim().toLowerCase();
   const password = rawPassword?.trim();
-  const securityAnswer = rawSecurityAnswer?.trim();
+
+  // OTP Verification
+  if (!otp) {
+    return res.status(400).json({ message: "OTP verification is required ❌" });
+  }
+
+  const otpRecord = await OTP.findOne({ email });
+  if (!otpRecord || otpRecord.otp !== otp.trim()) {
+    return res.status(400).json({ message: "Invalid or expired OTP ❌" });
+  }
 
   // CAPTCHA Verification
   if (!captchaToken || !captchaAnswer || !verifyCaptcha(captchaToken, captchaAnswer)) {
@@ -161,8 +171,6 @@ exports.signup = async (req, res) => {
       collegeId,
       department,
       mobileNumber,
-      securityQuestion,
-      securityAnswer,
       graduationYear,
       accountExpiryDate,
       accountStatus: 'active'
@@ -170,6 +178,9 @@ exports.signup = async (req, res) => {
 
     console.log("Saving user to database...");
     await user.save();
+
+    // Delete OTP record after successful signup
+    await OTP.deleteMany({ email });
 
     // Create welcome notification
     try {
@@ -314,17 +325,21 @@ exports.verifySecurityAnswer = async (req, res) => {
 
 exports.resetPassword = async (req, res) => {
   try {
-    const { email: rawEmail, securityAnswer: rawSecurityAnswer, newPassword: rawNewPassword } = req.body;
+    const { email: rawEmail, otp, newPassword: rawNewPassword } = req.body;
     const email = rawEmail?.trim().toLowerCase();
-    const securityAnswer = rawSecurityAnswer?.trim();
     const newPassword = rawNewPassword?.trim();
     const user = await User.findOne({ email });
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
-    if (user.securityAnswer !== securityAnswer) {
-      return res.status(400).json({ message: "Incorrect security answer" });
+    if (!otp) {
+      return res.status(400).json({ message: "OTP code is required ❌" });
+    }
+
+    const otpRecord = await OTP.findOne({ email });
+    if (!otpRecord || otpRecord.otp !== otp.trim()) {
+      return res.status(400).json({ message: "Invalid or expired OTP code ❌" });
     }
 
     // Validation: Password (must contain alphabets and at least a number)
@@ -336,6 +351,9 @@ exports.resetPassword = async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     user.password = await bcrypt.hash(newPassword, salt);
     await user.save();
+
+    // Clean up OTP record
+    await OTP.deleteMany({ email });
 
     res.json({ message: "Password reset successful" });
   } catch (err) {
@@ -387,7 +405,7 @@ exports.updateProfile = async (req, res) => {
 
 exports.updateAccountSettings = async (req, res) => {
   try {
-    const { currentPassword, newEmail, newPassword, securityAnswer } = req.body;
+    const { currentPassword, newEmail, newPassword, otp } = req.body;
     
     const user = await User.findById(req.user.id);
     if (!user) {
@@ -395,24 +413,27 @@ exports.updateAccountSettings = async (req, res) => {
     }
 
     // 1. Verification Logic
-    // If updating password, we accept EITHER currentPassword OR securityAnswer
+    // If updating password, we accept EITHER currentPassword OR otp
     if (newPassword) {
-      const providedSecurityAnswer = securityAnswer?.trim();
-      const isSecurityAnswerCorrect = providedSecurityAnswer && 
-        user.securityAnswer && 
-        providedSecurityAnswer.toLowerCase() === user.securityAnswer.trim().toLowerCase();
+      let isOtpCorrect = false;
+      if (otp) {
+        const otpRecord = await OTP.findOne({ email: user.email });
+        if (otpRecord && otpRecord.otp === otp.trim()) {
+          isOtpCorrect = true;
+          await OTP.deleteMany({ email: user.email });
+        }
+      }
       
       let isPasswordMatch = false;
       if (currentPassword) {
         isPasswordMatch = await bcrypt.compare(currentPassword, user.password);
       }
 
-      if (!isSecurityAnswerCorrect && !isPasswordMatch) {
-        console.log(`[DEBUG] Update Failed for ${user.email}. Correct Answer: ${user.securityAnswer}, Provided: ${providedSecurityAnswer}`);
+      if (!isOtpCorrect && !isPasswordMatch) {
         return res.status(400).json({ 
           message: currentPassword 
             ? "Incorrect current password" 
-            : "Security answer is required for verification" 
+            : "OTP is required or invalid for verification" 
         });
       }
     } else {
@@ -1153,6 +1174,69 @@ exports.adminDeleteUser = async (req, res) => {
   } catch (err) {
     console.error("Admin Delete User Error:", err);
     res.status(500).json({ message: "Server error deleting user" });
+  }
+};
+
+// Generate and Send OTP
+exports.sendOTP = async (req, res) => {
+  try {
+    const { email, checkExists } = req.body;
+    if (!email) {
+      return res.status(400).json({ message: "Email is required ❌" });
+    }
+
+    const normalizedEmail = email.trim().toLowerCase();
+
+    // Optionally check if the user is registered (e.g. for Forgot Password)
+    if (checkExists) {
+      const user = await User.findOne({ email: normalizedEmail });
+      if (!user) {
+        return res.status(404).json({ message: "No registered user found with this email ❌" });
+      }
+    }
+
+    // Generate a 6-digit random number
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+    // Delete any existing OTP for this email
+    await OTP.deleteMany({ email: normalizedEmail });
+
+    // Save new OTP
+    const newOtp = new OTP({ email: normalizedEmail, otp });
+    await newOtp.save();
+
+    // Send the email
+    await sendOTPEmail(normalizedEmail, otp);
+
+    res.status(200).json({ message: "OTP sent successfully to your email" });
+  } catch (error) {
+    console.error("Send OTP Error:", error);
+    res.status(500).json({ message: "Server error sending OTP" });
+  }
+};
+
+// Verify OTP
+exports.verifyOTP = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+    if (!email || !otp) {
+      return res.status(400).json({ message: "Email and OTP are required ❌" });
+    }
+
+    const normalizedEmail = email.trim().toLowerCase();
+    const otpRecord = await OTP.findOne({ email: normalizedEmail });
+    if (!otpRecord) {
+      return res.status(400).json({ message: "OTP has expired or does not exist ❌" });
+    }
+
+    if (otpRecord.otp !== otp.trim()) {
+      return res.status(400).json({ message: "Invalid OTP code ❌" });
+    }
+
+    res.status(200).json({ message: "OTP verified successfully", success: true });
+  } catch (error) {
+    console.error("Verify OTP Error:", error);
+    res.status(500).json({ message: "Server error verifying OTP" });
   }
 };
 
