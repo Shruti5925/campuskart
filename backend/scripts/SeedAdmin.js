@@ -13,12 +13,15 @@ const seedAdmin = async () => {
     const existingAdmin = await User.findOne({ email: adminEmail });
 
     if (existingAdmin) {
-      console.log("Admin account already exists.");
+      const salt = await bcrypt.genSalt(10);
+      existingAdmin.password = await bcrypt.hash("admin123", salt);
+      await existingAdmin.save();
+      console.log("Admin account password updated to admin123! 🚀");
       process.exit(0);
     }
 
     const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash("Admin@CampusKart2026", salt);
+    const hashedPassword = await bcrypt.hash("admin123", salt);
 
     const adminUser = new User({
       firstName: "System",
@@ -38,7 +41,7 @@ const seedAdmin = async () => {
     await adminUser.save();
     console.log("Admin account created successfully! 🚀");
     console.log("Email: admin@banasthali.in");
-    console.log("Password: Admin@CampusKart2026");
+    console.log("Password: admin123");
     process.exit(0);
   } catch (err) {
     console.error("Seeding Error:", err);
