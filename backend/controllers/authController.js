@@ -99,16 +99,6 @@ exports.signup = async (req, res) => {
   const email = rawEmail?.trim().toLowerCase();
   const password = rawPassword?.trim();
 
-  // OTP Verification
-  if (!otp) {
-    return res.status(400).json({ message: "OTP verification is required ❌" });
-  }
-
-  const otpRecord = await OTP.findOne({ email });
-  if (!otpRecord || otpRecord.otp !== otp.trim()) {
-    return res.status(400).json({ message: "Invalid or expired OTP ❌" });
-  }
-
   // CAPTCHA Verification
   if (!captchaToken || !captchaAnswer || !verifyCaptcha(captchaToken, captchaAnswer)) {
     return res.status(400).json({ message: "Invalid or expired CAPTCHA ❌" });
