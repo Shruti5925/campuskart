@@ -3,7 +3,6 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import { useModal } from '../context/ModalContext';
 import { formatNumericDate } from '../utils/dateUtils';
-import defaultProduct from '../assets/default-product.svg';
 import itemStandard from '../assets/image.webp';
 import ProductCard from '../Components/ProductCard';
 import femaleAvatar from '../assets/female-avatar.png';
@@ -51,7 +50,7 @@ const ProductView = () => {
     // Review state
     const [newRating, setNewRating] = useState(5);
     const [newComment, setNewComment] = useState('');
-    const [submittingReview, setSubmittingReview] = useState(false);
+    const [submittingReview, setSubmittingReview] = useState(false);    // eslint-disable-next-line no-unused-vars
     const [reporting, setReporting] = useState(false);
     const [isFlaggedError, setIsFlaggedError] = useState(false);
     const [isReportModalOpen, setIsReportModalOpen] = useState(false);
@@ -72,6 +71,7 @@ const ProductView = () => {
         }
     }
     const isSuspended = sessionStorage.getItem('isSuspended') === 'true';
+    // eslint-disable-next-line no-unused-vars
     const isVerified = true;
     const isUnverified = false;
 
@@ -119,6 +119,7 @@ const ProductView = () => {
 
     useEffect(() => {
         fetchProductData();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [id, token]);
 
     const handleChat = async () => {
@@ -252,6 +253,7 @@ const ProductView = () => {
         }
     };
 
+    // eslint-disable-next-line no-unused-vars
     const handleActionClick = (e, callback) => {
         if (isSuspended) {
             showModal({

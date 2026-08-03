@@ -106,6 +106,7 @@ const Navbar = () => {
       window.removeEventListener('cartUpdated', handleCartUpdate);
       if (socket) socket.off('new_notification');
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
 

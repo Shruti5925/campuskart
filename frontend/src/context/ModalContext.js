@@ -12,6 +12,10 @@ export const ModalProvider = ({ children }) => {
         onCancel: null,
     });
 
+    const closeModal = useCallback(() => {
+        setModalConfig(prev => ({ ...prev, isOpen: false }));
+    }, []);
+
     const showModal = useCallback(({ title, message, type = 'alert', onConfirm, onCancel }) => {
         setModalConfig({
             isOpen: true,
@@ -27,11 +31,7 @@ export const ModalProvider = ({ children }) => {
                 closeModal();
             },
         });
-    }, []);
-
-    const closeModal = useCallback(() => {
-        setModalConfig(prev => ({ ...prev, isOpen: false }));
-    }, []);
+    }, [closeModal]);
 
     return (
         <ModalContext.Provider value={{ showModal, closeModal, modalConfig }}>

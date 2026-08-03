@@ -58,6 +58,7 @@ const ProductCard = ({ product, isSeller, onDelete, isWishlistPage, onRemove, sh
             }
         };
         checkWishlist();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [product?._id, token, initialIsWishlisted]);
 
     const handleWishlistToggle = async (e) => {
@@ -110,13 +111,11 @@ const ProductCard = ({ product, isSeller, onDelete, isWishlistPage, onRemove, sh
         if (images.length <= 1) return;
 
         const interval = setInterval(() => {
-            nextImage();
+            setCurrentImageIndex((prev) => (prev + 1) % images.length);
         }, 3000);
 
         return () => clearInterval(interval);
     }, [images.length]);
-
-    const categorySlug = (product.category || 'others').toLowerCase().replace(/\s+/g, '-');
 
     const handleChat = async (e) => {
         e.stopPropagation();

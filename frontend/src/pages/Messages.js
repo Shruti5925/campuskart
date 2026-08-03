@@ -19,7 +19,9 @@ const Messages = ({ hideSidebar = false, isAdmin = false, propTargetUserId = nul
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState(isAdmin ? 'Open' : 'Active');
     const location = useLocation();
+    // eslint-disable-next-line no-unused-vars
     const [showOfferInput, setShowOfferInput] = useState(false);
+    // eslint-disable-next-line no-unused-vars
     const [offerAmount, setOfferAmount] = useState('');
     const [searchQuery, setSearchQuery] = useState('');
     const [userData, setUserData] = useState(null);
@@ -30,6 +32,7 @@ const Messages = ({ hideSidebar = false, isAdmin = false, propTargetUserId = nul
     const [reportTarget, setReportTarget] = useState({ id: null, type: 'user', name: '' });
     const messagesListRef = useRef(null);
     const messagesEndRef = useRef(null);
+    // eslint-disable-next-line no-unused-vars
     const socketRef = useRef(null);
     const token = sessionStorage.getItem('token');
 
@@ -69,6 +72,7 @@ const Messages = ({ hideSidebar = false, isAdmin = false, propTargetUserId = nul
         return msgDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
     };
 
+    // eslint-disable-next-line no-unused-vars
     const formatPostedDate = (product) => {
         if (!product) return 'N/A';
         if (product.createdAt) return formatNumericDate(product.createdAt);
@@ -289,6 +293,7 @@ const Messages = ({ hideSidebar = false, isAdmin = false, propTargetUserId = nul
                 socket.off('receive_message', handleReceiveMessage);
             };
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedConv, token]);
 
     // Fetch user marketplace stats when otherUser changes (for admin)
@@ -318,6 +323,7 @@ const Messages = ({ hideSidebar = false, isAdmin = false, propTargetUserId = nul
             }
         };
         fetchUserStats();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedConv, isAdmin, token, currentUserId]);
 
     useEffect(() => {
@@ -394,6 +400,7 @@ const Messages = ({ hideSidebar = false, isAdmin = false, propTargetUserId = nul
         }
     };
 
+    // eslint-disable-next-line no-unused-vars
     const handleSendOffer = async () => {
         if (!offerAmount || isNaN(offerAmount)) return;
         const offerMessage = `🤝 I'd like to make an offer of ₹${offerAmount}`;

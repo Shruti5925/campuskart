@@ -31,6 +31,7 @@ const Settings = () => {
             return;
         }
         fetchUserData();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [token]);
 
     const fetchUserData = async () => {

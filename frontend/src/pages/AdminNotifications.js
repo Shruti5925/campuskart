@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Footer from '../Components/Footer';
 import { useModal } from '../context/ModalContext';
@@ -15,6 +15,7 @@ const AdminNotifications = () => {
     const navigate = useNavigate();
     const token = sessionStorage.getItem('token');
     const profileDropdownRef = useRef(null);
+    // eslint-disable-next-line no-unused-vars
     const { showModal } = useModal();
 
     // Close dropdown on click outside
@@ -36,6 +37,7 @@ const AdminNotifications = () => {
 
     useEffect(() => {
         fetchNotifications();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const fetchNotifications = async () => {

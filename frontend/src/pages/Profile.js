@@ -7,7 +7,6 @@ import Footer from "../Components/Footer";
 import "../styles/Dashboard.css"; // Reuse for consistent layout
 import femaleAvatar from "../assets/female-avatar.png";
 import maleAvatar from "../assets/male-avatar.png";
-import itemStandard from "../assets/image.webp";
 import { formatExpiryDate } from "../utils/dateUtils";
 import "../styles/AccountStatus.css";
 
@@ -22,7 +21,9 @@ function Profile() {
     const { showModal } = useModal();
     
     const [products, setProducts] = useState([]);
+    // eslint-disable-next-line no-unused-vars
     const [searchTerm, setSearchTerm] = useState('');
+    // eslint-disable-next-line no-unused-vars
     const [isSearchFocused, setIsSearchFocused] = useState(false);
     const [photoUploading, setPhotoUploading] = useState(false);
     const [photoModalOpen, setPhotoModalOpen] = useState(false);
@@ -45,6 +46,7 @@ function Profile() {
         }
 
         fetchProfile();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [token, navigate, location.search]);
 
     const fetchProfile = async () => {
@@ -175,6 +177,7 @@ function Profile() {
         ? (pendingPhotoPreview || (pendingRemovePhoto ? defaultAvatar : savedPhotoSrc))
         : savedPhotoSrc;
 
+    // eslint-disable-next-line no-unused-vars
     const displayedSearchProducts = searchTerm ? products.filter(p => p.title.toLowerCase().includes(searchTerm.toLowerCase())) : products;
 
     return (

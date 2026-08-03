@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate, Link, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { useModal } from '../context/ModalContext';
 import ProductCard from '../Components/ProductCard';
@@ -9,7 +9,6 @@ import femaleAvatar from '../assets/female-avatar.png';
 import maleAvatar from '../assets/male-avatar.png';
 import itemStandard from '../assets/image.webp';
 import { formatNumericDate, formatExpiryDate } from '../utils/dateUtils';
-import ModerationModal from '../Components/ModerationModal';
 import '../styles/AdminDashboard.css';
 import '../styles/AccountStatus.css';
 
@@ -31,6 +30,7 @@ const AdminDashboard = () => {
     const [allReviews, setAllReviews] = useState([]);
     const [allUsers, setAllUsers] = useState([]);
 
+    // eslint-disable-next-line no-unused-vars
     const [stats, setStats] = useState({
         totalUsers: 0,
         pendingApprovals: 0,
@@ -150,6 +150,7 @@ const AdminDashboard = () => {
 
     useEffect(() => {
         fetchInitialData();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     useEffect(() => {
@@ -183,6 +184,7 @@ const AdminDashboard = () => {
         return () => document.removeEventListener('mousedown', handleClick);
     }, [showNotifDropdown]);
 
+    // eslint-disable-next-line no-unused-vars
     const handleMarkAdminNotifRead = async (notifId) => {
         try {
             await axios.put(`http://localhost:5001/api/notifications/${notifId}/read`, {}, {
@@ -194,6 +196,7 @@ const AdminDashboard = () => {
         }
     };
 
+    // eslint-disable-next-line no-unused-vars
     const handleMarkAllAdminRead = async () => {
         try {
             await axios.put('http://localhost:5001/api/notifications/mark-all-read', {}, {

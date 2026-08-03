@@ -33,6 +33,7 @@ const Notifications = () => {
         return () => {
             if (socket) socket.off('new_notification', handleNewNotification);
         };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const fetchNotifications = async () => {

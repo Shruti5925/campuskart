@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Footer from '../Components/Footer';
 import '../styles/AdminDashboard.css';
@@ -32,6 +32,7 @@ const AdminLogs = () => {
 
     useEffect(() => {
         fetchActivities();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const fetchActivities = async () => {

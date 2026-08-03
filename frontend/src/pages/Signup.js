@@ -48,6 +48,7 @@ function Signup() {
     }
   };
 
+  // eslint-disable-next-line no-unused-vars
   const securityQuestions = [
     "What is your pet's name?",
     "What is your mother's maiden name?",
